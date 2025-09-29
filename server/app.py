@@ -3,6 +3,10 @@ from flask_cors import CORS
 import openai
 import os
 import base64
+import json
+from dotenv import load_dotenv
+load_dotenv()
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://md-backend-blond.vercel.app"}})
@@ -71,30 +75,58 @@ def serve_react():
 def serve_static(path):
     return send_from_directory('../frontend/build', path)
 
-@app.route("/translate-members", methods=["POST"])
-def translate_members():
+@app.route("/translate-members-en", methods=["POST"])
+def translate_members_en():
     data = request.json
     members = data.get("members", [])
 
-    prompt = ("다음 멤버 이름을 일본어로 변환해줘. "
-        "절대 다른 설명이나 문장은 쓰지 말고, "
-        "쉼표(,)로만 구분해서 결과만 출력해. "
-        f"멤버: {', '.join(members)}")
+    prompt = (
+        "다음 멤버 이름을 영어 로마자 표기로 변환해줘. "
+        "절대 다른 설명하지 말고, 쉼표(,)로 구분해서 결과만 출력해. "
+        f"멤버: {', '.join(members)}"
+    )
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",   
-            messages=[{"role": "user", "content": prompt}]
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
         )
 
         result = response.choices[0].message.content.strip()
         translated = [m.strip() for m in result.split(",") if m.strip()]
 
-        return jsonify({"translatedMembers": translated})
+        return jsonify({"translatedMembersEn": translated})
 
     except Exception as e:
-        print("translate-members 오류:", str(e))
+        print("translate-members-en 오류:", str(e))
         return jsonify({"error": "GPT 처리 중 오류"}), 500
+
+@app.route("/translate-members-jp", methods=["POST"])
+def translate_members_jp():
+    data = request.json
+    members = data.get("members", [])
+
+    prompt = (
+        "다음 멤버 이름을 일본어 가타카나로 변환해줘. "
+        "절대 다른 설명하지 말고, 쉼표(,)로 구분해서 결과만 출력해. "
+        f"멤버: {', '.join(members)}"
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        result = response.choices[0].message.content.strip()
+        translated = [m.strip() for m in result.split(",") if m.strip()]
+
+        return jsonify({"translatedMembersJp": translated})
+
+    except Exception as e:
+        print("translate-members-jp 오류:", str(e))
+        return jsonify({"error": "GPT 처리 중 오류"}), 500
+
 
 
 if __name__ == "__main__":

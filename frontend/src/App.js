@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import './App.css';
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 function App() {
   const [groupName, setGroupName] = useState('');
@@ -12,16 +14,89 @@ function App() {
   const [thumbnailShippingDate, setThumbnailShippingDate] = useState('');
   const [mainName, setMainName] = useState('');
   const [detailDescription, setDetailDescription] = useState('');
-  const [bonusConditions, setBonusConditions] = useState([
-  { price: "9900", text: "公式特典1枚" },
-  { price: "11800", text: "公式特典2枚" },
-  { price: "17700", text: "公式特典3枚（以降も金額に応じて自動追加となります。）" }
-]);
   const [keywordType, setKeywordType] = useState(''); 
   const [memberText, setMemberText] = useState('');
   const [keywords, setKeywords] = useState([]);
+  const [bonusSets, setBonusSets] = useState([
+  { base: "", label: "" }   // base = 기준 숫자, label = 특전 이름
+]);
 
+  useEffect(() => {
+  // 조건이 하나만 있는 경우 (label 없음 → 기본 방식)
+  if (bonusSets.length === 1 && bonusSets[0].base) {
+    const base = Number(bonusSets[0].base);
+    setDetailDescription(prev => {
+      return prev; // 여기서는 글만 수정 안 하고, UI에서 보여주는 부분 처리
+    });
+  }
+}, [bonusSets]);
 
+  const handleDownloadExcelByGroup = (group, groupIdx) => {
+  const rows = [];
+  const hasAnyOptions = group.items.some(item => item.hasOption && item.optionText);
+
+  group.items.forEach((item) => {
+    if (item.hasOption && item.optionText) {
+      const members = item.optionText.split(",").map(m => m.trim()).filter(Boolean);
+      members.forEach((member) => {
+        rows.push({
+          option_title_1: "OPTION",
+          option_name_1: item.name,
+          option_title_2: hasAnyOptions ? "MEMBER" : "",   // ✅ 옵션 있으면 MEMBER, 없으면 비우기
+          option_name_2: hasAnyOptions ? member : "",   
+          option_title_3: "",
+          option_name_3: "",
+          option_price_yen: Number(item.price) - group.standardPrice, // ✅ 차액
+          option_quantity: 20,
+          seller_unique_option_id: "",
+          external_product_hs_id: "",
+          q_inventory_id: ""
+        });
+      });
+    } else {
+      rows.push({
+        option_title_1: "OPTION",
+        option_name_1: item.name,
+        option_title_2: hasAnyOptions ? "MEMBER" : "",   // ✅ 없으면 비우기
+        option_name_2: hasAnyOptions ? "-" : "", 
+        option_title_3: "",
+        option_name_3: "",
+        option_price_yen: Number(item.price) - group.standardPrice,
+        option_quantity: 20,
+        seller_unique_option_id: "",
+        external_product_hs_id: "",
+        q_inventory_id: ""
+      });
+    }
+  });
+
+  // ✅ 워크북 생성
+  const worksheet = XLSX.utils.json_to_sheet(rows, {
+    header: [
+      "option_title_1",
+      "option_name_1",
+      "option_title_2",
+      "option_name_2",
+      "option_title_3",
+      "option_name_3",
+      "option_price_yen",
+      "option_quantity",
+      "seller_unique_option_id",
+      "external_product_hs_id",
+      "q_inventory_id"
+    ]
+  });
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, `Group${groupIdx + 1}`);
+
+  // ✅ 파일 저장 (그룹 번호 포함)
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  saveAs(
+    new Blob([excelBuffer], { type: "application/octet-stream" }),
+    `group_${groupIdx + 1}_qoo10_optiondownitem.xlsx`
+  );
+};
   const API_BASE = process.env.REACT_APP_API_BASE;
   const ceilToNearestHundred = (num) => Math.ceil(num / 100) * 100;
   const handleOptionValueChange = (idx, newValue) => {
@@ -115,14 +190,14 @@ function App() {
 };
   //상세설명글
   const handleGenerateDescription = () => {
-    if (!thumbnailShippingDate) {
-      alert("발송 날짜를 입력해주세요.");
-      return;
-    }
+  if (!thumbnailShippingDate) {
+    alert("발송 날짜를 입력해주세요.");
+    return;
+  }
 
-    const dateText = formatThumbnailDate(thumbnailShippingDate); 
+  const dateText = formatThumbnailDate(thumbnailShippingDate); 
 
-    let baseText = `
+  let baseText = `
   【発送について】
 
   ${dateText}より、ご注文順に順次出荷されます。できるだけ早くお届けできるよう努めます。
@@ -134,36 +209,56 @@ function App() {
   商品はすべて100%正規品です。
 
   迅速な配送のため、現地で商品を順次確保して発送しております。そのため、ご購入いただいた商品は予約配送に切り替わることはありません。現地の状況に合わせて順次スピーディーに購入し、配送を進めておりますのでご安心ください。
-    `;
+  `;
 
-    if (hasBonus && bonusConditions.length > 0) {
-      baseText += `
+  if (hasBonus && bonusSets.length > 0) {
+    baseText += `
 
   🎁【特典情報】
 
   購入金額に応じて、以下のように公式特典を差し上げます。
   `;
 
-      bonusConditions.forEach(cond => {
-        if (cond.price && cond.text) {
-          baseText += `\n${cond.price}円以上:${cond.text}`;
+    if (bonusSets.length === 1 && bonusSets[0].base) {
+      // 특전 1개일 때
+      const base = Number(bonusSets[0].base);
+      baseText += `\n${base * 2000 - 100}円以上 : 公式特典1枚`;
+      baseText += `\n${base * 4000 - 200}円以上 : 公式特典2枚`;
+      baseText += `\n${base * 6000 - 300}円以上 : 公式特典3枚 (以降も金額に応じて自動追加となります。)`;
+    } else if (bonusSets.length > 1) {
+      // 특전 여러 개일 때
+      bonusSets.forEach((set) => {
+        if (set.base && set.label) {
+          const base = Number(set.base);
+          baseText += `\n${base * 2000 - 100}円ごとに ${set.label} 1枚ずつ支給 (以降も金額に応じて自動追加となります。)`;
         }
       });
 
-      baseText += `
-
-  ✔️送料を除く決済金額が対象となります。
-  ✔️重複なく発送いたします。
-      `;
+      // 예시 문구 추가 (2개 이상일 때만)
+      const maxBase = Math.max(...bonusSets.map(s => Number(s.base)));
+      const maxSet = bonusSets.find(s => Number(s.base) === maxBase);
+      baseText += `\n例: ${maxBase * 2000 - 100}円の場合 → `;
+      bonusSets.forEach((set, idx) => {
+        baseText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚`;
+        if (idx !== bonusSets.length - 1) baseText += " + ";
+      });
     }
 
     baseText += `
 
-  ご不明な点やご希望がございましたら、いつでもお気軽にお問い合わせください ^^
+  ✔️送料を除く決済金額が対象となります。
+  ✔️重複なく発送いたします。
     `;
+  }
 
-    setDetailDescription(baseText.trim());
-  };
+  baseText += `
+
+  ご不明な点やご希望がございましたら、いつでもお気軽にお問い合わせください ^^
+  `;
+
+  setDetailDescription(baseText.trim());
+};
+
   const handleImageUpload = (e) => {
     setImages([...e.target.files]);
   };
@@ -234,7 +329,7 @@ function App() {
   // 3. GPT 상품명/가격 추출하기
   await handleSubmit();
 };
-  const handleGenerateKeywords = async () => {
+  const handleGenerateKeywords = async () => { 
   if (!keywordType) {
     alert("응원봉/앨범/MD 중 하나를 선택하세요!");
     return;
@@ -245,26 +340,59 @@ function App() {
     return;
   }
 
-  const members = memberText.split(",").map(m => m.trim()).filter(Boolean);
+  const members = memberText
+    .split(",")
+    .map(m => m.trim())
+    .filter(Boolean);
 
   try {
-    const response = await fetch(`${API_BASE}/translate-members`, {
+    // 영어 변환 요청
+    const enRes = await fetch(`${API_BASE}/translate-members-en`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ members }),
     });
+    const { translatedMembersEn } = await enRes.json();
 
-    const data = await response.json();
-    const translated = data.translatedMembers || [];
+    // 일본어 변환 요청
+    const jpRes = await fetch(`${API_BASE}/translate-members-jp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ members }),
+    });
+    const { translatedMembersJp } = await jpRes.json();
 
-    const result = [keywordType, ...translated];
-    setKeywords(result);
+    // ✅ 쌍으로 묶기
+    const result = members.map((_, idx) => {
+      const en = translatedMembersEn[idx] || "";
+      const jp = translatedMembersJp[idx] || "";
+      return `${en}, ${jp}`;
+    });
+
+    // ✅ 그룹명 + 선택한 키워드타입 (응원봉/앨범/MD)
+    setKeywords([`${groupName} ${keywordType}`, ...result]);
+
   } catch (error) {
     console.error("키워드 추출 실패:", error);
     alert("GPT 요청 실패");
   }
 };
 
+  const handlePaste = (e) => {
+    const items = e.clipboardData.items;
+    const newFiles = [];
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") !== -1) {
+        const blob = items[i].getAsFile();
+        newFiles.push(blob);
+      }
+    }
+
+    if (newFiles.length > 0) {
+      setImages([...images, ...newFiles]);
+    }
+  };
 
   return (
     <div style={{ padding: '20px' }}>
@@ -275,11 +403,33 @@ function App() {
         <input type="file" accept="image/*" multiple onChange={handleImageUpload} />
       </div>
 
-      <div>
-        <label>📌 그룹명: </label>
-        <input type="text" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+      {/* 붙여넣기 지원 영역 */}
+      <div
+        onPaste={handlePaste}
+        style={{
+          border: "2px dashed gray",
+          padding: "20px",
+          marginTop: "10px",
+          textAlign: "center"
+        }}
+      >
+        네모박스 한 번 클릭 후 이미지를 여기에 복사붙여넣기
       </div>
 
+      {/* 업로드된 이미지 미리보기 */}
+      <div style={{ marginTop: "10px" }}>
+        {images.map((img, idx) => (
+          <p key={idx}>{img.name || `clipboard-image-${idx}`}</p>
+        ))}
+      </div>
+
+      {/* 그룹명   */}
+      <div>
+        <label>📌 그룹명: </label>
+        <input type="text" placeholder = "영어로 입력" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+      </div>
+
+      {/* 썸네일기준발송날짜   */}
       <div>
         <label>📌 썸네일 기준 발송날짜: </label>
         <input
@@ -289,55 +439,102 @@ function App() {
         />
       </div>
 
+      {/* 콘서트/팝업명   */}
       <div>
         <label>📌 콘서트/팝업명: </label>
         <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} />
       </div>
 
+      {/* 특전유무   */}
       <div>
         <label>📌 특전 유무: </label>
         <input type="checkbox" checked={hasBonus} onChange={(e) => setHasBonus(e.target.checked)} />
       </div>
+
       {/* 상세이미지 특전 조건 입력 UI */}
       {hasBonus && (
-        <div style={{ marginTop: '0px', marginBottom:'10px' }}>
-          <h3>🎁 특전조건 입력</h3>
-          <h5>9900엔 이상 공식혜택 1장 이렇게 되어있음. 조건이 복잡해지면 따로 입력하거나 파파고 ㄱㄱ</h5>
-          {bonusConditions.map((cond, idx) => (
-            <div key={idx} style={{ marginBottom: '5px' }}>
-              <input
-                type="number"
-                value={cond.price}
-                onChange={(e) => {
-                  const newConds = [...bonusConditions];
-                  newConds[idx].price = e.target.value;
-                  setBonusConditions(newConds);
-                }}
-                style={{ width: '100px', marginRight: '8px' }}
-              /> 円以上 :
-              <input
-                type="text"
-                value={cond.text}
-                onChange={(e) => {
-                  const newConds = [...bonusConditions];
-                  newConds[idx].text = e.target.value;
-                  setBonusConditions(newConds);
-                }}
-                style={{ width: '250px', marginLeft: '8px' }}
-              />
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() =>
-              setBonusConditions([...bonusConditions, { price: "", text: "" }])
-            }
-            style={{ marginTop: '5px' }}
-          >
-            조건 추가 +
-          </button>
-        </div>
-      )}  
+  <div style={{ marginTop: '0px', marginBottom: '10px' }}>
+    <h3>🎁 특전조건 입력</h3>
+
+    {bonusSets.map((set, idx) => (
+      <div key={idx} style={{ marginBottom: "10px" }}>
+        <label>기준 숫자: </label>
+        <input
+          type="number"
+          value={set.base}
+          onChange={(e) => {
+            const newSets = [...bonusSets];
+            newSets[idx].base = e.target.value;
+            setBonusSets(newSets);
+          }}
+          placeholder="예: 5"
+          style={{ width: "100px", marginLeft: "8px" }}
+        />
+
+        {/* ✅ 특전 이름 입력은 2개 이상일 때만 보여주기 */}
+        {bonusSets.length > 1 && (
+          <>
+            <label style={{ marginLeft: "10px" }}>특전 이름: </label>
+            <input
+              type="text"
+              value={set.label}
+              onChange={(e) => {
+                const newSets = [...bonusSets];
+                newSets[idx].label = e.target.value;
+                setBonusSets(newSets);
+              }}
+              placeholder="예: FRAGILE ver."
+              style={{ width: "200px", marginLeft: "8px" }}
+            />
+          </>
+        )}
+
+        {/* ✅ 예시 문구는 마지막 줄에서만 보여주기 */}
+        {bonusSets.length > 1 && idx === bonusSets.length - 1 && (
+          <span style={{ marginLeft: "15px", color: "blue" }}>
+            {(() => {
+              const validSets = bonusSets.filter(s => s.base && s.label);
+              if (validSets.length > 1) {
+                const maxBase = Math.max(...validSets.map(s => Number(s.base)));
+                const maxPrice = maxBase * - 100;
+                return `例: ${maxPrice}円の場合 → ` + 
+                  validSets.map(s => {
+                    const count = Math.floor(maxPrice / (s.base * 2000 - 100));
+                    return `${s.label} ${count}枚`;
+                  }).join(" + ");
+              }
+              return null;
+            })()}
+          </span>
+        )}
+      </div>
+    ))}
+
+    <button
+      type="button"
+      onClick={() => setBonusSets([...bonusSets, { base: "", label: "" }])}
+    >
+      특전 추가 +
+    </button>
+    {bonusSets.length > 1 && (
+      <button
+        type="button"
+        onClick={() => setBonusSets(bonusSets.slice(0, -1))}
+        style={{ marginLeft: "10px", color: "red" }}
+      >
+        특전 삭제 -
+      </button>
+    )}
+    {bonusSets.length === 1 && bonusSets[0].base && (
+      <div>
+        <p>{bonusSets[0].base * 2000 - 100}円以上 : 公式特典1枚</p>
+        <p>{bonusSets[0].base * 4000 - 200}円以上 : 公式特典2枚</p>
+        <p>{bonusSets[0].base * 6000 - 300}円以上 : 公式特典3枚 (以降も…)</p>
+      </div>
+    )}
+
+  </div>
+)}
       <hr />
       {/* 메인상품명 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '10px' }}>
@@ -433,8 +630,29 @@ function App() {
                         const newList = [...mdList];
                         newList[idx].hasOption = e.target.checked;
                         setMdList(newList);
-                      }}
+                        }}
                     />
+                    {item.hasOption && (
+                    <input
+                      type="text"
+                      placeholder="쉼표로 구분 (예: 한나, 유나, 현서)"
+                      value={item.optionText || ""}
+                      onChange={(e) => {
+                        const newList = [...mdList];
+                        newList[idx].optionText = e.target.value;
+                        setMdList(newList);
+                      }}
+                      style={{ 
+                        fontSize: "14px",
+        border: "1px solid #ccc",
+        padding: "3px",
+        // ✅ 글자 수에 따라 width 자동 조절
+        width: `${(item.optionText?.length || 1) * 10}px`,
+        minWidth: "150px",  // 너무 작아지지 않게 최소 너비
+        maxWidth: "100%",   // 화면 넘치지 않게 최대 제한
+                       }}
+                    />
+                  )}
                   </td>
                 </tr>
               ))}
@@ -465,17 +683,15 @@ function App() {
           <div key={idx} style={{ marginBottom: '15px' }}>
             <strong>그룹 {idx + 1} (기준가격: ¥{group.standardPrice} 참고가격 :¥{group.standardPrice*1.3} )</strong>
             
-            {/* 그룹별 복사 버튼 */}
-          <button
-            className="COPY-button"
-            style={{ marginLeft: '10px' }}
-            onClick={() => {
-              const names = sortedItems.map(item => item.name).join(" , ");
-              handleCopy(names, `그룹 ${idx + 1} 상품명`);
-            }}
-          >
-            그룹 {idx + 1} 복사하기
-          </button>
+          {/* ✅ 그룹별 엑셀 다운로드 버튼 */}
+      <button
+        className="xlsx-button"
+        style={{ marginLeft: '10px' }}
+        onClick={() => handleDownloadExcelByGroup(group, idx)}
+      >
+        그룹 {idx + 1} 엑셀 다운로드
+      </button>
+
             <ul>
               {sortedItems.map((item, i) => {
                 const diff = Number(item.price) - group.standardPrice;
@@ -493,59 +709,60 @@ function App() {
           </div>
         );
       })}
+
       {/* 🔎 검색 키워드 추출 섹션 (그룹이 생성된 후에만 표시) */}
-{grouped.length > 0 && (
-  <div style={{ marginTop: '30px' }}>
-    <h3>🔎 검색 키워드 추출</h3>
+      {grouped.length > 0 && (
+        <div style={{ marginTop: '30px' }}>
+          <h3>🔎 검색 키워드 추출</h3>
 
-    {/* 체크박스 */}
-    <div>
-      <label>
-        <input 
-          type="radio" 
-          name="keywordType" 
-          value="ペンライト" 
-          checked={keywordType === "ペンライト"} 
-          onChange={(e) => setKeywordType(e.target.value)} 
-        /> 응원봉
-      </label>
-      <label style={{ marginLeft: '10px' }}>
-        <input 
-          type="radio" 
-          name="keywordType" 
-          value="アルバム" 
-          checked={keywordType === "アルバム"} 
-          onChange={(e) => setKeywordType(e.target.value)} 
-        /> 앨범
-      </label>
-      <label style={{ marginLeft: '10px' }}>
-        <input 
-          type="radio" 
-          name="keywordType" 
-          value="MD" 
-          checked={keywordType === "MD"} 
-          onChange={(e) => setKeywordType(e.target.value)} 
-        /> MD
-      </label>
-    </div>
+        {/* 체크박스 */}
+        <div>
+          <label>
+            <input 
+              type="radio" 
+              name="keywordType" 
+              value="ペンライト" 
+              checked={keywordType === "ペンライト"} 
+              onChange={(e) => setKeywordType(e.target.value)} 
+            /> 응원봉
+          </label>
+          <label style={{ marginLeft: '10px' }}>
+            <input 
+              type="radio" 
+              name="keywordType" 
+              value="アルバム" 
+              checked={keywordType === "アルバム"} 
+              onChange={(e) => setKeywordType(e.target.value)} 
+            /> 앨범
+          </label>
+          <label style={{ marginLeft: '10px' }}>
+            <input 
+              type="radio" 
+              name="keywordType" 
+              value="MD" 
+              checked={keywordType === "MD"} 
+              onChange={(e) => setKeywordType(e.target.value)} 
+            /> MD
+          </label>
+        </div>
 
-    {/* 멤버명 입력 */}
-    <div style={{ marginTop: '10px' }}>
-      <textarea
-        placeholder="멤버명을 쉼표로 구분해 입력하세요 (예: 리쿠, 쇼타, 유타) + 9개까지만 입력 가능합니다."
-        value={memberText}
-        onChange={(e) => {
-            const value = e.target.value;
-            const members = value.split(",").map(m => m.trim()).filter(Boolean);
-            if (members.length <= 9) {
-            setMemberText(value);
-            } else {
-            alert("최대 9명까지만 입력할 수 있다!");
-            }
-        }}
-        style={{ width: '100%', height: '60px' }}
-      />
-    </div>
+        {/* 멤버명 입력 */}
+        <div style={{ marginTop: '10px' }}>
+          <textarea
+            placeholder="멤버명을 쉼표로 구분해 입력하세요 (예: 리쿠, 쇼타, 유타) + 4명까지만 입력 가능합니다."
+            value={memberText}
+            onChange={(e) => {
+                const value = e.target.value;
+                const members = value.split(",").map(m => m.trim()).filter(Boolean);
+                if (members.length <= 4) {
+                setMemberText(value);
+                } else {
+                alert("최대 4명까지만 입력할 수 있다!");
+                }
+            }}
+            style={{ width: '100%', height: '60px' }}
+          />
+        </div>
 
     <button 
       className="pretty-button" 
@@ -580,7 +797,4 @@ function App() {
     </div>  
   );
 }
-
-console.log("✅ API_BASE:", process.env.REACT_APP_API_BASE);
-
 export default App;
