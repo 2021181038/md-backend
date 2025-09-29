@@ -290,7 +290,7 @@ function App() {
           const rawPrice = Number(match[3].replace(/[^\d]/g, ""));
           const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
           const methodB = rawPrice * 0.2;
-          const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB));
+          const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 100;
 
           return {
             name: `[${match[1]}] ${match[2].trim().replace(/[-\u2013:]+$/, "")}`,
@@ -362,15 +362,19 @@ function App() {
     });
     const { translatedMembersJp } = await jpRes.json();
 
-    // ✅ 쌍으로 묶기
-    const result = members.map((_, idx) => {
-      const en = translatedMembersEn[idx] || "";
-      const jp = translatedMembersJp[idx] || "";
-      return `${en}, ${jp}`;
-    });
+    const result = members.map((_, idx) => ({
+      en: translatedMembersEn[idx] || "",
+      jp: translatedMembersJp[idx] || "",
+      type: "member"
+    }));
 
-    // ✅ 그룹명 + 선택한 키워드타입 (응원봉/앨범/MD)
-    setKeywords([`${groupName} ${keywordType}`, ...result]);
+  // 그룹명 + 키워드타입 추가
+  const finalKeywords = [
+    { en: `${groupName} ${keywordType}`, jp: "", type: "main" },
+    ...result
+  ];
+
+  setKeywords(finalKeywords);
 
   } catch (error) {
     console.error("키워드 추출 실패:", error);
@@ -644,21 +648,43 @@ function App() {
                       }}
                       style={{ 
                         fontSize: "14px",
-        border: "1px solid #ccc",
-        padding: "3px",
-        // ✅ 글자 수에 따라 width 자동 조절
-        width: `${(item.optionText?.length || 1) * 10}px`,
-        minWidth: "150px",  // 너무 작아지지 않게 최소 너비
-        maxWidth: "100%",   // 화면 넘치지 않게 최대 제한
+                        border: "1px solid #ccc",
+                        padding: "3px",
+                        // ✅ 글자 수에 따라 width 자동 조절
+                        width: `${(item.optionText?.length || 1) * 10}px`,
+                        minWidth: "150px",  // 너무 작아지지 않게 최소 너비
+                        maxWidth: "100%",   // 화면 넘치지 않게 최대 제한
                        }}
                     />
                   )}
+                  </td>
+                  <td>
+                    <button
+                      style={{ color: "red" }}
+                      onClick={() => {
+                        const newList = [...mdList];
+                        newList.splice(idx, 1);
+                        setMdList(newList);
+                      }}
+                    >
+                      상품 삭제 –
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
 
           </table>
+          <button
+            className="pretty-button"
+            style={{ marginTop: "10px", marginBottom: "10px" }}
+            onClick={() => {
+              setMdList([...mdList, { name: "", price: "", hasOption: false, optionText: "" }]);
+            }}
+          >
+            상품 추가 +
+          </button>
+          
           <button 
             className="pretty-button" 
             style={{ marginTop: '20px', marginBottom:'10px' }} 
@@ -776,20 +802,50 @@ function App() {
     {keywords.length > 0 && (
       <div style={{ marginTop: '15px' }}>
         <h4>검색키워드</h4>
-        <ul>
-          {keywords.map((kw, idx) => (
-            <li key={idx} style={{ marginBottom: '5px' }}>
-              {kw}
-              <button
-                className="COPY-button"
-                style={{ marginLeft: '10px' }}
-                onClick={() => handleCopy(kw, "검색 키워드")}
-              >
-                복사하기
-              </button>
-            </li>
-          ))}
-        </ul>
+              <ul>
+  {keywords.map((kw, idx) => (
+    <li key={idx} style={{ marginBottom: '10px' }}>
+      {kw.type === "main" ? (
+        // 메인 키워드 → 복사 버튼 1개만
+        <div>
+          {kw.en}
+          <button
+            className="COPY-button"
+            style={{ marginLeft: '10px' }}
+            onClick={() => handleCopy(kw.en, "검색 키워드")}
+          >
+            복사하기
+          </button>
+        </div>
+      ) : (
+        // 멤버 키워드 → EN/JP 각각 복사 버튼
+        <>
+          <div>
+            {kw.en}
+            <button
+              className="COPY-button"
+              style={{ marginLeft: '10px', marginBottom:'15px' }}
+              onClick={() => handleCopy(kw.en, "영어 키워드")}
+            >
+              복사하기
+            </button>
+          </div>
+          <div>
+            {kw.jp}
+            <button
+              className="COPY-button"
+              style={{ marginLeft: '10px' }}
+              onClick={() => handleCopy(kw.jp, "일본어 키워드")}
+            >
+              복사하기
+            </button>
+          </div>
+        </>
+      )}
+    </li>
+  ))}
+</ul>
+
       </div>
     )}
   </div>
