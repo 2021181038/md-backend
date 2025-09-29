@@ -79,6 +79,27 @@
 .xlsx-button:active{
   transform: scale(0.97);
 }
+.plus-button{
+  padding: 10px 16px;
+  background-color: #e6361f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: left;
+  cursor: pointer;
+  width: 270px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.plus-button:hover{
+  background-color: #943b1d;
+}
+
+.plus-button:active{
+  transform: scale(0.97);
+}
 
 
 .App-header {

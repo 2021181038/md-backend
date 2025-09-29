@@ -675,9 +675,9 @@ function App() {
             </tbody>
 
           </table>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" , marginBottom:"15px"}}>
           <button
-            className="pretty-button"
+            className="plus-button"
             onClick={() => {
               setMdList([...mdList, { name: "", price: "", hasOption: false, optionText: "" }]);
             }}
