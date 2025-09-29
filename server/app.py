@@ -5,13 +5,15 @@ import os
 import base64
 import json
 from dotenv import load_dotenv
-load_dotenv()
 
+# 환경 변수 로드
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://md-backend-blond.vercel.app"}})
 
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# OpenAI API 키 설정
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.after_request
 def add_cors_headers(response):
@@ -21,12 +23,15 @@ def add_cors_headers(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
     return response
 
+# ===============================
+# 이미지에서 상품명/가격 추출
+# ===============================
 @app.route("/extract-md", methods=["POST"])
 def extract_md():
     if request.method == "OPTIONS":
         return jsonify({}), 200
-    files = request.files.getlist('images')  # ✅ 여러 개의 이미지 받기
 
+    files = request.files.getlist('images')  # 여러 개 이미지 받기
     if not files:
         return jsonify({"error": "이미지가 업로드되지 않았습니다."}), 400
 
@@ -41,7 +46,7 @@ def extract_md():
         })
 
     try:
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {
@@ -67,6 +72,9 @@ def extract_md():
         print("OpenAI API 오류:", str(e))
         return jsonify({"error": "GPT 처리 중 오류가 발생했습니다."}), 500
 
+# ===============================
+# React 빌드 파일 서빙
+# ===============================
 @app.route('/')
 def serve_react():
     return send_from_directory('../frontend/build', 'index.html')
@@ -75,6 +83,9 @@ def serve_react():
 def serve_static(path):
     return send_from_directory('../frontend/build', path)
 
+# ===============================
+# 멤버명 변환 - 영어
+# ===============================
 @app.route("/translate-members-en", methods=["POST"])
 def translate_members_en():
     data = request.json
@@ -87,7 +98,7 @@ def translate_members_en():
     )
 
     try:
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
         )
@@ -101,6 +112,9 @@ def translate_members_en():
         print("translate-members-en 오류:", str(e))
         return jsonify({"error": "GPT 처리 중 오류"}), 500
 
+# ===============================
+# 멤버명 변환 - 일본어
+# ===============================
 @app.route("/translate-members-jp", methods=["POST"])
 def translate_members_jp():
     data = request.json
@@ -113,7 +127,7 @@ def translate_members_jp():
     )
 
     try:
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
         )
@@ -127,8 +141,9 @@ def translate_members_jp():
         print("translate-members-jp 오류:", str(e))
         return jsonify({"error": "GPT 처리 중 오류"}), 500
 
-
-
+# ===============================
+# 서버 실행
+# ===============================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5050))  # ← Render가 주는 PORT를 사용
+    port = int(os.environ.get("PORT", 5050))
     app.run(host="0.0.0.0", port=port)
