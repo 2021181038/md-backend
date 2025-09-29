@@ -675,6 +675,8 @@ function App() {
             </tbody>
 
           </table>
+          </div>
+          )}
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" , marginBottom:"15px"}}>
           <button
             className="plus-button"
@@ -692,8 +694,6 @@ function App() {
             가격별 그룹 만들기
           </button>
         </div>
-        </div>
-      )}
       {/* 그룹 가격 묶기  */}
       {grouped.map((group, idx) => {     
         const sortedItems = [...group.items].sort((a, b) => {
