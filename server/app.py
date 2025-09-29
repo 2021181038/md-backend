@@ -5,6 +5,9 @@ import os
 import base64
 import json
 from dotenv import load_dotenv
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 # 환경 변수 로드
 load_dotenv()
@@ -28,6 +31,14 @@ def add_cors_headers(response):
 # ===============================
 @app.route("/extract-md", methods=["POST"])
 def extract_md():
+    result = None
+    if response.choices and response.choices[0].message:
+        result = response.choices[0].message.content
+
+    if not result:
+        logging.error("⚠️ GPT 응답이 비어 있음")
+        return jsonify({"error": "GPT 응답 없음"}), 500
+
     if request.method == "OPTIONS":
         return jsonify({}), 200
 
@@ -69,8 +80,9 @@ def extract_md():
         return jsonify({"result": result})
 
     except Exception as e:
-        print("OpenAI API 오류:", str(e))
-        return jsonify({"error": "GPT 처리 중 오류가 발생했습니다."}), 500
+        logging.exception("❌ OpenAI API 오류 발생")
+        return jsonify({"error": str(e)}), 500
+
 
 # ===============================
 # React 빌드 파일 서빙
