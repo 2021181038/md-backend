@@ -675,9 +675,9 @@ function App() {
             </tbody>
 
           </table>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
           <button
             className="pretty-button"
-            style={{ marginTop: "10px", marginBottom: "10px" }}
             onClick={() => {
               setMdList([...mdList, { name: "", price: "", hasOption: false, optionText: "" }]);
             }}
@@ -687,11 +687,11 @@ function App() {
           
           <button 
             className="pretty-button" 
-            style={{ marginTop: '20px', marginBottom:'10px' }} 
             onClick={handleGroup}
           >
             가격별 그룹 만들기
           </button>
+        </div>
         </div>
       )}
       {/* 그룹 가격 묶기  */}
