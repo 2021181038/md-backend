@@ -362,6 +362,9 @@ function App() {
     });
     const { translatedMembersJp } = await jpRes.json();
 
+    const groupNameEn = translatedMembersEn[0] || groupName;
+    const groupNameJp = translatedMembersJp[0] || groupName;
+
     const result = members.map((_, idx) => ({
       en: translatedMembersEn[idx] || "",
       jp: translatedMembersJp[idx] || "",
@@ -370,8 +373,8 @@ function App() {
 
   // 그룹명 + 키워드타입 추가
   const finalKeywords = [
-    { en: `${groupName} ${keywordType}`, jp: "", type: "main" },
-    ...result
+    { en: `${groupNameEn} ${keywordType}`, jp: `${groupNameJp} ${keywordType}`, type: "main" },
+  ...result
   ];
 
   setKeywords(finalKeywords);
@@ -812,54 +815,66 @@ function App() {
 
     {/* 결과 출력 */}
     {keywords.length > 0 && (
-      <div style={{ marginTop: '15px' }}>
-        <h4>검색키워드</h4>
-              <ul>
-  {keywords.map((kw, idx) => (
-    <li key={idx} style={{ marginBottom: '10px' }}>
-      {kw.type === "main" ? (
-        // 메인 키워드 → 복사 버튼 1개만
-        <div>
-          {kw.en}
-          <button
-            className="COPY-button"
-            style={{ marginLeft: '10px' }}
-            onClick={() => handleCopy(kw.en, "검색 키워드")}
-          >
-            복사하기
-          </button>
-        </div>
-      ) : (
-        // 멤버 키워드 → EN/JP 각각 복사 버튼
-        <>
-          <div>
-            {kw.en}
-            <button
-              className="COPY-button"
-              style={{ marginLeft: '10px', marginBottom:'15px' }}
-              onClick={() => handleCopy(kw.en, "영어 키워드")}
-            >
-              복사하기
-            </button>
-          </div>
-          <div>
-            {kw.jp}
-            <button
-              className="COPY-button"
-              style={{ marginLeft: '10px' }}
-              onClick={() => handleCopy(kw.jp, "일본어 키워드")}
-            >
-              복사하기
-            </button>
-          </div>
-        </>
-      )}
-    </li>
-  ))}
-</ul>
+  <div style={{ marginTop: '15px' }}>
+    <h4>검색키워드</h4>
+    <ul>
+      {keywords.map((kw, idx) => (
+        <li key={idx} style={{ marginBottom: '10px' }}>
+          {kw.type === "main" ? (
+            // 메인 키워드 → EN/JP 각각 복사 버튼
+            <>
+              <div>
+                {kw.en}
+                <button
+                  className="COPY-button"
+                  style={{ marginLeft: '10px' }}
+                  onClick={() => handleCopy(kw.en, "영어 키워드")}
+                >
+                  복사하기
+                </button>
+              </div>
+              <div>
+                {kw.jp}
+                <button
+                  className="COPY-button"
+                  style={{ marginLeft: '10px' }}
+                  onClick={() => handleCopy(kw.jp, "일본어 키워드")}
+                >
+                  복사하기
+                </button>
+              </div>
+            </>
+          ) : (
+            // 멤버 키워드 → EN/JP 각각 복사 버튼
+            <>
+              <div>
+                {kw.en}
+                <button
+                  className="COPY-button"
+                  style={{ marginLeft: '10px' }}
+                  onClick={() => handleCopy(kw.en, "영어 키워드")}
+                >
+                  복사하기
+                </button>
+              </div>
+              <div>
+                {kw.jp}
+                <button
+                  className="COPY-button"
+                  style={{ marginLeft: '10px' }}
+                  onClick={() => handleCopy(kw.jp, "일본어 키워드")}
+                >
+                  복사하기
+                </button>
+              </div>
+            </>
+          )}
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
 
-      </div>
-    )}
   </div>
 )}
     </div>  
