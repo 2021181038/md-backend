@@ -290,7 +290,7 @@ function App() {
           const rawPrice = Number(match[3].replace(/[^\d]/g, ""));
           const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
           const methodB = rawPrice * 0.2;
-          const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 100;
+          const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
 
           return {
             name: `[${match[1]}] ${match[2].trim().replace(/[-\u2013:]+$/, "")}`,
