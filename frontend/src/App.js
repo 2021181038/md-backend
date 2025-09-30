@@ -620,26 +620,25 @@ function App() {
                   </td>
                   <td>
                     <input
-  type="number"
-  value={item.price}
-  onChange={(e) => {
-    const newList = [...mdList];
-    const rawPrice = Number(e.target.value);
-
-    if (!isNaN(rawPrice) && rawPrice > 0) {
-      const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
-      const methodB = rawPrice * 0.2;
-      const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
-
-      newList[idx].price = finalPrice.toString();
-    } else {
-      newList[idx].price = e.target.value; // 숫자 아닌 경우 그냥 입력값 반영
-    }
-
-    setMdList(newList);
-  }}
-/>
-
+                      type="number"
+                      value={item.price}
+                      onChange={(e) => {
+                        const newList = [...mdList];
+                        newList[idx].price = e.target.value; // 입력값 그대로 반영
+                        setMdList(newList);
+                      }}
+                      onBlur={(e) => {
+                        const newList = [...mdList];
+                        const rawPrice = Number(e.target.value);
+                        if (!isNaN(rawPrice) && rawPrice > 0) {
+                          const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
+                          const methodB = rawPrice * 0.2;
+                          const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
+                          newList[idx].price = finalPrice.toString();
+                          setMdList(newList);
+                        }
+                      }}
+                    />
                   </td>
                   <td>
                     <input
