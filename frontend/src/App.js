@@ -42,7 +42,7 @@ function App() {
         rows.push({
           option_title_1: "OPTION",
           option_name_1: item.name,
-          option_title_2: hasAnyOptions ? "MEMBER" : "",   // ✅ 옵션 있으면 MEMBER, 없으면 비우기
+          option_title_2: hasAnyOptions ? "TYPE" : "",   
           option_name_2: hasAnyOptions ? member : "",   
           option_title_3: "",
           option_name_3: "",
@@ -57,7 +57,7 @@ function App() {
       rows.push({
         option_title_1: "OPTION",
         option_name_1: item.name,
-        option_title_2: hasAnyOptions ? "MEMBER" : "",   // ✅ 없으면 비우기
+        option_title_2: hasAnyOptions ? "TYPE" : "",   // ✅ 없으면 비우기
         option_name_2: hasAnyOptions ? "-" : "", 
         option_title_3: "",
         option_name_3: "",
