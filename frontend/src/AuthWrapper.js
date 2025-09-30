@@ -1,4 +1,4 @@
-// src/AuthWrapper.js
+// 첫화면-비밀번호입력페이지
 import React, { useState } from "react";
 
 const AuthWrapper = ({ children }) => {
