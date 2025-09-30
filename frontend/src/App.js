@@ -148,8 +148,9 @@ function App() {
       const prices = remaining.map(item => Number(item.price));
       const min = Math.min(...prices);
 
-      const rawStandard = min * 2;
-      const standardPrice = (Math.ceil(rawStandard / 100) * 100)+10;;
+      // const rawStandard = min * 2;
+      // const standardPrice = (Math.ceil(rawStandard / 100) * 100)+10;
+      const standardPrice =  min * 2;
 
       const lowerBound = standardPrice * 0.5;
       const upperBound = standardPrice * 1.5;
