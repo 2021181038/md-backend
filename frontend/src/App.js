@@ -594,7 +594,8 @@ function App() {
       {/* 추출 결과 */}
       {mdList.length > 0 && (
         <div style={{ marginTop: '30px' }}>
-          <h3>📋 상품명 및 가격 * 맞는지 꼭 확인해보기</h3>
+          <h3>📋 상품명 및 가격</h3>
+          <h3>상품 추가 시 가격은 ₩원화₩를 기준으로 입력하기</h3>
           <table border="1" cellPadding="5" style={{ borderCollapse: 'collapse' }}>
             <thead>
               <tr>
