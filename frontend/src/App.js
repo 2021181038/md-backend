@@ -149,7 +149,7 @@ function App() {
       const min = Math.min(...prices);
 
       const rawStandard = min * 2;
-      const standardPrice = Math.ceil(rawStandard / 100) * 100;
+      const standardPrice = (Math.ceil(rawStandard / 100) * 100)-10;;
 
       const lowerBound = standardPrice * 0.5;
       const upperBound = standardPrice * 1.5;
