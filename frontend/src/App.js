@@ -312,7 +312,7 @@ function App() {
           };
         }
 
-        match = line.match(/^(.+?)\s+\u20a9([\d,]+)/);
+        match = line.match(/^(.+?)\s*[₩\u20a9](\d[\d,]*)/);
         if (match) {
           const rawPrice = Number(match[2].replace(/[^\d]/g, ""));
           const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
@@ -328,7 +328,13 @@ function App() {
 
         return { name: line.trim(), price: "", options: [] };  
       });
-
+      const hasAnyNumber = parsed.some(item => /^\[\d+\]/.test(item.name));
+    if (!hasAnyNumber) {
+      parsed = parsed.map((item, idx) => ({
+        ...item,
+        name: `[${idx + 1}] ${item.name}`
+      }));
+    }
       setMdList(parsed);
     } catch (error) {
       console.error("에러 발생:", error);
