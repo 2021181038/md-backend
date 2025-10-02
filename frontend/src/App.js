@@ -47,7 +47,7 @@ function App() {
           option_title_3: "",
           option_name_3: "",
           option_price_yen: Number(item.price) - group.standardPrice, // ✅ 차액
-          option_quantity: 20,
+          option_quantity: item.name === "–" ? 0 : 20,
           seller_unique_option_id: "",
           external_product_hs_id: "",
           q_inventory_id: ""
@@ -62,7 +62,7 @@ function App() {
         option_title_3: "",
         option_name_3: "",
         option_price_yen: Number(item.price) - group.standardPrice,
-        option_quantity: 20,
+        option_quantity: item.name === "–" ? 0 : 20,
         seller_unique_option_id: "",
         external_product_hs_id: "",
         q_inventory_id: ""
@@ -167,7 +167,11 @@ function App() {
 
       const hasStandard = group.some(item => Number(item.price) === standardPrice);
       if (!hasStandard) {
-        group.push({ name: "–", price: standardPrice.toString() });
+        group.push({ 
+          name: "–", 
+          price: standardPrice.toString() ,
+          quantity: 0
+        });
       }
 
       groups.push({ standardPrice, items: group });
