@@ -71,8 +71,7 @@ function App() {
   });
 
   // ✅ 워크북 생성
-  const worksheet = XLSX.utils.json_to_sheet(rows, {
-    header: [
+    const header = [
       "option_title_1",
       "option_name_1",
       "option_title_2",
@@ -84,7 +83,16 @@ function App() {
       "seller_unique_option_id",
       "external_product_hs_id",
       "q_inventory_id"
-    ]
+    ];
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+
+  // ✅ 2) 데이터는 A5부터 넣기 (2~4행 공백)
+  // header 옵션으로 컬럼 매핑을 고정하고 skipHeader로 데이터에선 헤더 미출력
+  XLSX.utils.sheet_add_json(worksheet, rows, {
+    header: headers,
+    skipHeader: true,
+    origin: "A5"      // ← 여기서 5행부터 시작
   });
 
   const workbook = XLSX.utils.book_new();
