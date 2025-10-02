@@ -71,7 +71,7 @@ function App() {
   });
 
   // ✅ 워크북 생성
-    const header = [
+    const headers = [
       "option_title_1",
       "option_name_1",
       "option_title_2",
@@ -155,15 +155,9 @@ function App() {
     while (remaining.length > 0) {
       const prices = remaining.map(item => Number(item.price));
       const min = Math.min(...prices);
-
-      // const rawStandard = min * 2;
-      // const standardPrice = (Math.ceil(rawStandard / 100) * 100)+10;
       const standardPrice =  min * 2;
-      //ㅋㅋ
-
       const lowerBound = standardPrice * 0.5;
       const upperBound = standardPrice * 1.5;
-
       const group = remaining.filter(item => {
         const p = Number(item.price);
         return p >= lowerBound && p <= upperBound;
