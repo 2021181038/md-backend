@@ -31,6 +31,48 @@ function App() {
   }
 }, [bonusSets]);
 
+  const resizeImage = (file, maxSize = 1080) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => resolve(blob), file.type, 0.9);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};  
+  const chunkArray = (arr, size) => {
+  const result = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+};
+
   const handleDownloadExcelByGroup = (group, groupIdx) => {
   const rows = [];
   const hasAnyOptions = group.items.some(item => item.hasOption && item.optionText);
@@ -277,15 +319,22 @@ function App() {
     setImages([...e.target.files]);
   };
   const handleSubmit = async () => {
-    if (!images.length) {
-      alert("이미지를 업로드해주세요.");
-      return;
-    }
+  if (!images.length) {
+    alert("이미지를 업로드해주세요.");
+    return;
+  }
 
+  let allResults = [];
+
+  // 1. 업로드한 이미지들을 1080px 리사이즈
+  const resizedImages = await Promise.all(images.map(img => resizeImage(img, 1080)));
+
+  // 2. 4장씩 잘라서 배치 처리
+  const batches = chunkArray(resizedImages, 4);
+
+  for (const batch of batches) {
     const formData = new FormData();
-    images.forEach((file, i) => {
-      formData.append("images", file);
-    });
+    batch.forEach((file) => formData.append("images", file));
 
     try {
       const response = await fetch(`${API_BASE}/extract-md`, {
@@ -297,8 +346,12 @@ function App() {
       const raw = data.result;
 
       const lines = raw.split("\n").filter(line => line.trim() !== "");
-      const parsed = lines.map((line) => {
+
+      // 여기서 기존 정규식 + 가격계산 로직 적용
+      let parsed = lines.map((line) => {
         let match;
+
+        // 1) [번호] 상품명 가격
         match = line.match(/\[(\d+)\]\s*(.+?)\s+([\d,]+)\s*(\u20a9|WON|\uC6D0|\u5186)?\s*$/i);
         if (match) {
           const rawPrice = Number(match[3].replace(/[^\d]/g, ""));
@@ -312,6 +365,7 @@ function App() {
           };
         }
 
+        // 2) 상품명 ₩가격
         match = line.match(/^(.+?)\s*[₩\u20a9](\d[\d,]*)/);
         if (match) {
           const rawPrice = Number(match[2].replace(/[^\d]/g, ""));
@@ -322,25 +376,34 @@ function App() {
           return {
             name: match[1].trim().replace(/[-\u2013:]+$/, ""),
             price: finalPrice.toString(),
-            options: []  
+            options: []
           };
         }
 
-        return { name: line.trim(), price: "", options: [] };  
+        return { name: line.trim(), price: "", options: [] };
       });
-      const hasAnyNumber = parsed.some(item => /^\[\d+\]/.test(item.name));
-    if (!hasAnyNumber) {
-      parsed = parsed.map((item, idx) => ({
-        ...item,
-        name: `[${idx + 1}] ${item.name}`
-      }));
-    }
-      setMdList(parsed);
+
+      // 3. 번호 자동 붙이기 (전체 batch 다 합친 뒤 적용)
+      allResults = [...allResults, ...parsed];
+
     } catch (error) {
       console.error("에러 발생:", error);
-      alert("서버 연결에 실패했어요.");
     }
-  };
+  }
+
+  // ✅ 마지막에 번호 자동 붙이기
+  const hasAnyNumber = allResults.some(item => /^\[\d+\]/.test(item.name));
+  if (!hasAnyNumber) {
+    allResults = allResults.map((item, idx) => ({
+      ...item,
+      name: `[${idx + 1}] ${item.name}`
+    }));
+  }
+
+  setMdList(allResults);
+};
+
+
   const handleOnetoThree = async () => {
   // 1. 상품명 만들기
   handleGenerateMainName();
