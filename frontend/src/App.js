@@ -70,6 +70,12 @@ function App() {
     }
   });
 
+  rows.sort((a, b) => {
+    const numA = parseInt(a.option_name_1.match(/^\[(\d+)\]/)?.[1] || 9999, 10);
+    const numB = parseInt(b.option_name_1.match(/^\[(\d+)\]/)?.[1] || 9999, 10);
+    return numA - numB;
+  });
+
   // ✅ 워크북 생성
     const headers = [
       "option_title_1",
