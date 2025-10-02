@@ -179,7 +179,7 @@ function App() {
   const dateText = formatThumbnailDate(thumbnailShippingDate); 
   const bonusText = hasBonus ? "[特典贈呈]" : "";
 
-  const result = `[${groupName}][${dateText}発送][現地購入]${bonusText}${eventName} OFFICIAL MD`;
+  const result = `[${groupName.toUpperCase()}][${dateText}発送][現地購入]${bonusText}${eventName} OFFICIAL MD`;
   setMainName(result);
   };
   const toggleOptionForItem = (itemIdx, optIdx) => {  
@@ -196,42 +196,50 @@ function App() {
   };
   // 가격 묶는 코드 
   const groupByCustomPrice = (items) => {
-    const sorted = [...items].sort((a, b) => Number(a.price) - Number(b.price));
-    let remaining = [...sorted];
-    const groups = [];
+  const sorted = [...items].sort((a, b) => Number(a.price) - Number(b.price));
+  let remaining = [...sorted];
+  const groups = [];
 
-    while (remaining.length > 0) {
-      const prices = remaining.map(item => Number(item.price));
-      const min = Math.min(...prices);
-      const standardPrice =  min * 2;
-      const lowerBound = standardPrice * 0.5;
-      const upperBound = standardPrice * 1.5;
-      const group = remaining.filter(item => {
-        const p = Number(item.price);
-        return p >= lowerBound && p <= upperBound;
-      });
+  while (remaining.length > 0) {
+    const prices = remaining.map(item => Number(item.price));
+    const min = Math.min(...prices);
+    const rawStandard = min * 2;
+    const lowerBound = rawStandard * 0.5;
+    const upperBound = rawStandard * 1.5;
 
-      if (group.length === 0) {
-        group.push(remaining[0]);
-      }
+    const group = remaining.filter(item => {
+      const p = Number(item.price);
+      return p >= lowerBound && p <= upperBound;
+    });
 
-      const hasStandard = group.some(item => Number(item.price) === standardPrice);
-      if (!hasStandard) {
-        group.push({ 
-          name: "–", 
-          price: standardPrice.toString() ,
-          quantity: 0
-        });
-      }
-
-      groups.push({ standardPrice, items: group });
-
-      const ids = new Set(group.map(g => g.name + g.price));
-      remaining = remaining.filter(item => !ids.has(item.name + item.price));
+    // ✅ 묶인 상품이 하나뿐이면, 그 상품 가격을 기준가격으로 잡기
+    let standardPrice;
+    if (group.length === 1) {
+      standardPrice = Number(group[0].price);
+    } else {
+      standardPrice = rawStandard;
     }
 
-    return groups;
-  };
+    // 기준가격과 정확히 같은 상품이 없으면 "-" 더하기
+    const hasStandard = group.some(item => Number(item.price) === standardPrice);
+    if (!hasStandard) {
+      group.push({
+        name: "–",
+        price: standardPrice.toString(),
+        quantity: 0
+      });
+    }
+
+    groups.push({ standardPrice, items: group });
+
+    // 이번 그룹에서 사용한 상품 제거
+    const ids = new Set(group.map(g => g.name + g.price));
+    remaining = remaining.filter(item => !ids.has(item.name + item.price));
+  }
+
+  return groups;
+};
+
   // 가격 묶는 코드 버튼 누르기
   const handleGroup = () => {
     const result = groupByCustomPrice(mdList); 
@@ -326,10 +334,10 @@ function App() {
 
   let allResults = [];
 
-  // 1. 업로드한 이미지들을 1080px 리사이즈
+  // 1. 업로드된 이미지를 전부 리사이즈
   const resizedImages = await Promise.all(images.map(img => resizeImage(img, 1080)));
 
-  // 2. 4장씩 잘라서 배치 처리
+  // 2. 4장씩 잘라서 서버에 전송
   const batches = chunkArray(resizedImages, 4);
 
   for (const batch of batches) {
@@ -344,10 +352,9 @@ function App() {
 
       const data = await response.json();
       const raw = data.result;
-
       const lines = raw.split("\n").filter(line => line.trim() !== "");
 
-      // 여기서 기존 정규식 + 가격계산 로직 적용
+      // 🔹 배치별 파싱
       let parsed = lines.map((line) => {
         let match;
 
@@ -380,10 +387,10 @@ function App() {
           };
         }
 
+        // 3) 매칭 안 되면 그대로
         return { name: line.trim(), price: "", options: [] };
       });
 
-      // 3. 번호 자동 붙이기 (전체 batch 다 합친 뒤 적용)
       allResults = [...allResults, ...parsed];
 
     } catch (error) {
@@ -391,17 +398,20 @@ function App() {
     }
   }
 
-  // ✅ 마지막에 번호 자동 붙이기
-  const hasAnyNumber = allResults.some(item => /^\[\d+\]/.test(item.name));
-  if (!hasAnyNumber) {
-    allResults = allResults.map((item, idx) => ({
-      ...item,
-      name: `[${idx + 1}] ${item.name}`
-    }));
-  }
+  // 3. 모든 배치 끝난 뒤 → 없는 경우에만 순서대로 번호 부여
+  allResults = allResults.map((item, idx) => {
+    if (/^\[\d+\]/.test(item.name)) {
+      // 이미 번호가 있으면 그대로 둠
+      return item;
+    } else {
+      // 전체 배열 기준 idx + 1 로 번호 붙이기
+      return { ...item, name: `[${idx + 1}] ${item.name}` };
+    }
+  });
 
   setMdList(allResults);
 };
+
 
 
   const handleOnetoThree = async () => {
@@ -445,8 +455,15 @@ function App() {
     });
     const { translatedMembersJp } = await jpRes.json();
 
-    const groupNameEn = translatedMembersEn[0] || groupName;
-    const groupNameJp = translatedMembersJp[0] || groupName;
+    const groupRes = await fetch(`${API_BASE}/translate-members-jp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ members: [groupName] }),   // 그룹명 단독 번역
+    });
+    const { translatedMembersJp: groupNameJpArr } = await groupRes.json();
+    const groupNameJp = groupNameJpArr[0] || groupName; // 실패하면 영어 그대로
+
+    const groupNameEn = groupName;
 
     const result = members.map((_, idx) => ({
       en: translatedMembersEn[idx] || "",
@@ -516,7 +533,7 @@ function App() {
       {/* 그룹명   */}
       <div>
         <label>📌 그룹명: </label>
-        <input type="text" placeholder = "영어로 입력" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+        <input type="text" placeholder = "영어로 입력" value={groupName} onChange={(e) => setGroupName(e.target.value.toUpperCase())} />
       </div>
 
       {/* 썸네일기준발송날짜   */}
