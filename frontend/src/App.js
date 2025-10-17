@@ -367,9 +367,10 @@ function App() {
           const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
 
           return {
-            name: `[${match[1]}] ${match[2].trim().replace(/[-\u2013:]+$/, "")}`,
-            price: finalPrice.toString(),
-          };
+          name: `[${match[1]}] ${match[2].trim().replace(/[-\u2013:]+$/, "")}`,
+          price: finalPrice.toString(), // 엔화
+          originalPriceKrw: rawPrice.toString(), // 원화 저장
+        };
         }
 
         // 2) 상품명 ₩가격
@@ -696,64 +697,89 @@ function App() {
         <div style={{ marginTop: '30px' }}>
           <h3>📋 상품명 및 가격</h3>
           <h3>상품 추가 시 가격은 ₩원화₩를 기준으로 입력하기</h3>
-          <table border="1" cellPadding="5" style={{ borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th>상품명</th>
-                <th>가격 (엔화)</th>
-                <th style={{ color: 'red' }}>옵션 여부</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mdList.map((item, idx) => (
-                <tr key={idx}>
-                  <td>
-                    <input
-                      type="text"
-                      value={item.name}
-                      onChange={(e) => {
-                        const newList = [...mdList];
-                        newList[idx].name = e.target.value;
-                        setMdList(newList);
-                      }}
-                      style={{ width: '400px' }}
-                    />
-                  </td>
-                  <td>
+          <table className="md-table">
+          <thead>
+            <tr>
+              <th>상품명</th>
+              <th>가격 (원화)</th>
+              <th>가격 (엔화)</th>
+              <th style={{ color: 'red' }}>옵션 여부</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {mdList.map((item, idx) => (
+              <tr key={idx}>
+                {/* 상품명 */}
+                <td>
+                  <input
+                    type="text"
+                    className="md-input-name"
+                    value={item.name}
+                    onChange={(e) => {
+                      const newList = [...mdList];
+                      newList[idx].name = e.target.value;
+                      setMdList(newList);
+                    }}
+                  />
+                </td>
+
+                {/* 원화 */}
+                <td>{item.originalPriceKrw ? `₩${item.originalPriceKrw}` : '-'}</td>
+
+                {/* 엔화 변환 */}
+                <td>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
                     <input
                       type="number"
+                      className="md-input-price"
+                      placeholder="₩원화 입력"
                       value={item.price}
                       onChange={(e) => {
                         const newList = [...mdList];
-                        newList[idx].price = e.target.value; // 입력값 그대로 반영
+                        newList[idx].price = e.target.value;
                         setMdList(newList);
                       }}
-                      onBlur={(e) => {
+                    />
+                    <button
+                      className="convert-btn"
+                      onClick={() => {
                         const newList = [...mdList];
-                        const rawPrice = Number(e.target.value);
+                        const rawPrice = Number(newList[idx].price);
+
                         if (!isNaN(rawPrice) && rawPrice > 0) {
                           const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
                           const methodB = rawPrice * 0.2;
                           const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
-                          newList[idx].price = finalPrice.toString();
+                          newList[idx].originalPriceKrw = rawPrice.toString(); // ✅ 원화 저장
+                          newList[idx].price = finalPrice.toString(); // ✅ 엔화 변환
                           setMdList(newList);
+                        } else {
+                          alert("숫자를 올바르게 입력해주세요!");
                         }
                       }}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={item.hasOption || false}
-                      onChange={(e) => {
-                        const newList = [...mdList];
-                        newList[idx].hasOption = e.target.checked;
-                        setMdList(newList);
-                        }}
-                    />
-                    {item.hasOption && (
+                    >
+                      엔화로 변환
+                    </button>
+                  </div>
+                </td>
+
+                {/* 옵션 */}
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={item.hasOption || false}
+                    onChange={(e) => {
+                      const newList = [...mdList];
+                      newList[idx].hasOption = e.target.checked;
+                      setMdList(newList);
+                    }}
+                  />
+                  {item.hasOption && (
                     <input
                       type="text"
+                      className="md-input-option"
                       placeholder="쉼표로 구분 (예: 한나, 유나, 현서)"
                       value={item.optionText || ""}
                       onChange={(e) => {
@@ -761,35 +787,32 @@ function App() {
                         newList[idx].optionText = e.target.value;
                         setMdList(newList);
                       }}
-                      style={{ 
-                        fontSize: "14px",
-                        border: "1px solid #ccc",
-                        padding: "3px",
-                        // ✅ 글자 수에 따라 width 자동 조절
+                      style={{
                         width: `${(item.optionText?.length || 1) * 10}px`,
-                        minWidth: "150px",  // 너무 작아지지 않게 최소 너비
-                        maxWidth: "100%",   // 화면 넘치지 않게 최대 제한
-                       }}
+                        maxWidth: "100%",
+                      }}
                     />
                   )}
-                  </td>
-                  <td>
-                    <button
-                      style={{ color: "red" }}
-                      onClick={() => {
-                        const newList = [...mdList];
-                        newList.splice(idx, 1);
-                        setMdList(newList);
-                      }}
-                    >
-                      상품 삭제 –
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                </td>
 
-          </table>
+                {/* 삭제 */}
+                <td>
+                  <button
+                    className="delete-btn"
+                    onClick={() => {
+                      const newList = [...mdList];
+                      newList.splice(idx, 1);
+                      setMdList(newList);
+                    }}
+                  >
+                    상품 삭제 –
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
           </div>
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" , marginBottom:"15px"}}>

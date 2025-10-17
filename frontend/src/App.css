@@ -117,6 +117,99 @@
   color: #61dafb;
 }
 
+/* =========================
+   📋 상품 테이블 스타일
+   ========================= */
+.md-table {
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.md-table th,
+.md-table td {
+  border: 1px solid #ddd;
+  padding: 8px 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.md-table th {
+  background-color: #f5f6fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.md-table tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.md-table tbody tr:hover {
+  background-color: #f0f8ff;
+  transition: background-color 0.2s;
+}
+
+/* 상품명 input */
+.md-input-name {
+  width: 400px;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* 가격 input */
+.md-input-price {
+  width: 100px;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: right;
+}
+
+/* 변환 버튼 */
+.convert-btn {
+  background-color: #33418f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.convert-btn:hover {
+  background-color: #4954b5;
+}
+
+.convert-btn:active {
+  transform: scale(0.97);
+}
+
+/* 옵션 input */
+.md-input-option {
+  font-size: 14px;
+  border: 1px solid #ccc;
+  padding: 4px;
+  border-radius: 4px;
+  min-width: 150px;
+}
+
+/* 삭제 버튼 */
+.delete-btn {
+  color: #e6361f;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: color 0.2s;
+}
+
+.delete-btn:hover {
+  color: #b72d18;
+}
+
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
