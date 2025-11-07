@@ -1,0 +1,161 @@
+/* 🎨 MarginCalculator.css */
+
+/* 공통 여백 및 제목 */
+.margin-container {
+  padding: 20px;
+}
+
+.margin-container h2 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.margin-container h3 {
+  margin-top: 25px;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+/* 버튼 공통 스타일 */
+.mc-btn {
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 10px;
+}
+
+.mc-btn-blue {
+  background-color: #33418f;
+}
+
+.mc-btn-blue:hover {
+  background-color: #4457c8;
+}
+
+.mc-btn-purple {
+  background-color: #514e4b;
+}
+.mc-btn-green {
+  background-color: #1a630f;
+}
+
+.mc-btn-green:hover {
+  background-color: #278a18;
+}
+
+/* 테이블 스타일 */
+.margin-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 15px;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+.margin-table th,
+.margin-table td {
+  border: 1px solid #ddd;
+  padding: 4px;
+  text-align: left;
+  vertical-align: middle;
+}
+.margin-table th:nth-child(1),
+.margin-table td:nth-child(1) {
+  width: 28%; /* 옵션정보 칸 넓게 */
+  text-align: left;
+  padding-left: 6px;
+}
+
+.margin-table th {
+  background-color: #f0f0f0;
+  font-weight: 600;
+}
+
+.margin-table tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.margin-table tbody tr:hover {
+  background-color: #f4faff;
+}
+
+/* 상품 선택 리스트 */
+.product-list {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 10px;
+}
+
+.product-list li {
+  margin-bottom: 4px;
+}
+
+/* 숫자 입력창의 ▲▼ 버튼 제거 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox용 설정 */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* 💜 옷 관세만 적용 (체크박스) */
+.margin-table tbody tr.duty-row {
+  background-color: #da88ea !important;
+  transition: background-color 0.3s ease;
+}
+
+/* 🟢 결제금 16500엔 초과 (자동 관세) */
+.margin-table tbody tr.auto-duty-row {
+  background-color: #b5f5b0 !important;
+  transition: background-color 0.3s ease;
+}
+
+/* 🔴 두 조건 모두 (옷 관세 + 자동 5%) */
+.margin-table tbody tr.dual-duty-row {
+  background-color: #f7b4b4 !important;
+  transition: background-color 0.3s ease;
+}
+
+
+/* 업로드 영역을 가로 배치 */
+.upload-section {
+  display: flex;
+  gap: 40px; /* 두 섹션 사이 간격 */
+  align-items: center; /* 세로 중앙 정렬 */
+  flex-wrap: wrap; /* 화면이 좁을 경우 줄바꿈 허용 */
+}
+
+.mc-btn {
+  display: inline-flex; /* ✅ 이모지 & 텍스트 수직 정렬을 위해 flex 사용 */
+  align-items: center;  /* ✅ 수직 가운데 정렬 */
+  justify-content: center; /* ✅ 텍스트 중앙 정렬 */
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin: 6px;
+  width: 220px; /* ✅ 모든 버튼 동일 너비 */
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+  font-weight: bold;
+}
+
+
+/* 또는 가로로 배치된 경우 약간 더 띄움 */
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px; /* 버튼 간격 */
+  margin-top: 15px;
+}

@@ -124,6 +124,7 @@ def translate_members_jp():
     except Exception as e:
         print("translate-members-jp 오류:", str(e))
         return jsonify({"error": "GPT 처리 중 오류"}), 500
+    
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))  # ← Render가 주는 PORT를 사용

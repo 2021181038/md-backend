@@ -2,6 +2,8 @@ import React, { useState ,useEffect} from 'react';
 import './App.css';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import MarginCalculator from './margin/MarginCalculator';
+import OrderManager from './order/OrderManager';
 
 function App() {
   const [groupName, setGroupName] = useState('');
@@ -20,6 +22,7 @@ function App() {
   const [bonusSets, setBonusSets] = useState([
   { base: "", label: "" }   // base = 기준 숫자, label = 특전 이름
 ]);
+  const [activeTab, setActiveTab] = useState("upload");
 
   useEffect(() => {
   // 조건이 하나만 있는 경우 (label 없음 → 기본 방식)
@@ -503,504 +506,559 @@ function App() {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-    {/* 기본정보입력 */}
-      <h2>상품 등록</h2>
-      <div>
-        <label>📌 상세 이미지 업로드: </label>
-        <input type="file" accept="image/*" multiple onChange={handleImageUpload} />
-      </div>
-
-      {/* 붙여넣기 지원 영역 */}
+    <div>
       <div
-        onPaste={handlePaste}
-        style={{
-          border: "2px dashed gray",
-          padding: "20px",
-          marginTop: "10px",
-          textAlign: "center"
-        }}
-      >
-        네모박스 한 번 클릭 후 이미지를 여기에 복사붙여넣기
-      </div>
-
-      {/* 업로드된 이미지 미리보기 */}
-      <div style={{ marginTop: "10px" }}>
-        {images.map((img, idx) => (
-          <p key={idx}>{img.name || `clipboard-image-${idx}`}</p>
-        ))}
-      </div>
-
-      {/* 그룹명   */}
-      <div>
-        <label>📌 그룹명: </label>
-        <input type="text" placeholder = "영어로 입력" value={groupName} onChange={(e) => setGroupName(e.target.value.toUpperCase())} />
-      </div>
-
-      {/* 썸네일기준발송날짜   */}
-      <div>
-        <label>📌 썸네일 기준 발송날짜: </label>
-        <input
-          type="date"
-          value={thumbnailShippingDate}
-          onChange={(e) => setThumbnailShippingDate(e.target.value)}
-        />
-      </div>
-
-      {/* 콘서트/팝업명   */}
-      <div>
-        <label>📌 콘서트/팝업명: </label>
-        <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} />
-      </div>
-
-      {/* 특전유무   */}
-      <div>
-        <label>📌 특전 유무: </label>
-        <input type="checkbox" checked={hasBonus} onChange={(e) => setHasBonus(e.target.checked)} />
-      </div>
-
-      {/* 상세이미지 특전 조건 입력 UI */}
-      {hasBonus && (
-  <div style={{ marginTop: '0px', marginBottom: '10px' }}>
-    <h3>🎁 특전조건 입력</h3>
-
-    {bonusSets.map((set, idx) => (
-      <div key={idx} style={{ marginBottom: "10px" }}>
-        <label>기준 숫자: </label>
-        <input
-          type="number"
-          value={set.base}
-          onChange={(e) => {
-            const newSets = [...bonusSets];
-            newSets[idx].base = e.target.value;
-            setBonusSets(newSets);
-          }}
-          placeholder="예: 5"
-          style={{ width: "100px", marginLeft: "8px" }}
-        />
-
-        {/* ✅ 특전 이름 입력은 2개 이상일 때만 보여주기 */}
-        {bonusSets.length > 1 && (
-          <>
-            <label style={{ marginLeft: "10px" }}>특전 이름: </label>
-            <input
-              type="text"
-              value={set.label}
-              onChange={(e) => {
-                const newSets = [...bonusSets];
-                newSets[idx].label = e.target.value;
-                setBonusSets(newSets);
-              }}
-              placeholder="예: FRAGILE ver."
-              style={{ width: "200px", marginLeft: "8px" }}
-            />
-          </>
-        )}
-
-        {/* ✅ 예시 문구는 마지막 줄에서만 보여주기 */}
-        {bonusSets.length > 1 && idx === bonusSets.length - 1 && (
-          <span style={{ marginLeft: "15px", color: "blue" }}>
-            {(() => {
-              const validSets = bonusSets.filter(s => s.base && s.label);
-              if (validSets.length > 1) {
-                const maxBase = Math.max(...validSets.map(s => Number(s.base)));
-                const maxPrice = maxBase * - 100;
-                return `例: ${maxPrice}円の場合 → ` + 
-                  validSets.map(s => {
-                    const count = Math.floor(maxPrice / (s.base * 2000 - 100));
-                    return `${s.label} ${count}枚`;
-                  }).join(" + ");
-              }
-              return null;
-            })()}
-          </span>
-        )}
-      </div>
-    ))}
-
-    <button
-      type="button"
-      onClick={() => setBonusSets([...bonusSets, { base: "", label: "" }])}
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        gap: "15px",
+        marginBottom: "20px",
+        borderBottom: "2px solid #ddd",
+        paddingBottom: "10px"
+      }}
     >
-      특전 추가 +
-    </button>
-    {bonusSets.length > 1 && (
+      <button
+        className="pretty-button"
+        style={{
+          backgroundColor: activeTab === "upload" ? "#33418f" : "#777",
+          width: "150px"
+        }}
+        onClick={() => setActiveTab("upload")}
+      >
+        업로드
+      </button>
+
+      <button
+        className="pretty-button"
+        style={{
+          backgroundColor: activeTab === "margin" ? "#33418f" : "#777",
+          width: "150px"
+        }}
+        onClick={() => setActiveTab("margin")}
+      >
+        마진 계산기
+      </button>
+
+      <button
+        className="pretty-button"
+        style={{
+          backgroundColor: activeTab === "order" ? "#33418f" : "#777",
+          width: "150px"
+        }}
+        onClick={() => setActiveTab("order")}
+      >
+        주문 정리
+      </button>
+    </div>
+
+    {activeTab === "upload" && (
+      <div>      
+      <div style={{ padding: '20px' }}>
+      {/* 기본정보입력 */}
+        <h2>상품 등록</h2>
+        <div>
+          <label>📌 상세 이미지 업로드: </label>
+          <input type="file" accept="image/*" multiple onChange={handleImageUpload} />
+        </div>
+
+        {/* 붙여넣기 지원 영역 */}
+        <div
+          onPaste={handlePaste}
+          style={{
+            border: "2px dashed gray",
+            padding: "20px",
+            marginTop: "10px",
+            textAlign: "center"
+          }}
+        >
+          네모박스 한 번 클릭 후 이미지를 여기에 복사붙여넣기
+        </div>
+
+        {/* 업로드된 이미지 미리보기 */}
+        <div style={{ marginTop: "10px" }}>
+          {images.map((img, idx) => (
+            <p key={idx}>{img.name || `clipboard-image-${idx}`}</p>
+          ))}
+        </div>
+
+        {/* 그룹명   */}
+        <div>
+          <label>📌 그룹명: </label>
+          <input type="text" placeholder = "영어로 입력" value={groupName} onChange={(e) => setGroupName(e.target.value.toUpperCase())} />
+        </div>
+
+        {/* 썸네일기준발송날짜   */}
+        <div>
+          <label>📌 썸네일 기준 발송날짜: </label>
+          <input
+            type="date"
+            value={thumbnailShippingDate}
+            onChange={(e) => setThumbnailShippingDate(e.target.value)}
+          />
+        </div>
+
+        {/* 콘서트/팝업명   */}
+        <div>
+          <label>📌 콘서트/팝업명: </label>
+          <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} />
+        </div>
+
+        {/* 특전유무   */}
+        <div>
+          <label>📌 특전 유무: </label>
+          <input type="checkbox" checked={hasBonus} onChange={(e) => setHasBonus(e.target.checked)} />
+        </div>
+
+        {/* 상세이미지 특전 조건 입력 UI */}
+        {hasBonus && (
+    <div style={{ marginTop: '0px', marginBottom: '10px' }}>
+      <h3>🎁 특전조건 입력</h3>
+
+      {bonusSets.map((set, idx) => (
+        <div key={idx} style={{ marginBottom: "10px" }}>
+          <label>기준 숫자: </label>
+          <input
+            type="number"
+            value={set.base}
+            onChange={(e) => {
+              const newSets = [...bonusSets];
+              newSets[idx].base = e.target.value;
+              setBonusSets(newSets);
+            }}
+            placeholder="예: 5"
+            style={{ width: "100px", marginLeft: "8px" }}
+          />
+
+          {/* ✅ 특전 이름 입력은 2개 이상일 때만 보여주기 */}
+          {bonusSets.length > 1 && (
+            <>
+              <label style={{ marginLeft: "10px" }}>특전 이름: </label>
+              <input
+                type="text"
+                value={set.label}
+                onChange={(e) => {
+                  const newSets = [...bonusSets];
+                  newSets[idx].label = e.target.value;
+                  setBonusSets(newSets);
+                }}
+                placeholder="예: FRAGILE ver."
+                style={{ width: "200px", marginLeft: "8px" }}
+              />
+            </>
+          )}
+
+          {/* ✅ 예시 문구는 마지막 줄에서만 보여주기 */}
+          {bonusSets.length > 1 && idx === bonusSets.length - 1 && (
+            <span style={{ marginLeft: "15px", color: "blue" }}>
+              {(() => {
+                const validSets = bonusSets.filter(s => s.base && s.label);
+                if (validSets.length > 1) {
+                  const maxBase = Math.max(...validSets.map(s => Number(s.base)));
+                  const maxPrice = maxBase * - 100;
+                  return `例: ${maxPrice}円の場合 → ` + 
+                    validSets.map(s => {
+                      const count = Math.floor(maxPrice / (s.base * 2000 - 100));
+                      return `${s.label} ${count}枚`;
+                    }).join(" + ");
+                }
+                return null;
+              })()}
+            </span>
+          )}
+        </div>
+      ))}
+
       <button
         type="button"
-        onClick={() => setBonusSets(bonusSets.slice(0, -1))}
-        style={{ marginLeft: "10px", color: "red" }}
+        onClick={() => setBonusSets([...bonusSets, { base: "", label: "" }])}
       >
-        특전 삭제 -
+        특전 추가 +
       </button>
-    )}
-    {bonusSets.length === 1 && bonusSets[0].base && (
-      <div>
-        <p>{bonusSets[0].base * 2000 - 100}円以上 : 公式特典1枚</p>
-        <p>{bonusSets[0].base * 4000 - 200}円以上 : 公式特典2枚</p>
-        <p>{bonusSets[0].base * 6000 - 300}円以上 : 公式特典3枚 (以降も…)</p>
-      </div>
-    )}
-
-  </div>
-)}
-      <hr />
-      {/* 메인상품명 */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '10px' }}>
-        <button 
-            className="pretty-button" 
-            style={{ marginTop: '20px' }}
-            onClick={handleOnetoThree}
-            >
-            위에 모두 입력 후 눌러주세요
+      {bonusSets.length > 1 && (
+        <button
+          type="button"
+          onClick={() => setBonusSets(bonusSets.slice(0, -1))}
+          style={{ marginLeft: "10px", color: "red" }}
+        >
+          특전 삭제 -
         </button>
-
-      {/* 메인상품명 */}
-      {mainName && (
-        <div style={{ marginTop: '0px' }}>
-          <h3>📝 메인상품명 </h3>
-          <textarea
-            value={mainName}
-            readOnly
-            style={{ width: '100%', height: '60px', fontSize: '16px' }}
-          />
-          <button 
-            className="COPY-button" 
-            style={{ marginTop: '8px' }}
-            onClick={() => handleCopy(mainName, "메인 상품명")}
-          >
-            복사하기
-          </button>
+      )}
+      {bonusSets.length === 1 && bonusSets[0].base && (
+        <div>
+          <p>{bonusSets[0].base * 2000 - 100}円以上 : 公式特典1枚</p>
+          <p>{bonusSets[0].base * 4000 - 200}円以上 : 公式特典2枚</p>
+          <p>{bonusSets[0].base * 6000 - 300}円以上 : 公式特典3枚 (以降も…)</p>
         </div>
       )}
 
-      {/* 생성된 상세 설명 출력 */}
-      {detailDescription && (
-        <div style={{ marginTop: '0px', marginBottom:'5px' }}>
-          <h3>📝 상세페이지 글</h3>
-          <textarea
-            value={detailDescription}
-            readOnly
-            style={{ width: '100%', height: '200px', fontSize: '14px' }}
-          />
-          <button 
-            className="COPY-button" 
-            style={{ marginTop: '8px' }}
-            onClick={() => handleCopy(detailDescription, "상세페이지 글")}
-          >
-            복사하기
-          </button>
-        </div>
-      )}
     </div>
-      {/* 추출 결과 */}
-      {mdList.length > 0 && (
-        <div style={{ marginTop: '30px' }}>
-          <h3>📋 상품명 및 가격</h3>
-          <h3>상품 추가 시 가격은 ₩원화₩를 기준으로 입력하기</h3>
-          <table className="md-table">
-          <thead>
-            <tr>
-              <th>상품명</th>
-              <th>가격 (원화)</th>
-              <th>가격 (엔화)</th>
-              <th style={{ color: 'red' }}>옵션 여부</th>
-              <th></th>
-            </tr>
-          </thead>
+  )}
+        <hr />
+        {/* 메인상품명 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '10px' }}>
+          <button 
+              className="pretty-button" 
+              style={{ marginTop: '20px' }}
+              onClick={handleOnetoThree}
+              >
+              위에 모두 입력 후 눌러주세요
+          </button>
 
-          <tbody>
-            {mdList.map((item, idx) => (
-              <tr key={idx}>
-                {/* 상품명 */}
-                <td>
-                  <input
-                    type="text"
-                    className="md-input-name"
-                    value={item.name}
-                    onChange={(e) => {
-                      const newList = [...mdList];
-                      newList[idx].name = e.target.value;
-                      setMdList(newList);
-                    }}
-                  />
-                </td>
+        {/* 메인상품명 */}
+        {mainName && (
+          <div style={{ marginTop: '0px' }}>
+            <h3>📝 메인상품명 </h3>
+            <textarea
+              value={mainName}
+              readOnly
+              style={{ width: '100%', height: '60px', fontSize: '16px' }}
+            />
+            <button 
+              className="COPY-button" 
+              style={{ marginTop: '8px' }}
+              onClick={() => handleCopy(mainName, "메인 상품명")}
+            >
+              복사하기
+            </button>
+          </div>
+        )}
 
-                {/* 원화 */}
-                <td>{item.originalPriceKrw ? `₩${item.originalPriceKrw}` : '-'}</td>
+        {/* 생성된 상세 설명 출력 */}
+        {detailDescription && (
+          <div style={{ marginTop: '0px', marginBottom:'5px' }}>
+            <h3>📝 상세페이지 글</h3>
+            <textarea
+              value={detailDescription}
+              readOnly
+              style={{ width: '100%', height: '200px', fontSize: '14px' }}
+            />
+            <button 
+              className="COPY-button" 
+              style={{ marginTop: '8px' }}
+              onClick={() => handleCopy(detailDescription, "상세페이지 글")}
+            >
+              복사하기
+            </button>
+          </div>
+        )}
+      </div>
+        {/* 추출 결과 */}
+        {mdList.length > 0 && (
+          <div style={{ marginTop: '30px' }}>
+            <h3>📋 상품명 및 가격</h3>
+            <h3>상품 추가 시 가격은 ₩원화₩를 기준으로 입력하기</h3>
+            <table className="md-table">
+            <thead>
+              <tr>
+                <th>상품명</th>
+                <th>가격 (원화)</th>
+                <th>가격 (엔화)</th>
+                <th style={{ color: 'red' }}>옵션 여부</th>
+                <th></th>
+              </tr>
+            </thead>
 
-                {/* 엔화 변환 */}
-                <td>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
-                    <input
-                      type="number"
-                      className="md-input-price"
-                      placeholder="₩원화 입력"
-                      value={item.price}
-                      onChange={(e) => {
-                        const newList = [...mdList];
-                        newList[idx].price = e.target.value;
-                        setMdList(newList);
-                      }}
-                    />
-                    <button
-                      className="convert-btn"
-                      onClick={() => {
-                        const newList = [...mdList];
-                        const rawPrice = Number(newList[idx].price);
-
-                        if (!isNaN(rawPrice) && rawPrice > 0) {
-                          const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
-                          const methodB = rawPrice * 0.2;
-                          const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
-                          newList[idx].originalPriceKrw = rawPrice.toString(); // ✅ 원화 저장
-                          newList[idx].price = finalPrice.toString(); // ✅ 엔화 변환
-                          setMdList(newList);
-                        } else {
-                          alert("숫자를 올바르게 입력해주세요!");
-                        }
-                      }}
-                    >
-                      엔화로 변환
-                    </button>
-                  </div>
-                </td>
-
-                {/* 옵션 */}
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={item.hasOption || false}
-                    onChange={(e) => {
-                      const newList = [...mdList];
-                      newList[idx].hasOption = e.target.checked;
-                      setMdList(newList);
-                    }}
-                  />
-                  {item.hasOption && (
+            <tbody>
+              {mdList.map((item, idx) => (
+                <tr key={idx}>
+                  {/* 상품명 */}
+                  <td>
                     <input
                       type="text"
-                      className="md-input-option"
-                      placeholder="쉼표로 구분 (예: 한나, 유나, 현서)"
-                      value={item.optionText || ""}
+                      className="md-input-name"
+                      value={item.name}
                       onChange={(e) => {
                         const newList = [...mdList];
-                        newList[idx].optionText = e.target.value;
+                        newList[idx].name = e.target.value;
                         setMdList(newList);
                       }}
-                      style={{
-                        width: `${(item.optionText?.length || 1) * 10}px`,
-                        maxWidth: "100%",
+                    />
+                  </td>
+
+                  {/* 원화 */}
+                  <td>{item.originalPriceKrw ? `₩${item.originalPriceKrw}` : '-'}</td>
+
+                  {/* 엔화 변환 */}
+                  <td>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
+                      <input
+                        type="number"
+                        className="md-input-price"
+                        placeholder="₩원화 입력"
+                        value={item.price}
+                        onChange={(e) => {
+                          const newList = [...mdList];
+                          newList[idx].price = e.target.value;
+                          setMdList(newList);
+                        }}
+                      />
+                      <button
+                        className="convert-btn"
+                        onClick={() => {
+                          const newList = [...mdList];
+                          const rawPrice = Number(newList[idx].price);
+
+                          if (!isNaN(rawPrice) && rawPrice > 0) {
+                            const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
+                            const methodB = rawPrice * 0.2;
+                            const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
+                            newList[idx].originalPriceKrw = rawPrice.toString(); // ✅ 원화 저장
+                            newList[idx].price = finalPrice.toString(); // ✅ 엔화 변환
+                            setMdList(newList);
+                          } else {
+                            alert("숫자를 올바르게 입력해주세요!");
+                          }
+                        }}
+                      >
+                        엔화로 변환
+                      </button>
+                    </div>
+                  </td>
+
+                  {/* 옵션 */}
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={item.hasOption || false}
+                      onChange={(e) => {
+                        const newList = [...mdList];
+                        newList[idx].hasOption = e.target.checked;
+                        setMdList(newList);
                       }}
                     />
-                  )}
-                </td>
+                    {item.hasOption && (
+                      <input
+                        type="text"
+                        className="md-input-option"
+                        placeholder="쉼표로 구분 (예: 한나, 유나, 현서)"
+                        value={item.optionText || ""}
+                        onChange={(e) => {
+                          const newList = [...mdList];
+                          newList[idx].optionText = e.target.value;
+                          setMdList(newList);
+                        }}
+                        style={{
+                          width: `${(item.optionText?.length || 1) * 10}px`,
+                          maxWidth: "100%",
+                        }}
+                      />
+                    )}
+                  </td>
 
-                {/* 삭제 */}
-                <td>
-                  <button
-                    className="delete-btn"
-                    onClick={() => {
-                      const newList = [...mdList];
-                      newList.splice(idx, 1);
-                      setMdList(newList);
-                    }}
-                  >
-                    상품 삭제 –
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  {/* 삭제 */}
+                  <td>
+                    <button
+                      className="delete-btn"
+                      onClick={() => {
+                        const newList = [...mdList];
+                        newList.splice(idx, 1);
+                        setMdList(newList);
+                      }}
+                    >
+                      상품 삭제 –
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-          </div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" , marginBottom:"15px"}}>
-          <button
-            className="plus-button"
-            onClick={() => {
-              setMdList([...mdList, { name: "", price: "", hasOption: false, optionText: "" }]);
-            }}
-          >
-            상품 추가 +
-          </button>
-          
-          <button 
-            className="pretty-button" 
-            onClick={handleGroup}
-          >
-            가격별 그룹 만들기
-          </button>
-        </div>
-      {/* 그룹 가격 묶기  */}
-      {grouped.map((group, idx) => {     
-        const sortedItems = [...group.items].sort((a, b) => {
-          if (a.name === "–") return 1;   // "-" 는 뒤로
-          if (b.name === "–") return -1;
-          const numA = parseInt(a.name.match(/^\[(\d+)\]/)?.[1] || 0, 10);
-          const numB = parseInt(b.name.match(/^\[(\d+)\]/)?.[1] || 0, 10);
-          return numA - numB;
-        });
-
-        return (
-          
-          <div key={idx} style={{ marginBottom: '15px' }}>
-            <strong>그룹 {idx + 1} (기준가격: ¥{group.standardPrice} 참고가격 :¥{group.standardPrice*1.3} )</strong>
+            </div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" , marginBottom:"15px"}}>
+            <button
+              className="plus-button"
+              onClick={() => {
+                setMdList([...mdList, { name: "", price: "", hasOption: false, optionText: "" }]);
+              }}
+            >
+              상품 추가 +
+            </button>
             
-          {/* ✅ 그룹별 엑셀 다운로드 버튼 */}
-      <button
-        className="xlsx-button"
-        style={{ marginLeft: '10px' }}
-        onClick={() => handleDownloadExcelByGroup(group, idx)}
+            <button 
+              className="pretty-button" 
+              onClick={handleGroup}
+            >
+              가격별 그룹 만들기
+            </button>
+          </div>
+        {/* 그룹 가격 묶기  */}
+        {grouped.map((group, idx) => {     
+          const sortedItems = [...group.items].sort((a, b) => {
+            if (a.name === "–") return 1;   // "-" 는 뒤로
+            if (b.name === "–") return -1;
+            const numA = parseInt(a.name.match(/^\[(\d+)\]/)?.[1] || 0, 10);
+            const numB = parseInt(b.name.match(/^\[(\d+)\]/)?.[1] || 0, 10);
+            return numA - numB;
+          });
+
+          return (
+            
+            <div key={idx} style={{ marginBottom: '15px' }}>
+              <strong>그룹 {idx + 1} (기준가격: ¥{group.standardPrice} 참고가격 :¥{group.standardPrice*1.3} )</strong>
+              
+            {/* ✅ 그룹별 엑셀 다운로드 버튼 */}
+        <button
+          className="xlsx-button"
+          style={{ marginLeft: '10px' }}
+          onClick={() => handleDownloadExcelByGroup(group, idx)}
+        >
+          그룹 {idx + 1} 엑셀 다운로드
+        </button>
+
+              <ul>
+                {sortedItems.map((item, i) => {
+                  const diff = Number(item.price) - group.standardPrice;
+                  const diffText = diff === 0 ? '0' : (diff > 0 ? `+${diff}` : `${diff}`);
+                  return (
+                  <li 
+                    key={i}
+                    style={{ color: item.hasOption ? 'red' : 'black' }}
+                    >
+                      {item.name} : {diffText}
+                      </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
+
+        {/* 🔎 검색 키워드 추출 섹션 (그룹이 생성된 후에만 표시) */}
+        {grouped.length > 0 && (
+          <div style={{ marginTop: '30px' }}>
+            <h3>🔎 검색 키워드 추출</h3>
+
+          {/* 체크박스 */}
+          <div>
+            <label>
+              <input 
+                type="radio" 
+                name="keywordType" 
+                value="ペンライト" 
+                checked={keywordType === "ペンライト"} 
+                onChange={(e) => setKeywordType(e.target.value)} 
+              /> 응원봉
+            </label>
+            <label style={{ marginLeft: '10px' }}>
+              <input 
+                type="radio" 
+                name="keywordType" 
+                value="アルバム" 
+                checked={keywordType === "アルバム"} 
+                onChange={(e) => setKeywordType(e.target.value)} 
+              /> 앨범
+            </label>
+            <label style={{ marginLeft: '10px' }}>
+              <input 
+                type="radio" 
+                name="keywordType" 
+                value="MD" 
+                checked={keywordType === "MD"} 
+                onChange={(e) => setKeywordType(e.target.value)} 
+              /> MD
+            </label>
+          </div>
+
+          {/* 멤버명 입력 */}
+          <div style={{ marginTop: '10px' }}>
+            <textarea
+              placeholder="멤버명을 쉼표로 구분해 입력하세요 (예: 리쿠, 쇼타, 유타) + 4명까지만 입력 가능합니다."
+              value={memberText}
+              onChange={(e) => {
+                  const value = e.target.value;
+                  const members = value.split(",").map(m => m.trim()).filter(Boolean);
+                  if (members.length <= 4) {
+                  setMemberText(value);
+                  } else {
+                  alert("최대 4명까지만 입력할 수 있다!");
+                  }
+              }}
+              style={{ width: '100%', height: '60px' }}
+            />
+          </div>
+
+      <button 
+        className="pretty-button" 
+        style={{ marginTop: '10px' }}
+        onClick={handleGenerateKeywords}
       >
-        그룹 {idx + 1} 엑셀 다운로드
+        생성하기
       </button>
 
-            <ul>
-              {sortedItems.map((item, i) => {
-                const diff = Number(item.price) - group.standardPrice;
-                const diffText = diff === 0 ? '0' : (diff > 0 ? `+${diff}` : `${diff}`);
-                return (
-                <li 
-                  key={i}
-                  style={{ color: item.hasOption ? 'red' : 'black' }}
+      {/* 결과 출력 */}
+      {keywords.length > 0 && (
+    <div style={{ marginTop: '15px' }}>
+      <h4>검색키워드</h4>
+      <ul>
+        {keywords.map((kw, idx) => (
+          <li key={idx} style={{ marginBottom: '10px' }}>
+            {kw.type === "main" ? (
+              // 메인 키워드 → EN/JP 각각 복사 버튼
+              <>
+                <div>
+                  {kw.en}
+                  <button
+                    className="COPY-button"
+                    style={{ marginLeft: '10px' }}
+                    onClick={() => handleCopy(kw.en, "영어 키워드")}
                   >
-                    {item.name} : {diffText}
-                    </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      })}
+                    복사하기
+                  </button>
+                </div>
+                <div>
+                  {kw.jp}
+                  <button
+                    className="COPY-button"
+                    style={{ marginLeft: '10px' }}
+                    onClick={() => handleCopy(kw.jp, "일본어 키워드")}
+                  >
+                    복사하기
+                  </button>
+                </div>
+              </>
+            ) : (
+              // 멤버 키워드 → EN/JP 각각 복사 버튼
+              <>
+                <div>
+                  {kw.en}
+                  <button
+                    className="COPY-button"
+                    style={{ marginLeft: '10px' }}
+                    onClick={() => handleCopy(kw.en, "영어 키워드")}
+                  >
+                    복사하기
+                  </button>
+                </div>
+                <div>
+                  {kw.jp}
+                  <button
+                    className="COPY-button"
+                    style={{ marginLeft: '10px' }}
+                    onClick={() => handleCopy(kw.jp, "일본어 키워드")}
+                  >
+                    복사하기
+                  </button>
+                </div>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
 
-      {/* 🔎 검색 키워드 추출 섹션 (그룹이 생성된 후에만 표시) */}
-      {grouped.length > 0 && (
-        <div style={{ marginTop: '30px' }}>
-          <h3>🔎 검색 키워드 추출</h3>
-
-        {/* 체크박스 */}
-        <div>
-          <label>
-            <input 
-              type="radio" 
-              name="keywordType" 
-              value="ペンライト" 
-              checked={keywordType === "ペンライト"} 
-              onChange={(e) => setKeywordType(e.target.value)} 
-            /> 응원봉
-          </label>
-          <label style={{ marginLeft: '10px' }}>
-            <input 
-              type="radio" 
-              name="keywordType" 
-              value="アルバム" 
-              checked={keywordType === "アルバム"} 
-              onChange={(e) => setKeywordType(e.target.value)} 
-            /> 앨범
-          </label>
-          <label style={{ marginLeft: '10px' }}>
-            <input 
-              type="radio" 
-              name="keywordType" 
-              value="MD" 
-              checked={keywordType === "MD"} 
-              onChange={(e) => setKeywordType(e.target.value)} 
-            /> MD
-          </label>
-        </div>
-
-        {/* 멤버명 입력 */}
-        <div style={{ marginTop: '10px' }}>
-          <textarea
-            placeholder="멤버명을 쉼표로 구분해 입력하세요 (예: 리쿠, 쇼타, 유타) + 4명까지만 입력 가능합니다."
-            value={memberText}
-            onChange={(e) => {
-                const value = e.target.value;
-                const members = value.split(",").map(m => m.trim()).filter(Boolean);
-                if (members.length <= 4) {
-                setMemberText(value);
-                } else {
-                alert("최대 4명까지만 입력할 수 있다!");
-                }
-            }}
-            style={{ width: '100%', height: '60px' }}
-          />
-        </div>
-
-    <button 
-      className="pretty-button" 
-      style={{ marginTop: '10px' }}
-      onClick={handleGenerateKeywords}
-    >
-      생성하기
-    </button>
-
-    {/* 결과 출력 */}
-    {keywords.length > 0 && (
-  <div style={{ marginTop: '15px' }}>
-    <h4>검색키워드</h4>
-    <ul>
-      {keywords.map((kw, idx) => (
-        <li key={idx} style={{ marginBottom: '10px' }}>
-          {kw.type === "main" ? (
-            // 메인 키워드 → EN/JP 각각 복사 버튼
-            <>
-              <div>
-                {kw.en}
-                <button
-                  className="COPY-button"
-                  style={{ marginLeft: '10px' }}
-                  onClick={() => handleCopy(kw.en, "영어 키워드")}
-                >
-                  복사하기
-                </button>
-              </div>
-              <div>
-                {kw.jp}
-                <button
-                  className="COPY-button"
-                  style={{ marginLeft: '10px' }}
-                  onClick={() => handleCopy(kw.jp, "일본어 키워드")}
-                >
-                  복사하기
-                </button>
-              </div>
-            </>
-          ) : (
-            // 멤버 키워드 → EN/JP 각각 복사 버튼
-            <>
-              <div>
-                {kw.en}
-                <button
-                  className="COPY-button"
-                  style={{ marginLeft: '10px' }}
-                  onClick={() => handleCopy(kw.en, "영어 키워드")}
-                >
-                  복사하기
-                </button>
-              </div>
-              <div>
-                {kw.jp}
-                <button
-                  className="COPY-button"
-                  style={{ marginLeft: '10px' }}
-                  onClick={() => handleCopy(kw.jp, "일본어 키워드")}
-                >
-                  복사하기
-                </button>
-              </div>
-            </>
-          )}
-        </li>
-      ))}
-    </ul>
+    </div>
+  )}
+      </div>  
+    );
   </div>
-)}
+    )}
+    {/* 마진 계산기 탭 */}
+{activeTab === "margin" && <MarginCalculator />}
 
+{/* 주문 정리 탭 */}
+{activeTab === "order" && <OrderManager />}
   </div>
-)}
-    </div>  
-  );
-}
+  )}
 export default App;
