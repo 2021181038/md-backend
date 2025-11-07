@@ -403,6 +403,8 @@ if (proxyApplied[row.option]) {
           텍스트로 추출하기
         </button>
       )}
+
+      {summary.length > 0 && (
       <button
   onClick={() => {
     const newState = {};
@@ -415,13 +417,15 @@ if (proxyApplied[row.option]) {
 >
   대찍 전체 선택
 </button>
-
+)}
+{summary.length > 0 && (
 <button
   onClick={() => setProxyApplied({})}
   className="mc-btn mc-btn-purple"
 >
   대찍 전체 해제
 </button>
+)}
 
         </div>
 
@@ -619,8 +623,7 @@ if (proxyApplied[row.option]) {
           </div>
         )
       )}
-
-
+{summary.length > 0 && (
       <button
   onClick={() => {
     if (matchedSummary.length === 0) {
@@ -655,10 +658,11 @@ if (proxyApplied[row.option]) {
 >
   💾 CSV로 내보내기
 </button>
-
+)}
 
     </div>
   );
+  
 }
 
 export default MarginCalculator;
