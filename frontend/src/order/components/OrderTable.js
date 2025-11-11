@@ -340,16 +340,16 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
                 </td>
 
 
-                {/* 📦 수령완료 (구매필요 자동 조정) */}
+                {/* 📦 수령완료 (대리완료 자동 조정) */}
                 <td className="qty-cell">
                   <button
                     className="qty-btn"
                     onClick={() => {
                       const updated = [...eventOrders];
                       const newReceived = Math.max(0, received - 1);
-                      // 감소하면 구매필요 수량 다시 늘림
+                      // 감소하면 대리완료 수량 다시 늘림 ✅
                       updated[idx].received_qty = newReceived;
-                      updated[idx].needed_qty = needed + 1;
+                      updated[idx].proxy_qty = proxy + 1; // ✅ proxy 복구
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
                     }}
@@ -366,8 +366,8 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
                       const diff = newValue - received;
                       const updated = [...eventOrders];
                       updated[idx].received_qty = newValue;
-                      // 수령완료로 옮겨간 만큼 구매필요 줄이기
-                      updated[idx].needed_qty = Math.max(0, needed - diff);
+                      // 수령완료로 옮겨간 만큼 대리완료 줄이기 ✅
+                      updated[idx].proxy_qty = Math.max(0, proxy - diff);
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
                     }}
@@ -377,9 +377,9 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
                     onClick={() => {
                       const updated = [...eventOrders];
                       const newReceived = received + 1;
-                      // 증가하면 구매필요 수량 1 감소
+                      // 증가하면 대리완료 수량 1 감소 ✅
                       updated[idx].received_qty = newReceived;
-                      updated[idx].needed_qty = Math.max(0, needed - 1);
+                      updated[idx].proxy_qty = Math.max(0, proxy - 1);
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
                     }}
@@ -387,6 +387,7 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
                     ＋
                   </button>
                 </td>
+
 
                 {/* 전체 (자동 계산) */}
                 <td style={{ textAlign: "center" }}>{total}</td>
