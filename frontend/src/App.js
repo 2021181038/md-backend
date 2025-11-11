@@ -562,7 +562,7 @@ function App() {
       }}
     >
       <button
-        className="pretty-button"
+        className="pretty-button tab-upload"
         style={{
           backgroundColor: activeTab === "upload" ? "#33418f" : "#777",
           width: "150px"
@@ -573,7 +573,7 @@ function App() {
       </button>
 
       <button
-        className="pretty-button"
+        className="pretty-button tab-margin"
         style={{
           backgroundColor: activeTab === "margin" ? "#33418f" : "#777",
           width: "150px"
@@ -584,7 +584,7 @@ function App() {
       </button>
 
       <button
-        className="pretty-button"
+        className="pretty-button tab-order active"
         style={{
           backgroundColor: activeTab === "order" ? "#33418f" : "#777",
           width: "150px"

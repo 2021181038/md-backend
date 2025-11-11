@@ -883,3 +883,9 @@
     white-space: nowrap;
   }
 }
+
+@media (max-width: 900px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
