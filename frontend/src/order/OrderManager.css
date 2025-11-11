@@ -788,6 +788,114 @@
 }
 
 
+/* ✅ 모바일 화면에서 주문내역 → 대리리스트 순서로 세로 배치 */
+@media (max-width: 900px) {
+  .order-main-section {
+    flex-direction: column;      /* 가로 → 세로 배치 */
+  }
 
+  .order-left-panel,
+  .order-right-panel {
+    width: 100%;                /* 전체 폭 사용 */
+    min-height: auto;           /* 높이 자동 조정 */
+  }
 
+  .order-right-panel {
+    margin-top: 20px;           /* 위쪽에 여백 추가 */
+  }
+}
 
+/* ✅ 모바일 반응형 최적화 (주문 내역 → 대리리스트 순서로 표시) */
+@media (max-width: 900px) {
+  /* 전체 배치 세로 전환 */
+  .order-main-section {
+    flex-direction: column;
+  }
+
+  .order-left-panel,
+  .order-right-panel {
+    width: 100%;
+    min-height: auto;
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .order-right-panel {
+    margin-top: 20px;
+  }
+
+  /* 제목 폰트 크기 축소 */
+  .order-left-panel h3,
+  .order-right-panel h3 {
+    font-size: 15px;
+  }
+
+  /* 테이블 글자 크기 & 버튼 크기 줄이기 */
+  .order-table {
+    font-size: 12px;
+  }
+
+  .qty-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+
+  .qty-input {
+    width: 40px;
+    font-size: 12px;
+    padding: 2px 0;
+  }
+
+  /* 삭제 버튼 및 액션 버튼 크기 조정 */
+  .delete-btn {
+    padding: 3px 5px;
+    font-size: 13px;
+  }
+
+  .mc-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  /* 모달도 모바일에 맞게 축소 */
+  .modal-container {
+    width: 95%;
+    max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .modal-body {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .modal-footer-fixed {
+    padding: 10px 12px;
+  }
+
+  /* 구매자 리스트의 내부 여백 축소 */
+  .agent-list-wrapper {
+    padding: 8px;
+    max-height: 350px;
+  }
+
+  .agent-item-option {
+    font-size: 13px;
+  }
+
+  /* 입력 필드 */
+  .modal-body input[type="text"],
+  .modal-body input[type="number"],
+  .modal-body select {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  /* 테이블 스크롤 허용 (가로 폭 초과 방지) */
+  .order-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
