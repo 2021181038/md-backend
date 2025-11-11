@@ -328,7 +328,7 @@ function OrderTable({
           <div className="mobile-qty-row">
             {/* 📦 구매필요 */}
             <div className="qty-group">
-              <span className="qty-label">📦 구매필요</span>
+              <span className="qty-label">필요</span>
               <div className="qty-controls">
                 <button className="qty-btn" onClick={() => {
                   const updated = [...eventOrders];
@@ -359,7 +359,7 @@ function OrderTable({
 
             {/* ✅ 대리완료 */}
             <div className="qty-group">
-              <span className="qty-label">✅ 대리완료</span>
+              <span className="qty-label">완료</span>
               <div className="qty-controls">
                 <button className="qty-btn" onClick={() => {
                   const updated = [...eventOrders];
