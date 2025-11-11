@@ -408,6 +408,7 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
 
       {/* ✅ 옵션 추가 입력창 */}
       <div
+        className="hide-on-mobile"
         style={{
           display: "flex",
           alignItems: "center",

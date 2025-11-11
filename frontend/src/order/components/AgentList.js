@@ -331,7 +331,7 @@ const updateQty = async (agentId, itemIndex, newQty) => {
 
   // ✅ 전체 렌더링
   return (
-    <div className="order-right-panel">
+    <div className="order-right-panel hide-on-mobile">
       <div className="agent-header">
         <h3>👥 대리 구매 리스트</h3>
         <button
