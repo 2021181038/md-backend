@@ -885,11 +885,12 @@
   /* 옵션명 */
   .option-name {
     font-weight: 600;
-    background-color: #c0d6f8;
+    background-color: #d7e0ed;
     font-size: 13px;
     border-radius: 10px; 
     line-height: 1.4;
     margin-bottom: 6px;
+    text-indent: 6px;
     word-break: keep-all;
   }
 
