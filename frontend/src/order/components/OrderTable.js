@@ -225,7 +225,7 @@ function OrderTable({
 
             return (
               <tr key={row.id || idx}>
-                <td className="delete-cell">
+                <td className="delete-cell hide-on-mobile">
                   <button className="delete-btn" onClick={() => handleDelete(row.id)}>
                     🗑
                   </button>
@@ -283,7 +283,7 @@ function OrderTable({
                 </td>
 
                 {/* 수령완료 */}
-                <td className="qty-cell">
+                <td className="qty-cell hide-on-mobile">
                   <button className="qty-btn" onClick={() => {
                     const updated = [...eventOrders];
                     const newReceived = Math.max(0, received - 1);
@@ -313,7 +313,7 @@ function OrderTable({
                   }}>＋</button>
                 </td>
 
-                <td style={{ textAlign: "center" }}>{total}</td>
+                <td style={{ textAlign: "center hide-on-mobile" }}>{total}</td>
               </tr>
             );
           })}

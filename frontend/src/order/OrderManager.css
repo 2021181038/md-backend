@@ -788,14 +788,14 @@
 }
 
 
-
-/* ✅ 모바일 반응형 최적화 (주문 내역 → 대리리스트 순서로 표시) */
+/* ✅ 모바일 전체 반응형 + 카드형 + 숨김 */
 @media (max-width: 900px) {
-  /* 전체 배치 세로 전환 */
+  /* ============================
+     🔹 전체 레이아웃
+  ============================ */
   .order-main-section {
     flex-direction: column;
   }
-
   .order-left-panel,
   .order-right-panel {
     width: 100%;
@@ -803,115 +803,41 @@
     padding: 14px;
     border-radius: 10px;
   }
+  .order-right-panel { margin-top: 20px; }
 
-  .order-right-panel {
-    margin-top: 20px;
-  }
-
-  /* 제목 폰트 크기 축소 */
+  /* ============================
+     🔹 제목, 버튼, 글씨 크기
+  ============================ */
   .order-left-panel h3,
-  .order-right-panel h3 {
-    font-size: 15px;
-  }
+  .order-right-panel h3 { font-size: 15px; }
+  .order-table { font-size: 12px; }
+  .qty-btn { width: 34px; height: 34px; font-size: 16px; border-radius: 8px; }
+  .qty-input { width: 48px; height: 34px; font-size: 15px; text-align: center; border-radius: 6px; }
+  .delete-btn { padding: 3px 5px; font-size: 13px; }
+  .mc-btn { padding: 6px 10px; font-size: 13px; }
 
-  /* 테이블 글자 크기 & 버튼 크기 줄이기 */
-  .order-table {
-    font-size: 12px;
-  }
+  /* ============================
+     🔹 모달/리스트 공통
+  ============================ */
+  .modal-container { width: 95%; max-width: 100%; border-radius: 8px; }
+  .modal-body { padding: 12px; font-size: 13px; }
+  .modal-footer-fixed { padding: 10px 12px; }
+  .agent-list-wrapper { padding: 8px; max-height: 350px; }
+  .agent-item-option { font-size: 13px; }
 
-  .qty-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
-  }
-
-  .qty-input {
-    width: 40px;
-    font-size: 12px;
-    padding: 2px 0;
-  }
-
-  /* 삭제 버튼 및 액션 버튼 크기 조정 */
-  .delete-btn {
-    padding: 3px 5px;
-    font-size: 13px;
-  }
-
-  .mc-btn {
-    padding: 6px 10px;
-    font-size: 13px;
-  }
-
-  /* 모달도 모바일에 맞게 축소 */
-  .modal-container {
-    width: 95%;
-    max-width: 100%;
-    border-radius: 8px;
-  }
-
-  .modal-body {
-    padding: 12px;
-    font-size: 13px;
-  }
-
-  .modal-footer-fixed {
-    padding: 10px 12px;
-  }
-
-  /* 구매자 리스트의 내부 여백 축소 */
-  .agent-list-wrapper {
-    padding: 8px;
-    max-height: 350px;
-  }
-
-  .agent-item-option {
-    font-size: 13px;
-  }
-
-  /* 입력 필드 */
-  .modal-body input[type="text"],
-  .modal-body input[type="number"],
-  .modal-body select {
-    font-size: 13px;
-    padding: 6px 8px;
-  }
-
-  /* 테이블 스크롤 허용 (가로 폭 초과 방지) */
-  .order-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-}
-
-@media (max-width: 900px) {
-  .hide-on-mobile {
-    display: none !important;
-  }
-}
-
-/* ✅ 모바일 전용 카드형 UI 최적화 */
-@media (max-width: 900px) {
-  .order-table {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    border: none;
-  }
-
-  .order-table thead {
-    display: none;
-  }
-
+  /* ============================
+     🔹 카드형 테이블
+  ============================ */
+  .order-table { display: flex; flex-direction: column; gap: 10px; border: none; overflow-x: auto; }
+  .order-table thead { display: none; }
   .order-table tr {
     display: flex;
     flex-direction: column;
-    background: #ffffff;
+    background: #fff;
     border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     padding: 10px 12px;
   }
-
   .order-table td {
     display: block;
     text-align: left;
@@ -919,7 +845,6 @@
     border: none;
     padding: 4px 0;
   }
-
   .option-name {
     font-weight: 600;
     font-size: 13px;
@@ -928,41 +853,19 @@
     word-break: keep-all;
   }
 
-  .qty-btn {
-    width: 34px;
-    height: 34px;
-    font-size: 16px;
-    border-radius: 8px;
-  }
+  /* ============================
+     🔹 숨김 제어 (모바일)
+  ============================ */
+  .hide-on-mobile { display: none !important; }
 
-  .qty-input {
-    width: 48px;
-    height: 34px;
-    font-size: 15px;
-    text-align: center;
-    border-radius: 6px;
-  }
+  /* 구매필요·대리완료만 남을 때 컬럼 폭 정리 */
+  .order-table td, .order-table th { width: auto; }
 
-  .qty-label {
-    display: block;
-    font-size: 12px;
-    color: #555;
-    margin-bottom: 2px;
-  }
-
-  .order-bottom-actions {
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 14px;
-  }
-
-  .order-bottom-actions button {
-    width: 100%;
-  }
-
-  .last-saved {
-    text-align: center;
-    font-size: 12px;
-    color: #555;
-  }
+  /* ============================
+     🔹 기타 정리
+  ============================ */
+  .order-bottom-actions { flex-direction: column; gap: 8px; margin-top: 14px; }
+  .order-bottom-actions button { width: 100%; }
+  .last-saved { text-align: center; font-size: 12px; color: #555; }
+  .qty-label { display: block; font-size: 12px; color: #555; margin-bottom: 2px; }
 }
