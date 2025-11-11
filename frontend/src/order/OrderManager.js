@@ -23,7 +23,6 @@ function OrderManager() {
 });
 const [highlightedOptions, setHighlightedOptions] = useState([]);
 
-
   // ✅ 이벤트 목록 불러오기
   const fetchEventList = useCallback(async () => {
     const { data, error } = await supabase
@@ -100,6 +99,7 @@ const fetchEventDetails = useCallback(async (eventName) => {
           refreshCurrentEvent={refreshCurrentEvent} //저장이나 삭제 후 최신 데이터 불러오기
           highlightedOptions={highlightedOptions}
           setHighlightedOptions={setHighlightedOptions}
+          agents={agents}
         />
         <AgentList
         selectedEvent={selectedEvent} //현재 선택된 이벤트 이름

@@ -1,4 +1,4 @@
-import React, { useState ,useEffect} from 'react';
+import React, { useState ,useEffect, useRef} from 'react';
 import './App.css';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -23,6 +23,13 @@ function App() {
   { base: "", label: "" }   // base = 기준 숫자, label = 특전 이름
 ]);
   const [activeTab, setActiveTab] = useState("upload");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [hasAlbum, setHasAlbum] = useState(false);
+  
+
+
+
 
   useEffect(() => {
   // 조건이 하나만 있는 경우 (label 없음 → 기본 방식)
@@ -206,24 +213,27 @@ function App() {
   while (remaining.length > 0) {
     const prices = remaining.map(item => Number(item.price));
     const min = Math.min(...prices);
-    const rawStandard = min * 2;
+    const rawStandard = min * 2; // ✅ 1단계: 임시 기준가격
     const lowerBound = rawStandard * 0.5;
     const upperBound = rawStandard * 1.5;
 
+    // ✅ 기존 로직대로 범위 안의 상품 묶기
     const group = remaining.filter(item => {
       const p = Number(item.price);
       return p >= lowerBound && p <= upperBound;
     });
 
-    // ✅ 묶인 상품이 하나뿐이면, 그 상품 가격을 기준가격으로 잡기
+    // ✅ 묶인 상품이 하나뿐이라면 그 상품 가격 그대로
     let standardPrice;
     if (group.length === 1) {
       standardPrice = Number(group[0].price);
     } else {
-      standardPrice = rawStandard;
+      // ✅ 2단계: 그룹 내 최댓값 기준으로 재계산
+      const maxPrice = Math.max(...group.map(g => Number(g.price)));
+      standardPrice = Math.round(maxPrice * 0.66); // ← 최댓값의 66% 반영
     }
 
-    // 기준가격과 정확히 같은 상품이 없으면 "-" 더하기
+    // ✅ 기준가격과 같은 상품 없으면 '-' 항목 추가
     const hasStandard = group.some(item => Number(item.price) === standardPrice);
     if (!hasStandard) {
       group.push({
@@ -233,15 +243,22 @@ function App() {
       });
     }
 
-    groups.push({ standardPrice, items: group });
+    // ✅ 그룹 내 모든 상품에 기준가격 대비 차액 계산용 필드 추가
+    const updatedGroup = group.map(item => ({
+      ...item,
+      diffFromStandard: Number(item.price) - standardPrice
+    }));
 
-    // 이번 그룹에서 사용한 상품 제거
+    groups.push({ standardPrice, items: updatedGroup });
+
+    // ✅ 이번 그룹에서 사용된 상품 제거
     const ids = new Set(group.map(g => g.name + g.price));
     remaining = remaining.filter(item => !ids.has(item.name + item.price));
   }
 
   return groups;
 };
+
 
   // 가격 묶는 코드 버튼 누르기
   const handleGroup = () => {
@@ -315,6 +332,7 @@ function App() {
 
   ✔️送料を除く決済金額が対象となります。
   ✔️重複なく発送いたします。
+  ${hasAlbum ? "✔️アルバムは特典の価格に含まれておりません。" : ""}
     `;
   }
 
@@ -329,31 +347,47 @@ function App() {
   const handleImageUpload = (e) => {
     setImages([...e.target.files]);
   };
+
   const handleSubmit = async () => {
   if (!images.length) {
     alert("이미지를 업로드해주세요.");
     return;
   }
 
+  // 이미 로딩 중이면 중복 실행 방지
+  if (isLoading) return;
+
+  setIsLoading(true);
+  setErrorMsg('');
   let allResults = [];
 
-  // 1. 업로드된 이미지를 전부 리사이즈
-  const resizedImages = await Promise.all(images.map(img => resizeImage(img, 1080)));
+  try {
+    // 1️⃣ 업로드된 이미지를 전부 리사이즈
+    const resizedImages = await Promise.all(images.map(img => resizeImage(img, 1080)));
 
-  // 2. 4장씩 잘라서 서버에 전송
-  const batches = chunkArray(resizedImages, 4);
+    // 2️⃣ 4장씩 잘라서 서버에 전송
+    const batches = chunkArray(resizedImages, 4);
 
-  for (const batch of batches) {
-    const formData = new FormData();
-    batch.forEach((file) => formData.append("images", file));
+    for (const batch of batches) {
+      const formData = new FormData();
+      batch.forEach((file) => formData.append("images", file));
 
-    try {
       const response = await fetch(`${API_BASE}/extract-md`, {
         method: "POST",
         body: formData,
       });
 
+      // 응답 실패 시 에러 처리
+      if (!response.ok) {
+        throw new Error(`서버 오류 (status: ${response.status})`);
+      }
+
       const data = await response.json();
+
+      if (!data?.result) {
+        throw new Error("서버에서 결과를 받지 못했습니다.");
+      }
+
       const raw = data.result;
       const lines = raw.split("\n").filter(line => line.trim() !== "");
 
@@ -370,10 +404,10 @@ function App() {
           const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
 
           return {
-          name: `[${match[1]}] ${match[2].trim().replace(/[-\u2013:]+$/, "")}`,
-          price: finalPrice.toString(), // 엔화
-          originalPriceKrw: rawPrice.toString(), // 원화 저장
-        };
+            name: `[${match[1]}] ${match[2].trim().replace(/[-\u2013:]+$/, "")}`,
+            price: finalPrice.toString(), // 엔화
+            originalPriceKrw: rawPrice.toString(), // 원화 저장
+          };
         }
 
         // 2) 상품명 ₩가격
@@ -396,26 +430,25 @@ function App() {
       });
 
       allResults = [...allResults, ...parsed];
-
-    } catch (error) {
-      console.error("에러 발생:", error);
     }
+
+    // 3️⃣ 모든 배치 끝난 뒤 → 없는 경우에만 순서대로 번호 부여
+    allResults = allResults.map((item, idx) => {
+      if (/^\[\d+\]/.test(item.name)) {
+        return item; // 이미 번호 있음
+      } else {
+        return { ...item, name: `[${idx + 1}] ${item.name}` };
+      }
+    });
+
+    setMdList(allResults);
+  } catch (error) {
+    console.error("에러 발생:", error);
+    setErrorMsg("❌ 상품 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.");
+  } finally {
+    setIsLoading(false);
   }
-
-  // 3. 모든 배치 끝난 뒤 → 없는 경우에만 순서대로 번호 부여
-  allResults = allResults.map((item, idx) => {
-    if (/^\[\d+\]/.test(item.name)) {
-      // 이미 번호가 있으면 그대로 둠
-      return item;
-    } else {
-      // 전체 배열 기준 idx + 1 로 번호 붙이기
-      return { ...item, name: `[${idx + 1}] ${item.name}` };
-    }
-  });
-
-  setMdList(allResults);
 };
-
 
 
   const handleOnetoThree = async () => {
@@ -428,7 +461,7 @@ function App() {
 };
   const handleGenerateKeywords = async () => { 
   if (!keywordType) {
-    alert("응원봉/앨범/MD 중 하나를 선택하세요!");
+    alert("응원봉/앨범/MD/포카 중 하나를 선택하세요!");
     return;
   }
 
@@ -462,12 +495,22 @@ function App() {
     const groupRes = await fetch(`${API_BASE}/translate-members-jp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ members: [groupName] }),   // 그룹명 단독 번역
+      body: JSON.stringify({ members: [groupName] }),
     });
     const { translatedMembersJp: groupNameJpArr } = await groupRes.json();
-    const groupNameJp = groupNameJpArr[0] || groupName; // 실패하면 영어 그대로
-
+    const groupNameJp = groupNameJpArr[0] || groupName;
     const groupNameEn = groupName;
+
+    // ✅ 추가 키워드 로직
+    let extraKeywordEn = "";
+    let extraKeywordJp = "";
+    if (keywordType === "アルバム") {
+      extraKeywordEn = "CD";
+      extraKeywordJp = "CD";
+    } else if (keywordType === "포カ" || keywordType === "フォトカード") {
+      extraKeywordEn = "POCA";
+      extraKeywordJp = "ポカ"; // 또는 "POCA" 그대로 써도 OK
+    }
 
     const result = members.map((_, idx) => ({
       en: translatedMembersEn[idx] || "",
@@ -475,19 +518,20 @@ function App() {
       type: "member"
     }));
 
-  // 그룹명 + 키워드타입 추가
-  const finalKeywords = [
-    { en: `${groupNameEn} ${keywordType}`, jp: `${groupNameJp} ${keywordType}`, type: "main" },
-  ...result
-  ];
+    // ✅ 그룹명 + 메인 키워드 생성
+    const finalKeywords = [
+      { en: `${groupNameEn} ${keywordType} ${extraKeywordEn}`.trim(), jp: `${groupNameJp} ${keywordType} ${extraKeywordJp}`.trim(), type: "main" },
+      ...result
+    ];
 
-  setKeywords(finalKeywords);
+    setKeywords(finalKeywords);
 
   } catch (error) {
     console.error("키워드 추출 실패:", error);
     alert("GPT 요청 실패");
   }
 };
+
 
   const handlePaste = (e) => {
     const items = e.clipboardData.items;
@@ -602,12 +646,21 @@ function App() {
           <label>📌 콘서트/팝업명: </label>
           <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} />
         </div>
-
+        
         {/* 특전유무   */}
         <div>
           <label>📌 특전 유무: </label>
           <input type="checkbox" checked={hasBonus} onChange={(e) => setHasBonus(e.target.checked)} />
         </div>
+          {/* 팝업인데 앨범도 팔아요! */}
+<div style={{ marginTop: "5px" }}>
+  <label>📌 팝업에서 앨범도 팔면 체크 </label>
+  <input 
+    type="checkbox" 
+    checked={hasAlbum} 
+    onChange={(e) => setHasAlbum(e.target.checked)} 
+  />
+</div>
 
         {/* 상세이미지 특전 조건 입력 UI */}
         {hasBonus && (
@@ -692,6 +745,7 @@ function App() {
       )}
 
     </div>
+    
   )}
         <hr />
         {/* 메인상품명 */}
@@ -703,6 +757,18 @@ function App() {
               >
               위에 모두 입력 후 눌러주세요
           </button>
+          {isLoading && (
+  <div style={{ textAlign: "center", marginTop: "15px" }}>
+    <div className="spinner"></div>
+    <p>상품 정보를 불러오는 중입니다...</p>
+  </div>
+)}
+
+{errorMsg && (
+  <div style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
+    {errorMsg}
+  </div>
+)}
 
         {/* 메인상품명 */}
         {mainName && (
@@ -747,6 +813,7 @@ function App() {
           <div style={{ marginTop: '30px' }}>
             <h3>📋 상품명 및 가격</h3>
             <h3>상품 추가 시 가격은 ₩원화₩를 기준으로 입력하기</h3>
+            <div className="md-table-container">
             <table className="md-table">
             <thead>
               <tr>
@@ -862,6 +929,7 @@ function App() {
               ))}
             </tbody>
           </table>
+          </div>
 
             </div>
             )}
@@ -895,7 +963,10 @@ function App() {
           return (
             
             <div key={idx} style={{ marginBottom: '15px' }}>
-              <strong>그룹 {idx + 1} (기준가격: ¥{group.standardPrice} 참고가격 :¥{group.standardPrice*1.3} )</strong>
+              <strong>
+  그룹 {idx + 1} (기준가격: ¥{group.standardPrice} 참고가격 :¥{Math.floor(group.standardPrice * 1.3)} )
+</strong>
+
               
             {/* ✅ 그룹별 엑셀 다운로드 버튼 */}
         <button
@@ -957,6 +1028,15 @@ function App() {
                 checked={keywordType === "MD"} 
                 onChange={(e) => setKeywordType(e.target.value)} 
               /> MD
+            </label>
+            <label style={{ marginLeft: '10px' }}>
+              <input 
+                type="radio" 
+                name="keywordType" 
+                value="フォトカード" 
+                checked={keywordType === "フォトカード"} 
+                onChange={(e) => setKeywordType(e.target.value)} 
+              /> 포카
             </label>
           </div>
 

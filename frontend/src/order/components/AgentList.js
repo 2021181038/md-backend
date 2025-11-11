@@ -129,29 +129,61 @@ const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
 
 
   // ✅ 수량 업데이트
-  const updateQty = async (agentId, itemIndex, newQty) => {
-    setAgents((prev) =>
-      prev.map((ag) =>
-        ag.id === agentId
-          ? {
-              ...ag,
-              items: ag.items.map((it, i) =>
-                i === itemIndex ? { ...it, qty: newQty } : it
-              ),
-            }
-          : ag
+  // ✅ 수량 업데이트 (Agent + OrderTable 연동)
+const updateQty = async (agentId, itemIndex, newQty) => {
+  // 프론트에 반영
+  setAgents((prev) =>
+    prev.map((ag) =>
+      ag.id === agentId
+        ? {
+            ...ag,
+            items: ag.items.map((it, i) =>
+              i === itemIndex ? { ...it, qty: newQty } : it
+            ),
+          }
+        : ag
+    )
+  );
+
+  const agent = agents.find((a) => a.id === agentId);
+  if (!agent) return;
+
+  const targetItem = agent.items[itemIndex];
+  const oldQty = targetItem.qty ?? 0;
+  const diff = newQty - oldQty; // 변경된 수량 차이 계산
+
+  // ✅ Supabase - agents 업데이트
+  const updatedItems = agent.items.map((it, i) =>
+    i === itemIndex ? { ...it, qty: newQty } : it
+  );
+  await supabase.from("agents").update({ items: updatedItems }).eq("id", agentId);
+
+  // ✅ Supabase - orders 반영
+  const { data: order } = await supabase
+    .from("orders")
+    .select("id, proxy_qty")
+    .eq("event_name", selectedEvent)
+    .eq("option_name", targetItem.option_name)
+    .maybeSingle();
+
+  if (order) {
+    const newProxy = Math.max(0, (order.proxy_qty ?? 0) + diff);
+    await supabase
+      .from("orders")
+      .update({ proxy_qty: newProxy })
+      .eq("id", order.id);
+
+    // ✅ 프론트 eventOrders도 즉시 반영
+    setEventOrders((prev) =>
+      prev.map((o) =>
+        o.option_name === targetItem.option_name
+          ? { ...o, proxy_qty: newProxy }
+          : o
       )
     );
+  }
+};
 
-    const agent = agents.find((a) => a.id === agentId);
-    if (!agent) return;
-
-    const updatedItems = agent.items.map((it, i) =>
-      i === itemIndex ? { ...it, qty: newQty } : it
-    );
-
-    await supabase.from("agents").update({ items: updatedItems }).eq("id", agentId);
-  };
 
   // ✅ 상태 변경
   const handleStatusChange = async (agentId, newStatus) => {
@@ -254,6 +286,17 @@ const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
         {/* 하단 버튼 */}
         <div className="agent-item-actions">
           <button
+            className="delete-icon-btn"
+            title="삭제하기"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(agent.id);
+            }}
+          >
+            🗑
+          </button>
+
+          <button
             className="mc-btn mc-btn-blue"
             onClick={(e) => {
               e.stopPropagation();
@@ -272,18 +315,6 @@ const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
           >
             옵션 추가
           </button>
-
-          <button
-            className="delete-icon-btn"
-            title="삭제하기"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(agent.id);
-            }}
-          >
-            🗑
-          </button>
-
           <button
             className="mc-btn mc-btn-green agent-receive-btn"
             onClick={(e) => {
@@ -332,24 +363,54 @@ const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
                   >
                     <div className="agent-row">
                       <div className="agent-info-wrapper">
-                        <span className="agent-info-left">
-                          [{a.contact_type}] {a.nickname} -{" "}
-                          <select
-                            value={a.status}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              handleStatusChange(a.id, e.target.value);
-                            }}
-                            className="status-select"
-                          >
-                            <option value="입금전">입금전</option>
-                            <option value="입금완료">입금완료</option>
-                            <option value="배송완료">배송완료</option>
-                          </select>
-                        </span>
+                        <span className="agent-info-left" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+  <span>[{a.contact_type}] {a.nickname} -</span>
+  <select
+    value={a.status}
+    onClick={(e) => e.stopPropagation()}
+    onChange={(e) => {
+      e.stopPropagation();
+      handleStatusChange(a.id, e.target.value);
+    }}
+    className="status-select"
+    style={{ height: "24px", fontSize: "13px" }}
+  >
+    <option value="입금전">입금전</option>
+    <option value="입금완료">입금완료</option>
+    <option value="배송완료">배송완료</option>
+  </select>
+
+  {/* ✅ 수고비 입력칸 (옆에 붙이기) */}
+  <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+    수고비(₩):
+    <input
+      type="number"
+      value={a.fee || 0}
+      onClick={(e) => e.stopPropagation()}
+      onChange={async (e) => {
+        const newFee = Number(e.target.value);
+        await supabase.from("agents").update({ fee: newFee }).eq("id", a.id);
+        const updated = agents.map((ag) =>
+          ag.id === a.id ? { ...ag, fee: newFee } : ag
+        );
+        setAgents(updated);
+      }}
+      style={{
+        width: "70px",
+        textAlign: "right",
+        border: "1px solid #ccc",
+        borderRadius: "4px",
+        padding: "2px 4px",
+        height: "20px",
+        fontSize: "13px",
+      }}
+    />
+  </label>
+</span>
+
                         <span className="agent-info-right">by {a.manager}</span>
                       </div>
+                      
                     </div>
                     {renderAgentDetail(a)}
                   </li>

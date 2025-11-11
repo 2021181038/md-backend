@@ -124,6 +124,7 @@
   border-collapse: collapse;
   margin-top: 15px;
   font-size: 14px;
+  table-layout: fixed; 
 }
 
 .md-table th,
@@ -135,6 +136,7 @@
 }
 
 .md-table th {
+  
   background-color: #f5f6fa;
   font-weight: 600;
   color: #333;
@@ -147,6 +149,20 @@
 .md-table tbody tr:hover {
   background-color: #f0f8ff;
   transition: background-color 0.2s;
+}
+
+.md-table-container {
+  height: 500px;        /* 테이블 전체 높이 고정 (원하는 만큼 조정 가능) */
+  overflow-y: auto;          /* 스크롤을 tbody 쪽만 적용 */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+.md-table thead th {
+  position: sticky;          /* 헤더를 고정 */
+  top: 0;                    /* 상단 기준 */
+  background-color: #f5f6fa; /* 고정 시 배경색 유지 */
+  z-index: 2;                /* 스크롤 내용보다 위에 표시 */
 }
 
 /* 상품명 input */
@@ -217,4 +233,19 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #33418f;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

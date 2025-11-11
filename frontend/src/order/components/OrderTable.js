@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
-function OrderTable({ selectedEvent, eventOrders, setEventOrders, refreshCurrentEvent, highlightedOptions, setHighlightedOptions,}) {
+function OrderTable({ selectedEvent, eventOrders, setEventOrders, refreshCurrentEvent, highlightedOptions, setHighlightedOptions,agents}) {
   const [newOptionName, setNewOptionName] = useState("");
   const [newOptionQty, setNewOptionQty] = useState("");
   const [lastSavedTime, setLastSavedTime] = useState(null);
   const [margins, setMargins] = useState([]); // 💰 마진 데이터
   const exchangeRate = 9.43;
+  const totalFee = agents.reduce((sum, a) => sum + Number(a.fee || 0), 0);
+
 
   // ✅ 저장 시간 불러오기
   useEffect(() => {
@@ -203,9 +205,10 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
         <span>📦 {selectedEvent} 주문 내역</span>
         <span style={{ fontSize: "15px", fontWeight: "600", color: "#4a764c" }}>
           <span>   환율 {exchangeRate} 기준,</span>
-          총 마진: {totalProfit.toLocaleString()}円  
+          마진: {totalProfit.toLocaleString()}円  
           <span style={{ color: "#555", marginLeft: "6px" }}>
             (≈ {totalProfitKRW.toLocaleString()}원)
+            총 수고비: {totalFee.toLocaleString()} ₩
           </span>
         </span>
       </h3>

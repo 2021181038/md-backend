@@ -61,6 +61,7 @@ const newEntry = {
   nickname: newAgent.nickname,
   status: newAgent.status,
   manager: newAgent.manager,
+  fee: Number(newAgent.fee) || 0,
   is_received: false,
   items: filledOptions,
 };
@@ -148,6 +149,18 @@ handleClose();
                 value={newAgent.nickname}
                 onChange={(e) =>
                   setNewAgent({ ...newAgent, nickname: e.target.value })
+                }
+              />
+            </div>
+
+            <div>
+              <label>수고비</label>
+              <input
+                type="number"
+                placeholder="수고비(₩)"
+                value={newAgent.fee || ""}
+                onChange={(e) =>
+                  setNewAgent((prev) => ({ ...prev, fee: e.target.value }))
                 }
               />
             </div>
