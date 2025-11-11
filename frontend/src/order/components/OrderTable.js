@@ -233,54 +233,49 @@ function OrderTable({
                 <td className="option-name">{row.option_name}</td>
 
                 {/* 구매필요 */}
-                <td className="qty-cell1">
-                  <span className="qty-label mobile-only">📦 구매필요</span>
-                  <button className="qty-btn" onClick={() => {
-                    const updated = [...eventOrders];
-                    updated[idx].needed_qty = Math.max(0, needed - 1);
-                    setEventOrders(updated);
-                    markAsChanged(row.option_name);
-                  }}>−</button>
-                  <input type="number" value={needed} min="0" className="qty-input"
-                    onChange={(e) => {
-                      const updated = [...eventOrders];
-                      updated[idx].needed_qty = Number(e.target.value);
-                      setEventOrders(updated);
-                      markAsChanged(row.option_name);
-                    }}
-                  />
-                  <button className="qty-btn" onClick={() => {
-                    const updated = [...eventOrders];
-                    updated[idx].needed_qty = needed + 1;
-                    setEventOrders(updated);
-                    markAsChanged(row.option_name);
-                  }}>＋</button>
+                {/* 구매필요 + 대리완료 (모바일 가로 정렬용) */}
+                <td className="qty-mobile-row">
+                  <div className="mobile-qty-row">
+                    <div className="qty-group">
+                      <span className="qty-label">📦 구매필요</span>
+                      <div className="qty-controls">
+                        <button className="qty-btn" onClick={() => {
+                          const updated = [...eventOrders];
+                          updated[idx].needed_qty = Math.max(0, needed - 1);
+                          setEventOrders(updated);
+                          markAsChanged(row.option_name);
+                        }}>−</button>
+                        <input type="number" value={needed} className="qty-input" />
+                        <button className="qty-btn" onClick={() => {
+                          const updated = [...eventOrders];
+                          updated[idx].needed_qty = needed + 1;
+                          setEventOrders(updated);
+                          markAsChanged(row.option_name);
+                        }}>＋</button>
+                      </div>
+                    </div>
+
+                    <div className="qty-group">
+                      <span className="qty-label">✅ 대리완료</span>
+                      <div className="qty-controls">
+                        <button className="qty-btn" onClick={() => {
+                          const updated = [...eventOrders];
+                          updated[idx].proxy_qty = Math.max(0, proxy - 1);
+                          setEventOrders(updated);
+                          markAsChanged(row.option_name);
+                        }}>−</button>
+                        <input type="number" value={proxy} className="qty-input" />
+                        <button className="qty-btn" onClick={() => {
+                          const updated = [...eventOrders];
+                          updated[idx].proxy_qty = proxy + 1;
+                          setEventOrders(updated);
+                          markAsChanged(row.option_name);
+                        }}>＋</button>
+                      </div>
+                    </div>
+                  </div>
                 </td>
 
-                {/* 대리완료 */}
-                <td className="qty-cell2">
-                  <span className="qty-label mobile-only">✅ 대리완료</span>
-                  <button className="qty-btn" onClick={() => {
-                    const updated = [...eventOrders];
-                    updated[idx].proxy_qty = Math.max(0, proxy - 1);
-                    setEventOrders(updated);
-                    markAsChanged(row.option_name);
-                  }}>−</button>
-                  <input type="number" value={proxy} min="0" className="qty-input"
-                    onChange={(e) => {
-                      const updated = [...eventOrders];
-                      updated[idx].proxy_qty = Number(e.target.value);
-                      setEventOrders(updated);
-                      markAsChanged(row.option_name);
-                    }}
-                  />
-                  <button className="qty-btn" onClick={() => {
-                    const updated = [...eventOrders];
-                    updated[idx].proxy_qty = proxy + 1;
-                    setEventOrders(updated);
-                    markAsChanged(row.option_name);
-                  }}>＋</button>
-                </td>
 
                 {/* 수령완료 */}
                 <td className="qty-cell hide-on-mobile">
@@ -313,7 +308,9 @@ function OrderTable({
                   }}>＋</button>
                 </td>
 
-                <td style={{ textAlign: "center hide-on-mobile" }}>{total}</td>
+                <td 
+                className="hide-on-mobile"
+                style={{ textAlign: "center" }}>{total}</td>
               </tr>
             );
           })}

@@ -790,6 +790,32 @@
 
 /* ✅ 모바일 전체 반응형 + 카드형 + 숨김 */
 @media (max-width: 900px) {
+  .mobile-qty-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .qty-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .qty-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
   /* ============================
      🔹 전체 레이아웃
   ============================ */
@@ -811,8 +837,18 @@
   .order-left-panel h3,
   .order-right-panel h3 { font-size: 15px; }
   .order-table { font-size: 12px; }
-  .qty-btn { width: 34px; height: 34px; font-size: 16px; border-radius: 8px; }
-  .qty-input { width: 48px; height: 34px; font-size: 15px; text-align: center; border-radius: 6px; }
+  .qty-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+    border-radius: 6px;
+  }
+  .qty-input {
+    width: 42px;
+    text-align: center;
+    font-size: 14px;
+    border-radius: 6px;
+  }
   .delete-btn { padding: 3px 5px; font-size: 13px; }
   .mc-btn { padding: 6px 10px; font-size: 13px; }
 
