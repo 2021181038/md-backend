@@ -230,7 +230,7 @@ function App() {
     } else {
       // ✅ 2단계: 그룹 내 최댓값 기준으로 재계산
       const maxPrice = Math.max(...group.map(g => Number(g.price)));
-      standardPrice = Math.round(maxPrice * 0.66); // ← 최댓값의 66% 반영
+      standardPrice = Math.round(maxPrice * 0.68); // ← 최댓값의 66% 반영
     }
 
     // ✅ 기준가격과 같은 상품 없으면 '-' 항목 추가
