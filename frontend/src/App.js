@@ -22,7 +22,7 @@ function App() {
   const [bonusSets, setBonusSets] = useState([
   { base: "", label: "" }   // base = 기준 숫자, label = 특전 이름
 ]);
-  const [activeTab, setActiveTab] = useState("upload");
+  const [activeTab, setActiveTab] = useState("order");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [hasAlbum, setHasAlbum] = useState(false);
