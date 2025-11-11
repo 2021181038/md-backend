@@ -81,7 +81,9 @@ const fetchEventDetails = useCallback(async (eventName) => {
         openMergeModal={() => setModal({ ...modal, merge: true })} //기존 이벤트 병합 버튼 누를 경우, 모달을 여는 함수
       />
       {/* 마진 업로드 버튼 */}
-      <div style={{ textAlign: "left", marginTop: "10px" }}>
+      <div 
+      className="hide-on-mobile"
+      style={{ textAlign: "left", marginTop: "10px" }}>
         <button
           className="mc-btn mc-btn-green"
           onClick={() => setModal({ ...modal, margin: true })}

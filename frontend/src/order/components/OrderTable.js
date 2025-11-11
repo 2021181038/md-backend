@@ -196,6 +196,7 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
     <div className="order-left-panel">
       {/* 상단 제목 + 총 마진 표시 */}
       <h3
+        className="hide-on-mobile"
         style={{
           display: "flex",
           alignItems: "center",
