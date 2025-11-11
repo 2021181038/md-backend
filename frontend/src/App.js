@@ -584,7 +584,7 @@ function App() {
       </button>
 
       <button
-        className="pretty-button tab-order active"
+        className="pretty-button tab-order"
         style={{
           backgroundColor: activeTab === "order" ? "#33418f" : "#777",
           width: "150px"
