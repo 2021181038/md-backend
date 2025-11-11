@@ -497,7 +497,7 @@ function OrderTable({
       )}
 
       <div className="order-bottom-actions">
-        <button className="mc-btn mc-btn-green" onClick={handleSort}>
+        <button className="mc-btn mc-btn-green hide-on-mobile" onClick={handleSort}>
           오름차순 정렬
         </button>
         <button className="mc-btn mc-btn-green" onClick={handleSave}>
