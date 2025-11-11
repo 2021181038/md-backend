@@ -216,12 +216,12 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
       <table className="order-table">
         <thead>
           <tr>
-            <th>삭제</th>
             <th>옵션명</th>
             <th>구매필요</th>
             <th>대리완료</th>
             <th>수령완료</th>
             <th>전체</th>
+            <th>삭제</th>
           </tr>
         </thead>
         <tbody>
@@ -252,14 +252,6 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
                     : ""
                 }
               >
-                <td className="delete-cell">
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(row.id)}
-                  >
-                    🗑
-                  </button>
-                </td>
                 
                 <td>{row.option_name}</td>
 
@@ -398,6 +390,14 @@ const totalProfitKRW = Math.round(totalProfit * exchangeRate);
 
                 {/* 전체 (자동 계산) */}
                 <td style={{ textAlign: "center" }}>{total}</td>
+                <td className="delete-cell">
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDelete(row.id)}
+                  >
+                    🗑
+                  </button>
+                </td>
               </tr>
             );
           })}

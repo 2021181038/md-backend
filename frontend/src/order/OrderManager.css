@@ -788,22 +788,6 @@
 }
 
 
-/* ✅ 모바일 화면에서 주문내역 → 대리리스트 순서로 세로 배치 */
-@media (max-width: 900px) {
-  .order-main-section {
-    flex-direction: column;      /* 가로 → 세로 배치 */
-  }
-
-  .order-left-panel,
-  .order-right-panel {
-    width: 100%;                /* 전체 폭 사용 */
-    min-height: auto;           /* 높이 자동 조정 */
-  }
-
-  .order-right-panel {
-    margin-top: 20px;           /* 위쪽에 여백 추가 */
-  }
-}
 
 /* ✅ 모바일 반응형 최적화 (주문 내역 → 대리리스트 순서로 표시) */
 @media (max-width: 900px) {
