@@ -808,9 +808,10 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 16px; /* 두 그룹 사이 간격 */
     margin-top: 6px;
+    overflow-x: auto;
   }
 .qty-group {
     display: flex;
@@ -822,7 +823,7 @@
     align-items: center;
     gap: 4px;
   }
-  
+
 .qty-label {
     font-size: 12px;
     font-weight: 600;
