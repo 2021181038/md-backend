@@ -40,11 +40,13 @@ function EventList({
   return (
     <div className="event-list-section">
       <div
-        className="order-right-header"
+        className="order-right-header hide-on-mobile"
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
       >
         <h2>🧾 저장된 이벤트 목록</h2>
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div 
+        className="hide-on-mobile"
+        style={{ display: "flex", gap: "8px" }}>
           <button className="mc-btn mc-btn-blue" onClick={openUploadModal}>
             + 새 이벤트 등록
           </button>
