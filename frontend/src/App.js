@@ -824,7 +824,7 @@ function App() {
                 fontSize: "14px",
                 border: "1px solid #ccc",
                 padding: "10px",
-                whiteSpace: "pre-line"
+                whiteSpace: "pre-wrap"
               }}
               dangerouslySetInnerHTML={{ __html: detailDescription }}
             ></div>
