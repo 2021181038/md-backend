@@ -83,6 +83,20 @@ function App() {
   }
   return result;
 };
+  const handleCopyHtmlRendered = () => {
+  const htmlElement = document.getElementById("detailDescriptionHtml");
+  if (!htmlElement) return;
+
+  const range = document.createRange();
+  const selection = window.getSelection();
+
+  selection.removeAllRanges();
+  range.selectNodeContents(htmlElement);
+  selection.addRange(range);
+
+  document.execCommand("copy");
+  selection.removeAllRanges();
+};
 
   const handleDownloadExcelByGroup = (group, groupIdx) => {
   const rows = [];
@@ -803,6 +817,7 @@ function App() {
           <div style={{ marginTop: '0px', marginBottom:'5px' }}>
             <h3>📝 상세페이지 글</h3>
             <div
+            id="detailDescriptionHtml"
               style={{
                 width: "100%",
                 minHeight: "200px",
@@ -817,7 +832,7 @@ function App() {
             <button 
               className="COPY-button" 
               style={{ marginTop: '8px' }}
-              onClick={() => handleCopy(detailDescription, "상세페이지 글")}
+              onClick={handleCopyHtmlRendered}
             >
               복사하기
             </button>
