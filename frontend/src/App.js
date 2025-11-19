@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import MarginCalculator from './margin/MarginCalculator';
 import OrderManager from './order/OrderManager';
+import AlbumUpload from './AlbumUpload/AlbumUpload';
 
 function App() {
   const [groupName, setGroupName] = useState('');
@@ -230,7 +231,8 @@ function App() {
     } else {
       // ✅ 2단계: 그룹 내 최댓값 기준으로 재계산
       const maxPrice = Math.max(...group.map(g => Number(g.price)));
-      standardPrice = Math.round(maxPrice * 0.68); // ← 최댓값의 66% 반영
+      let raw = Math.round(maxPrice * 0.68);
+      standardPrice = Math.ceil(raw / 100) * 100 - 10;
     }
 
     // ✅ 기준가격과 같은 상품 없으면 '-' 항목 추가
@@ -282,7 +284,7 @@ function App() {
   const dateText = formatThumbnailDate(thumbnailShippingDate); 
 
   let baseText = `
-  【発送について】
+  <b>【発送について】</b>
 
   ${dateText}より、ご注文順に順次出荷されます。できるだけ早くお届けできるよう努めます。
 
@@ -569,9 +571,16 @@ function App() {
         }}
         onClick={() => setActiveTab("upload")}
       >
-        업로드
+        상품 업로드
       </button>
-
+      <button
+          className="pretty-button .tab-album"
+          style={{ 
+            backgroundColor: activeTab === "album" ? "#33418f" : "#777" ,
+            width: "150px"
+          }}
+          onClick={() => setActiveTab("album")}
+        >앨범 업로드</button>
       <button
         className="pretty-button tab-margin"
         style={{
@@ -1134,6 +1143,8 @@ function App() {
     );
   </div>
     )}
+
+    {activeTab === "album" && <AlbumUpload />}
     {/* 마진 계산기 탭 */}
 {activeTab === "margin" && <MarginCalculator />}
 

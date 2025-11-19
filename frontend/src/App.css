@@ -253,7 +253,8 @@
 /* ✅ 모바일에서는 업로드 / 마진 탭 숨기고 주문정리만 표시 */
 @media (max-width: 900px) {
   .tab-upload,
-  .tab-margin,
+  .tab-margin
+  .tab-album,
   .tab-order {
     display: none !important;
   }
