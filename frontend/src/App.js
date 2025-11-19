@@ -339,7 +339,7 @@ function App() {
       const maxSet = bonusSets.find(s => Number(s.base) === maxBase);
       baseText += `\n例: ${maxBase * 2000 - 100}円の場合 →`;
       bonusSets.forEach((set, idx) => {
-        baseText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚`;
+        baseText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚<br>`;
         if (idx !== bonusSets.length - 1) baseText += " + ";
       });
     }
