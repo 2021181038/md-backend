@@ -861,16 +861,24 @@ function App() {
                 <tr key={idx}>
                   {/* 상품명 */}
                   <td>
-                    <input
-                      type="text"
-                      className="md-input-name"
-                      value={item.name}
-                      onChange={(e) => {
-                        const newList = [...mdList];
-                        newList[idx].name = e.target.value;
-                        setMdList(newList);
-                      }}
-                    />
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <input
+                        type="text"
+                        className="md-input-name"
+                        value={item.name}
+                        onChange={(e) => {
+                          const newList = [...mdList];
+                          newList[idx].name = e.target.value;
+                          setMdList(newList);
+                        }}
+                      />
+
+                      {item.name.length > 50 && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          상품명이 50자를 넘어요 !
+                        </div>
+                      )}
+                    </div>
                   </td>
 
                   {/* 원화 */}
