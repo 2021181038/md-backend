@@ -802,11 +802,18 @@ function App() {
         {detailDescription && (
           <div style={{ marginTop: '0px', marginBottom:'5px' }}>
             <h3>📝 상세페이지 글</h3>
-            <textarea
-              value={detailDescription}
-              readOnly
-              style={{ width: '100%', height: '200px', fontSize: '14px' }}
-            />
+            <div
+              style={{
+                width: "100%",
+                minHeight: "200px",
+                fontSize: "14px",
+                border: "1px solid #ccc",
+                padding: "10px",
+                whiteSpace: "pre-line"
+              }}
+              dangerouslySetInnerHTML={{ __html: detailDescription }}
+            ></div>
+
             <button 
               className="COPY-button" 
               style={{ marginTop: '8px' }}
@@ -960,7 +967,9 @@ function App() {
             </button>
           </div>
         {/* 그룹 가격 묶기  */}
-        {grouped.map((group, idx) => {     
+        {grouped.map((group, idx) => {
+          const rawReference = group.standardPrice * 1.3;
+          const referencePrice = Math.ceil(rawReference / 100) * 100 - 10;     
           const sortedItems = [...group.items].sort((a, b) => {
             if (a.name === "–") return 1;   // "-" 는 뒤로
             if (b.name === "–") return -1;
@@ -973,8 +982,8 @@ function App() {
             
             <div key={idx} style={{ marginBottom: '15px' }}>
               <strong>
-  그룹 {idx + 1} (기준가격: ¥{group.standardPrice} 참고가격 :¥{Math.floor(group.standardPrice * 1.3)} )
-</strong>
+                그룹 {idx + 1} (기준가격: ¥{group.standardPrice} 참고가격: ¥{referencePrice} )
+              </strong>
 
               
             {/* ✅ 그룹별 엑셀 다운로드 버튼 */}
