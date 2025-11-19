@@ -314,7 +314,7 @@ function App() {
   if (hasBonus && bonusSets.length > 0) {
     baseText += `
 
-  <b>🎁【特典情報】</b><<br>
+  <b>🎁【特典情報】</b><br>
 
   購入金額に応じて、以下のように公式特典を差し上げます。<br>
   `;
@@ -330,16 +330,16 @@ function App() {
       bonusSets.forEach((set) => {
         if (set.base && set.label) {
           const base = Number(set.base);
-          baseText += `\n${base * 2000 - 100}円ごとに ${set.label} 1枚ずつ支給 (以降も金額に応じて自動追加となります。)`;
+          baseText += `\n${base * 2000 - 100}円ごとに ${set.label} 1枚ずつ支給 (以降も金額に応じて自動追加となります。)<br>`;
         }
       });
 
       // 예시 문구 추가 (2개 이상일 때만)
       const maxBase = Math.max(...bonusSets.map(s => Number(s.base)));
       const maxSet = bonusSets.find(s => Number(s.base) === maxBase);
-      baseText += `\n例: ${maxBase * 2000 - 100}円の場合 → <br>`;
+      baseText += `\n例: ${maxBase * 2000 - 100}円の場合 →`;
       bonusSets.forEach((set, idx) => {
-        baseText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚<br>`;
+        baseText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚`;
         if (idx !== bonusSets.length - 1) baseText += " + ";
       });
     }
