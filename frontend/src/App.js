@@ -339,12 +339,12 @@ function App() {
       const maxSet = bonusSets.find(s => Number(s.base) === maxBase);
       baseText += `\n例: ${maxBase * 2000 - 100}円の場合 →`;
       bonusSets.forEach((set, idx) => {
-        baseText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚<br>`;
+        baseText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚`;
         if (idx !== bonusSets.length - 1) baseText += " + ";
       });
     }
 
-    baseText += `
+    baseText += `<br>
 
   ✔️送料を除く<b>決済金額</b>が対象となります。<br>
   ✔️重複なく発送いたします。<br>
