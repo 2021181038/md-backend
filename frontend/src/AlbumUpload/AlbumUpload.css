@@ -1,0 +1,280 @@
+/* ================================
+   AlbumUpload 전체 레이아웃
+=================================*/
+.album-upload-wrapper {
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: "Noto Sans KR", sans-serif;
+}
+
+/* ================================
+   공통 박스
+=================================*/
+.section-box {
+  background: #fff;
+  border: 1.5px solid #d6d9e5;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+}
+
+/* ================================
+   버튼 공통
+=================================*/
+.btn-primary {
+  background: #33418f;
+  color: #fff;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.btn-primary:hover {
+  background: #2b377d;
+}
+
+.btn-secondary {
+  background: #4b7bec;
+  color: #fff;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #3867d6;
+}
+
+.btn-delete {
+  background: #cc3d3d;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  background: #b53232;
+}
+
+/* ================================
+   세트 박스 (가로 스크롤)
+=================================*/
+.set-container {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.set-box {
+  min-width: 480px;
+  background: #fff;
+  border: 1.5px solid #cfd3e1;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+/* ================================
+   세트 내부 테이블
+=================================*/
+.set-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.set-table th,
+.set-table td {
+  border: 1px solid #d0d4e0;
+  padding: 6px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.set-table th {
+  background: #e8ebf5;
+  font-weight: 600;
+}
+
+/* ================================
+   가격 그룹 결과
+=================================*/
+.group-result-area {
+  margin-top: 20px;
+}
+
+.group-box {
+  background: #fff;
+  border: 1.5px solid #d6d9e5;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.group-item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.group-item-list li {
+  padding: 6px 0;
+}
+
+.option-item {
+  color: #d23369;
+  font-weight: 600;
+}
+
+/* ================================
+   엑셀 버튼
+=================================*/
+.xlsx-button {
+  background: #1abc9c;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.xlsx-button:hover {
+  background: #17a589;
+}
+
+.basic-info-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;       /* 각 필드 사이 여백 */
+  margin-bottom: 20px;
+}
+
+.basic-info-field-inline {
+  display: flex;
+  flex-direction: column;
+}
+
+.basic-info-field-inline label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.basic-info-field-inline input {
+  width: 180px;       /* input 가로 길이 조절 */
+  padding: 6px 8px;
+  border: 1px solid #cfd3e1;
+  border-radius: 6px;
+}
+
+.option-add-wrapper {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  margin-top: 40px;
+}
+
+.option-add-box {
+  flex: 1;
+  background: #fff;
+  border: 1.5px solid #cfd3e1;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+.option-add-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.option-add-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.option-add-inputs input {
+  padding: 6px 8px;
+  min-width: 160px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.option-add-btn-area {
+  margin-top: 16px;
+}
+
+/* 오른쪽 정렬 */
+.set-edit-area {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.row-highlight {
+  background-color: #e8ffe8; /* 연한 초록색 */
+}
+
+.edit-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #33418f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit-btn.editing {
+  background: #ff5fa2; /* 수정완료 핑크색 */
+}
+
+.confirm-members-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #4caf50; /* 초록색 버튼 */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit-btn-edit {
+  background-color: #3348ff; /* 파랑 */
+  color: white;
+}
+
+.edit-btn-save {
+  background-color: #ff88b0; /* 핑크 */
+  color: white;
+}
+
+.btn-yen {
+  background: #3a63d1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-yen:hover {
+  background: #2a4eb5;
+}
