@@ -765,7 +765,7 @@
 
 /* 왼쪽(주문내역) 패널 */
 .order-left-panel {
-  flex: 1.2;
+  flex: 1.8;
   background-color: #fff;
   border-radius: 12px;
   padding: 16px;
@@ -936,4 +936,34 @@
   .show-on-mobile {
     display: block !important;
   }
+}
+
+/* 옵션명 칼럼 줄이기 */
+.order-table .option-name {
+  max-width: 250px;  /* 🔥 기존보다 좁게 */
+  white-space: normal;   /* 줄바꿈 허용 */
+  word-break: break-word; /* 단어 단위 줄바꿈 */
+}
+
+/* TYPE 줄 스타일 */
+.type-line {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+/* OPTION/MEMBER 줄 스타일 */
+.sub-line {
+  color: #666;
+  font-size: 14px;
+}
+
+.qty-cell1,
+.qty-cell2,
+.qty-cell {
+  width: 120px; /* 원하는 값 */          /* 내부 요소들을 한 줄로 정렬 */
+  justify-content: center;   /* 가운데 정렬 */
+  align-items: center;
+  margin-left: 20px;      /* 세로 가운데 정렬 */
+  gap: 6px; 
 }

@@ -232,7 +232,24 @@ function OrderTable({
                   </button>
                 </td>
 
-                <td className="option-name">{row.option_name}</td>
+                <td className="option-name">
+  {row.option_name.includes("TYPE:")
+    ? (
+      <>
+        {/* TYPE 부분 줄바꿈 */}
+        <div className="type-line">
+          {row.option_name.split(" / ")[0]}
+        </div>
+
+        {/* OPTION 또는 MEMBER 부분 */}
+        <div className="sub-line">
+          {row.option_name.split(" / ").slice(1).join(" / ")}
+        </div>
+      </>
+    )
+    : row.option_name}
+</td>
+
 
                 {/* 구매필요 */}
                 <td className="qty-cell1 hide-on-mobile">
