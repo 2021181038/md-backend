@@ -1,4 +1,4 @@
-// 주문 목록, 수량 조정, 저장
+// 주문 목록, 수량 조정, 저장 → 자동저장 + 확인하기 버튼 버전
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
@@ -16,9 +16,23 @@ function OrderTable({
   const [lastSavedTime, setLastSavedTime] = useState(null);
   const [margins, setMargins] = useState([]);
   const exchangeRate = 9.43;
+
   const totalFee = agents.reduce((sum, a) => sum + Number(a.fee || 0), 0);
 
-  // ✅ 저장 시간 불러오기
+  // 🔥 자동 저장 함수
+  const autoSave = async (row) => {
+    await supabase
+      .from("orders")
+      .update({
+        needed_qty: row.needed_qty ?? 0,
+        proxy_qty: row.proxy_qty ?? 0,
+        received_qty: row.received_qty ?? 0,
+        quantity: row.needed_qty ?? 0,
+      })
+      .eq("id", row.id);
+  };
+
+  // 마지막 저장 시간 가져오기
   useEffect(() => {
     const fetchLastSavedTime = async () => {
       if (!selectedEvent) return;
@@ -39,12 +53,15 @@ function OrderTable({
           second: "2-digit",
         });
         setLastSavedTime(formatted);
-      } else setLastSavedTime(null);
+      } else {
+        setLastSavedTime(null);
+      }
     };
+
     fetchLastSavedTime();
   }, [selectedEvent]);
 
-  // ✅ 마진 데이터 불러오기
+  // 마진 데이터 가져오기
   useEffect(() => {
     const fetchMargins = async () => {
       if (!selectedEvent) return;
@@ -52,8 +69,10 @@ function OrderTable({
         .from("margins")
         .select("option_name, margin")
         .eq("event_name", selectedEvent);
+
       if (!error) setMargins(data || []);
     };
+
     fetchMargins();
   }, [selectedEvent, refreshCurrentEvent]);
 
@@ -74,143 +93,96 @@ function OrderTable({
     );
   }
 
-  // ✅ 변경 항목 표시
+  // 변경 항목 강조 (빨간색 표시)
   const markAsChanged = (optionName) => {
     setHighlightedOptions((prev) =>
       prev.includes(optionName) ? prev : [...prev, optionName]
     );
   };
 
-  // ✅ 총마진 계산
+  // 총마진 계산
   const totalProfit = eventOrders.reduce((sum, row) => {
     const marginRow = margins.find((m) => m.option_name === row.option_name);
     const marginValue = marginRow ? marginRow.margin : 0;
+
     const needed = row.needed_qty ?? row.quantity ?? 0;
     const received = row.received_qty ?? 0;
     const total = needed + received;
+
     return sum + total * marginValue;
   }, 0);
+
   const totalProfitKRW = Math.round(totalProfit * exchangeRate);
 
-  // ✅ 저장 로직
-  const handleSave = async () => {
-    if (!selectedEvent) return;
-    let hasError = false;
+  // 🔥 오름차순 정렬 그대로 유지
+  const handleSort = async () => {
+    const sorted = [...eventOrders].sort((a, b) => {
+      const nameA = a.option_name?.trim() || "";
+      const nameB = b.option_name?.trim() || "";
 
-    await Promise.all(
-      eventOrders.map(async (row) => {
-        const { error } = await supabase
-          .from("orders")
-          .update({
-            needed_qty: row.needed_qty ?? 0,
-            proxy_qty: row.proxy_qty ?? 0,
-            received_qty: row.received_qty ?? 0,
-            quantity: row.needed_qty ?? 0,
-          })
-          .eq("id", row.id);
-        if (error) hasError = true;
-      })
-    );
+      const numA = parseInt(nameA.match(/\[(\d+)\]/)?.[1] || "");
+      const numB = parseInt(nameB.match(/\[(\d+)\]/)?.[1] || "");
 
-    if (hasError) {
-      alert("일부 데이터 저장 오류!");
-      return;
-    }
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      if (!isNaN(numA) && isNaN(numB)) return -1;
+      if (isNaN(numA) && !isNaN(numB)) return 1;
 
-    const now = new Date();
-    const formattedIso = now.toISOString();
-    const formattedDisplay = now.toLocaleString("ko-KR", {
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+      return nameA.localeCompare(nameB, "ko", { numeric: true });
     });
 
-    await supabase
-      .from("events")
-      .update({ last_saved_time: formattedIso })
-      .eq("event_name", selectedEvent);
+    setEventOrders(sorted);
 
-    setLastSavedTime(formattedDisplay);
-    setHighlightedOptions([]);
-    await refreshCurrentEvent();
+    await Promise.all(
+      sorted.map((row, i) =>
+        supabase.from("orders").update({ order_index: i }).eq("id", row.id)
+      )
+    );
 
-    alert("저장 완료 ✅");
+    alert("옵션이 오름차순으로 정렬되었습니다.");
   };
 
-  // ✅ 오름차순 정렬
-  const handleSort = async () => {
-  const sorted = [...eventOrders].sort((a, b) => {
-    const nameA = a.option_name?.trim() || "";
-    const nameB = b.option_name?.trim() || "";
-
-    // 1️⃣ 숫자 추출
-    const numA = parseInt(nameA.match(/\[(\d+)\]/)?.[1] || "");
-    const numB = parseInt(nameB.match(/\[(\d+)\]/)?.[1] || "");
-
-    // 2️⃣ 둘 다 숫자 있으면 숫자 우선 정렬
-    if (!isNaN(numA) && !isNaN(numB)) {
-      return numA - numB;
-    }
-
-    // 3️⃣ 하나만 숫자 있으면 숫자가 먼저 오게
-    if (!isNaN(numA) && isNaN(numB)) return -1;
-    if (isNaN(numA) && !isNaN(numB)) return 1;
-
-    // 4️⃣ 한글, 영어 모두 localeCompare 로 비교
-    return nameA.localeCompare(nameB, "ko", { numeric: true });
-  });
-
-  setEventOrders(sorted);
-
-  // DB에도 순서 반영
-  await Promise.all(
-    sorted.map((row, i) =>
-      supabase.from("orders").update({ order_index: i }).eq("id", row.id)
-    )
-  );
-
-  alert("옵션이 오름차순으로 정렬되었습니다 ✅");
-};
-
-
-  // ✅ 항목 삭제
+  // 삭제
   const handleDelete = async (rowId) => {
     if (!window.confirm("이 항목을 삭제하시겠습니까?")) return;
     const { error } = await supabase.from("orders").delete().eq("id", rowId);
     if (!error) await refreshCurrentEvent();
   };
 
-  // ✅ 옵션 추가
+  // 옵션 추가
   const handleAddOption = async () => {
-    if (!newOptionName.trim()) {
-      alert("옵션명을 입력해주세요!");
-      return;
-    }
-    const validIndexes = eventOrders
-      .map((o) => o.order_index)
-      .filter((n) => Number.isFinite(n));
-    const maxIndex = validIndexes.length ? Math.max(...validIndexes) + 1 : 0;
-    const newRow = {
-      event_name: selectedEvent,
-      option_name: newOptionName.trim(),
-      needed_qty: Number(newOptionQty) || 0,
-      received_qty: 0,
-      quantity: Number(newOptionQty) || 0,
-      order_index: maxIndex,
-    };
-    const { error } = await supabase.from("orders").insert([newRow]);
-    if (!error) await refreshCurrentEvent();
-    setNewOptionName("");
-    setNewOptionQty("");
+  if (!newOptionName.trim()) {
+    alert("옵션명을 입력해주세요!");
+    return;
+  }
+
+  const validIndexes = eventOrders
+    .map((o) => o.order_index)
+    .filter((n) => Number.isFinite(n));
+  const maxIndex = validIndexes.length ? Math.max(...validIndexes) + 1 : 0;
+
+  const newRow = {
+    event_name: selectedEvent,
+    option_name: newOptionName.trim(),
+    needed_qty: Number(newOptionQty) || 0,
+    received_qty: 0,
+    quantity: Number(newOptionQty) || 0,
+    order_index: maxIndex,
   };
+
+  const { error } = await supabase.from("orders").insert([newRow]);
+  if (!error) {
+    await refreshCurrentEvent();
+
+    // 🔥 새로 추가된 옵션을 빨간색 강조 표시
+    setHighlightedOptions((prev) => [...prev, newOptionName.trim()]);
+  }
+
+  setNewOptionName("");
+  setNewOptionQty("");
+};
 
   return (
     <div className="order-left-panel">
-      {/* 상단 제목 */}
       <h3
         className="hide-on-mobile"
         style={{
@@ -237,6 +209,7 @@ function OrderTable({
             <th>전체</th>
           </tr>
         </thead>
+
         <tbody>
           {eventOrders.map((row, idx) => {
             const needed = row.needed_qty ?? row.quantity ?? 0;
@@ -254,163 +227,126 @@ function OrderTable({
                 }
               >
                 <td className="delete-cell hide-on-mobile">
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(row.id)}
-                  >
+                  <button className="delete-btn" onClick={() => handleDelete(row.id)}>
                     🗑
                   </button>
                 </td>
 
                 <td className="option-name">{row.option_name}</td>
 
+                {/* 구매필요 */}
                 <td className="qty-cell1 hide-on-mobile">
-          <button className="qty-btn" onClick={() => {
-            const updated = [...eventOrders];
-            updated[idx].needed_qty = Math.max(0, needed - 1);
-            setEventOrders(updated);
-            markAsChanged(row.option_name);
-          }}>−</button>
-          <input
-            type="number"
-            value={needed}
-            min="0"
-            className="qty-input"
-            onChange={(e) => {
-              const updated = [...eventOrders];
-              updated[idx].needed_qty = Number(e.target.value);
-              setEventOrders(updated);
-              markAsChanged(row.option_name);
-            }}
-          />
-          <button className="qty-btn" onClick={() => {
-            const updated = [...eventOrders];
-            updated[idx].needed_qty = needed + 1;
-            setEventOrders(updated);
-            markAsChanged(row.option_name);
-          }}>＋</button>
-        </td>
+                  <button
+                    className="qty-btn"
+                    onClick={() => {
+                      const updated = [...eventOrders];
+                      updated[idx].needed_qty = Math.max(0, needed - 1);
+                      setEventOrders(updated);
+                      markAsChanged(row.option_name);
+                      autoSave(updated[idx]); // 🔥 자동 저장
+                    }}
+                  >
+                    −
+                  </button>
 
-        <td className="qty-cell2 hide-on-mobile">
-          <button className="qty-btn" onClick={() => {
-            const updated = [...eventOrders];
-            updated[idx].proxy_qty = Math.max(0, proxy - 1);
-            updated[idx].needed_qty = needed + 1;
-            setEventOrders(updated);
-            markAsChanged(row.option_name);
-          }}>−</button>
-          <input
-            type="number"
-            value={proxy}
-            min="0"
-            className="qty-input"
-            onChange={(e) => {
-              const newValue = Number(e.target.value);
-              const diff = newValue - proxy;
-              const updated = [...eventOrders];
-              updated[idx].proxy_qty = newValue;
-              updated[idx].needed_qty = Math.max(0, needed - diff);
-              setEventOrders(updated);
-              markAsChanged(row.option_name);
-            }}
-          />
-          <button className="qty-btn" onClick={() => {
-            const updated = [...eventOrders];
-            updated[idx].proxy_qty = proxy + 1;
-            updated[idx].needed_qty = Math.max(0, needed - 1);
-            setEventOrders(updated);
-            markAsChanged(row.option_name);
-          }}>＋</button>
-        </td>
+                  <input
+                    type="number"
+                    value={needed}
+                    min="0"
+                    className="qty-input"
+                    onChange={(e) => {
+                      const updated = [...eventOrders];
+                      updated[idx].needed_qty = Number(e.target.value);
+                      setEventOrders(updated);
+                      markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
+                    }}
+                  />
 
-        {/* 📱 모바일 전용: 한 줄 정렬 */}
-        <td className="show-on-mobile" colSpan="3">
-          <div className="mobile-qty-row">
-            {/* 📦 구매필요 */}
-            <div className="qty-group">
-              <span className="qty-label">필요</span>
-              <div className="qty-controls">
-                <button className="qty-btn" onClick={() => {
-                  const updated = [...eventOrders];
-                  updated[idx].needed_qty = Math.max(0, needed - 1);
-                  setEventOrders(updated);
-                  markAsChanged(row.option_name);
-                }}>−</button>
-                <input
-                  type="number"
-                  value={needed}
-                  min="0"
-                  className="qty-input"
-                  onChange={(e) => {
-                    const updated = [...eventOrders];
-                    updated[idx].needed_qty = Number(e.target.value);
-                    setEventOrders(updated);
-                    markAsChanged(row.option_name);
-                  }}
-                />
-                <button className="qty-btn" onClick={() => {
-                  const updated = [...eventOrders];
-                  updated[idx].needed_qty = needed + 1;
-                  setEventOrders(updated);
-                  markAsChanged(row.option_name);
-                }}>＋</button>
-              </div>
-            </div>
+                  <button
+                    className="qty-btn"
+                    onClick={() => {
+                      const updated = [...eventOrders];
+                      updated[idx].needed_qty = needed + 1;
+                      setEventOrders(updated);
+                      markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
+                    }}
+                  >
+                    ＋
+                  </button>
+                </td>
 
-            {/* ✅ 대리완료 */}
-            <div className="qty-group">
-              <span className="qty-label">완료</span>
-              <div className="qty-controls">
-                <button className="qty-btn" onClick={() => {
-                  const updated = [...eventOrders];
-                  updated[idx].proxy_qty = Math.max(0, proxy - 1);
-                  updated[idx].needed_qty = needed + 1;
-                  setEventOrders(updated);
-                  markAsChanged(row.option_name);
-                }}>−</button>
-                <input
-                  type="number"
-                  value={proxy}
-                  min="0"
-                  className="qty-input"
-                  onChange={(e) => {
-                    const newValue = Number(e.target.value);
-                    const diff = newValue - proxy;
-                    const updated = [...eventOrders];
-                    updated[idx].proxy_qty = newValue;
-                    updated[idx].needed_qty = Math.max(0, needed - diff);
-                    setEventOrders(updated);
-                    markAsChanged(row.option_name);
-                  }}
-                />
-                <button className="qty-btn" onClick={() => {
-                  const updated = [...eventOrders];
-                  updated[idx].proxy_qty = proxy + 1;
-                  updated[idx].needed_qty = Math.max(0, needed - 1);
-                  setEventOrders(updated);
-                  markAsChanged(row.option_name);
-                }}>＋</button>
-              </div>
-            </div>
-          </div>
-        </td>
+                {/* 대리완료 */}
+                <td className="qty-cell2 hide-on-mobile">
+                  <button
+                    className="qty-btn"
+                    onClick={() => {
+                      const updated = [...eventOrders];
+                      updated[idx].proxy_qty = Math.max(0, proxy - 1);
+                      updated[idx].needed_qty = needed + 1;
+                      setEventOrders(updated);
+                      markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
+                    }}
+                  >
+                    −
+                  </button>
 
+                  <input
+                    type="number"
+                    value={proxy}
+                    min="0"
+                    className="qty-input"
+                    onChange={(e) => {
+                      const newValue = Number(e.target.value);
+                      const diff = newValue - proxy;
 
-                {/* 📦 수령완료 */}
+                      const updated = [...eventOrders];
+                      updated[idx].proxy_qty = newValue;
+                      updated[idx].needed_qty = Math.max(0, needed - diff);
+
+                      setEventOrders(updated);
+                      markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
+                    }}
+                  />
+
+                  <button
+                    className="qty-btn"
+                    onClick={() => {
+                      const updated = [...eventOrders];
+                      updated[idx].proxy_qty = proxy + 1;
+                      updated[idx].needed_qty = Math.max(0, needed - 1);
+
+                      setEventOrders(updated);
+                      markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
+                    }}
+                  >
+                    ＋
+                  </button>
+                </td>
+
+                {/* 수령완료 */}
                 <td className="qty-cell hide-on-mobile">
                   <button
                     className="qty-btn"
                     onClick={() => {
                       const updated = [...eventOrders];
                       const newReceived = Math.max(0, received - 1);
+
                       updated[idx].received_qty = newReceived;
                       updated[idx].proxy_qty = proxy + 1;
+
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
                     }}
                   >
                     −
                   </button>
+
                   <input
                     type="number"
                     value={received}
@@ -419,31 +355,36 @@ function OrderTable({
                     onChange={(e) => {
                       const newValue = Number(e.target.value);
                       const diff = newValue - received;
+
                       const updated = [...eventOrders];
                       updated[idx].received_qty = newValue;
                       updated[idx].proxy_qty = Math.max(0, proxy - diff);
+
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
                     }}
                   />
+
                   <button
                     className="qty-btn"
                     onClick={() => {
                       const updated = [...eventOrders];
                       const newReceived = received + 1;
+
                       updated[idx].received_qty = newReceived;
                       updated[idx].proxy_qty = Math.max(0, proxy - 1);
+
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
                     }}
                   >
                     ＋
                   </button>
                 </td>
 
-                <td 
-                className="hide-on-mobile"
-                style={{ textAlign: "center" }}>
+                <td className="hide-on-mobile" style={{ textAlign: "center" }}>
                   {total}
                 </td>
               </tr>
@@ -452,7 +393,7 @@ function OrderTable({
         </tbody>
       </table>
 
-      {/* ✅ 옵션 추가 입력창 복원 */}
+      {/* 옵션 추가 */}
       <div
         className="hide-on-mobile"
         style={{
@@ -474,6 +415,7 @@ function OrderTable({
             borderRadius: "6px",
           }}
         />
+
         <input
           type="number"
           placeholder="구매필요 수량"
@@ -487,6 +429,7 @@ function OrderTable({
             textAlign: "center",
           }}
         />
+
         <button className="mc-btn mc-btn-blue" onClick={handleAddOption}>
           항목 추가
         </button>
@@ -496,12 +439,17 @@ function OrderTable({
         <p className="last-saved">마지막 저장 시각: {lastSavedTime}</p>
       )}
 
+      {/* 자동 저장이므로 '저장하기' 대신 확인 버튼 */}
       <div className="order-bottom-actions">
-        <button className="mc-btn mc-btn-green hide-on-mobile" onClick={handleSort}>
+        <button className="mc-btn mc-btn-green" onClick={handleSort}>
           오름차순 정렬
         </button>
-        <button className="mc-btn mc-btn-green" onClick={handleSave}>
-          저장하기
+
+        <button
+          className="mc-btn mc-btn-green"
+          onClick={() => setHighlightedOptions([])}
+        >
+          확인하기
         </button>
       </div>
     </div>
