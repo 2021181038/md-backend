@@ -202,14 +202,10 @@
    🔹 수량 조절 버튼
 ============================= */
 
-.qty-cell,
-.qty-cell1,
-.qty-cell2 {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
+.qty-cell, .qty-cell1, .qty-cell2 {
+  flex-direction: column;
 }
+
 
 .qty-cell input,
 .qty-input {
