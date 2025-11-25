@@ -8,6 +8,10 @@
   background-color: #fafafa;
 }
 
+/* =============================
+   🔹 이벤트 목록
+============================= */
+
 .event-list-section {
   background-color: #ffffff;
   padding: 10px;
@@ -26,7 +30,6 @@
   margin-bottom: 12px;
 }
 
-/* ���λ맂 �대깽�� 紐⑸줉留� grid �곸슜 */
 .event-list-section .product-list {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -55,7 +58,7 @@
   border-color: #3b82f6;
 }
 
-/* �섎㉧吏� 由ъ뒪�몃뒗 湲곗〈泥섎읆 flex column */
+/* 상품리스트 공통 레이아웃 */
 .product-list {
   list-style: none;
   padding: 0;
@@ -65,23 +68,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-/* 諛섏쓳�� */
-@media (max-width: 1200px) {
-  .event-list-section .product-list {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-@media (max-width: 900px) {
-  .event-list-section .product-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (max-width: 600px) {
-  .event-list-section .product-list {
-    grid-template-columns: 1fr;
-  }
 }
 
 .product-list li {
@@ -103,6 +89,27 @@
   border-bottom: none;
 }
 
+/* 이벤트 목록 반응형 */
+@media (max-width: 1200px) {
+  .event-list-section .product-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .event-list-section .product-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .event-list-section .product-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================
+   🔹 주문 + 구매자 메인 레이아웃
+============================= */
+
 .order-content {
   display: flex;
   gap: 24px;
@@ -119,6 +126,7 @@
 .order-left-panel {
   flex: 1.1;
 }
+
 .order-right-panel {
   flex: 1;
 }
@@ -137,6 +145,10 @@
   color: #777;
 }
 
+/* =============================
+   🔹 테이블 기본 스타일
+============================= */
+
 .order-table {
   width: 100%;
   border-collapse: collapse;
@@ -145,7 +157,6 @@
   overflow: hidden;
   margin-top: 10px;
   font-size: 14px;
-  
 }
 
 .order-table th {
@@ -157,19 +168,49 @@
 
 .order-table td {
   text-align: left;
+  padding: 10px;
 }
 
 .order-table tr:nth-child(even) {
   background-color: #fafafa;
 }
 
-.qty-cell {
-  display: flex;             /* 내부 요소들을 한 줄로 정렬 */
-  justify-content: center;   /* 가운데 정렬 */
-  align-items: center;       /* 세로 가운데 정렬 */
-  gap: 6px;                  /* 버튼과 인풋 사이 여백 */
+/* TYPE / SUB 라인 구분 */
+.type-line {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
 }
 
+.sub-line {
+  color: #666;
+  font-size: 14px;
+}
+
+/* 옵션명 컬럼 */
+.order-table .option-name {
+  max-width: 250px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* =============================
+   🔹 수량 조절 버튼
+============================= */
+
+/* 데스크탑에서도 수량 조절을 가로 정렬로 고정 */
+.qty-cell,
+.qty-cell1,
+.qty-cell2 {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+
+.qty-cell input,
 .qty-input {
   width: 50px;
   text-align: center;
@@ -196,6 +237,10 @@
   transform: translateY(-1px);
 }
 
+/* =============================
+   🔹 버튼 공통
+============================= */
+
 .mc-btn {
   padding: 7px 14px;
   border: none;
@@ -216,25 +261,28 @@
   background-color: #3e6d9c;
   color: white;
 }
-.mc-btn-blue:hover {
-  background-color: #0d47a1;
-}
 
 .mc-btn-green {
   background-color: #4a764c;
-  color: white;
-}
-.mc-btn-green:hover {
-  background-color: #1b5e20;
 }
 
 .mc-btn-red {
   background-color: #e74c3c;
-  color: white;
 }
-.mc-btn-red:hover {
-  background-color: #c0392b;
+
+.delete-btn {
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 14px;
 }
+
+.delete-btn:hover {
+  background-color: #ffb3b3;
+}
+
+/* =============================
+   🔹 모달
+============================= */
 
 .modal-overlay {
   position: fixed;
@@ -245,10 +293,10 @@
   background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* ✅ 중앙 정렬 → 상단 정렬로 변경 */
+  align-items: flex-start;
   padding-top: 60px;
   z-index: 1000;
-  overflow-y: auto; /* ✅ 오버레이 자체도 스크롤 가능하게 */
+  overflow-y: auto;
 }
 
 .modal-container {
@@ -256,581 +304,19 @@
   border-radius: 10px;
   width: 90%;
   max-width: 1100px;
-  max-height: 90vh; /* ✅ 높이 고정 대신 최대 높이 */
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.modal-header {
-  padding: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.modal-header h3 {
-  font-size: 18px;
-  margin-bottom: 8px;
-}
-
-.modal-header input {
-  width: 100%;
-  margin-top: 8px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  min-height: 0; /* ✅ flex 컨테이너 안에서 스크롤 정상 작동시키는 핵심 */
-}
-
-.modal-footer-fixed {
-  position: sticky;
-  bottom: 0;
-  background: #fff;
-  padding: 15px 20px;
-  border-top: 1px solid #eee;
-  text-align: right;
-}
-
-.highlight-row {
-  background-color: #ffe3e3 !important;
-  transition: background-color 0.3s ease;
-}
-
-.delete-cell {
-  width: 50px;
-  text-align: center;
-}
-
-.delete-btn {
-  border-radius: 6px;
-  padding: 4px 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
-}
-
-.delete-btn:hover {
-  background-color: #ffb3b3;
-  transform: scale(1.05);
-}
-
-@media (max-width: 1000px) {
-  .order-content {
-    flex-direction: column;
-  }
-}
-
-.agent-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.agent-section-title {
-  margin-top: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #333;
-  text-align: left;
-}
-
-.agent-item {
-  display: flex;
-  flex-direction: column;
-  text-align: left !important;
-  align-items: flex-start !important;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.agent-item:hover {
-  background-color: #f8fbff;
-}
-
-.agent-row {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  padding: 8px 4px;
-}
-
-.agent-info {
-  font-size: 14px;
-  color: #333;
-}
-
-.agent-receive-btn {
-  padding: 12px 8px !important;
-  font-size: 14px !important;
-}
-
-.agent-item-detail {
-  margin-top: 6px;
-  margin-left: 10px;
-  background: #f9f9f9;
-  border-radius: 6px;
-  padding: 6px 10px;
-  width: 95%;
-  transition: all 0.2s ease;
-}
-
-.agent-item-line {
-  font-size: 13px;
-  color: #444;
-  margin-bottom: 3px;
-}
-
-.agent-item-option {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0;
-  font-size: 14px;
-}
-
-.option-name {
-  flex: 1;
-  text-align: left;
-  color: #333;
-}
-
-.option-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.qty-number {
-  min-width: 20px;
-  text-align: center;
-  font-weight: 600;
-  color: #333;
-}
-
-.agent-item-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.status-select {
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-size: 13px;
-  background-color: #f7f7f7;
-  cursor: pointer;
-}
-
-.status-select:hover {
-  background-color: #eef5ff;
-}
-
-.status-select:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.mc-btn-red {
-  background-color: #e74c3c !important;
-  color: white !important;
-  transition: background-color 0.2s ease;
-}
-
-.mc-btn-red:hover {
-  background-color: #c0392b !important;
-}
-
-.delete-icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  padding: 4px 6px;
-  color: #e74c3c;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.delete-icon-btn:hover {
-  background-color: #fdecea;
-  color: #c0392b;
-  transform: scale(1.1);
-}
-
-.agent-info-wrapper {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  align-items: center;
-}
-
-.agent-info-left {
-  font-size: 14px;
-  color: #333;
-  text-align: left;
-}
-
-.agent-info-right {
-  font-size: 13px;
-  color: #666;
-  font-style: italic;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.order-bottom-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-
-/* ���λ맂 �대깽�� 紐⑸줉�� 諛곌꼍 �� �쒓굅 */
-.event-list-section .product-list {
-  border: none !important;
-  background: transparent !important;
-}
-
-.event-list-section .product-list li {
-  border: 1px solid #ddd; /* 媛� 移대뱶留� �뚮몢由� �좎� */
-}
-
-/* 援щℓ�� 異붽� 紐⑤떖 �꾩껜 �곸뿭 */
-.modal-container h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-/* 媛� �낅젰 洹몃９ */
-.modal-body label {
-  display: block;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 6px;
-  font-size: 14px;
-}
-
-.modal-body select,
-.modal-body input[type="text"],
-.modal-body input[type="number"] {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.modal-body select:focus,
-.modal-body input:focus {
-  border-color: #3b82f6;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-/* 援щℓ 紐⑸줉 �곸뿭 */
-.modal-body .purchase-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 300px;
-  overflow-y: auto;
-  background: #fafafa;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px;
-}
-
-.modal-body .purchase-list div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 6px 10px;
-  transition: background 0.2s ease;
-}
-
-.modal-body .purchase-list div:hover {
-  background-color: #f0f7ff;
-}
-
-.modal-body .purchase-list span {
-  flex: 1;
-  font-size: 14px;
-  color: #333;
-}
-
-/* �섎웾 �낅젰移� */
-.modal-body .purchase-list input[type="number"] {
-  width: 60px;
-  text-align: center;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 3px 0;
-}
-
-/* �섎떒 踰꾪듉 */
-.modal-footer-fixed button {
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.modal-footer-fixed {
-  border-top: 1px solid #eee;
-  padding-top: 15px;
-}
-
-/* �ㅽ겕濡ㅻ컮 �덉걯寃� */
-.modal-body .purchase-list::-webkit-scrollbar {
-  width: 6px;
-}
-.modal-body .purchase-list::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 3px;
-}
-.modal-body .purchase-list::-webkit-scrollbar-thumb:hover {
-  background-color: #999;
-}
-
-/* �됰꽕�� �낅젰移몃쭔 媛�濡� �ш린 以꾩씠湲� */
-.modal-body input[type="text"] {
-  width: 98%; /* 湲곕낯 100% �� 60% �뺣룄濡� 以꾩엫 */
-  max-width: 1400px; /* �덈Т �볦뼱吏�吏� �딄쾶 �쒗븳 */
-}
-
-/* �섎졊 �� / �섎졊 �꾨즺 由ъ뒪�� �믪씠 怨좎젙 諛� �ㅽ겕濡� �곸슜 */
-.agent-section-title {
-  margin-bottom: 8px;
-}
-
-/* 怨듯넻 wrapper */
-.agent-list-wrapper {
-  max-height: 400px; /* �뵻 �먰븯�� �믪씠濡� 議곗젙 (��: 350~450px) */
-  overflow-y: auto;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  padding: 10px;
-  background-color: #fff;
-}
-
-/* �대� 由ъ뒪�� �ㅽ��� */
-.agent-list-wrapper ul.product-list {
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-.agent-list-wrapper ul.product-list li {
-  border-bottom: 1px solid #f1f1f1;
-  padding: 8px 10px;
-  border-radius: 6px;
-}
-
-.agent-list-wrapper ul.product-list li:hover {
-  background-color: #f9fbff;
-}
-
-/* �ㅽ겕濡ㅻ컮 �덉걯寃� */
-.agent-list-wrapper::-webkit-scrollbar {
-  width: 8px;
-}
-.agent-list-wrapper::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 4px;
-}
-.agent-list-wrapper::-webkit-scrollbar-thumb:hover {
-  background-color: #999;
-}
-
-/* �섎졊 �� / �섎졊 �꾨즺 �꾩껜 諛뺤뒪 怨듯넻 �ㅽ��� */
-.agent-section-box {
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  padding: 16px 18px;
-  margin-top: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  height: 400px; /* �뵻 怨좎젙 �믪씠 (�� �� �숈씪�섍쾶 �ㅼ젙) */
-  display: flex;
-  flex-direction: column;
-}
-
-/* �대� �ㅽ겕濡� �곸뿭 */
-.agent-list-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  margin-top: 8px;
-  border-top: 1px solid #f2f2f2;
-  padding-top: 8px;
-}
-
-/* �ㅽ겕濡ㅻ컮 �ㅽ��� */
-.agent-list-wrapper::-webkit-scrollbar {
-  width: 8px;
-}
-.agent-list-wrapper::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 4px;
-}
-.agent-list-wrapper::-webkit-scrollbar-thumb:hover {
-  background-color: #999;
-}
-
-/* 由ъ뒪�� ��ぉ �ㅽ��� (�� 源붾걫�섍쾶 �뺣━) */
-.agent-list-wrapper ul.product-list {
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-.agent-list-wrapper ul.product-list li {
-  border-bottom: 1px solid #eee;
-  padding: 10px;
-  border-radius: 6px;
-  transition: background 0.2s ease;
-}
-
-.agent-list-wrapper ul.product-list li:hover {
-  background-color: #f9fbff;
-}
-
-/* 蹂묓빀 �� �덈줈 異붽��� �듭뀡 �섏씠�쇱씠�� */
-.highlight-merged {
-  background-color: #de9696 !important;
-}
-
-.agent-item-option input[type="checkbox"] {
-  margin-right: 6px;
-  transform: scale(1.1);
-}
-
-.agent-item-option {
-  transition: all 0.2s ease;
-}
-
-/* 📦 새 이벤트 등록 모달의 상품 리스트 스크롤 처리 */
-.modal-body .product-list {
-  max-height: 300px; /* 스크롤 높이 제한 (필요 시 조정 가능) */
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 6px;
-  background-color: #fff;
-}
-
-/* 스크롤바 스타일 (선택사항) */
-.modal-body .product-list::-webkit-scrollbar {
-  width: 6px;
-}
-.modal-body .product-list::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 3px;
-}
-.modal-body .product-list::-webkit-scrollbar-thumb:hover {
-  background-color: #999;
-}
-
-/* =============================
-   🔹 주문 내역 + 대리 구매자 레이아웃
-============================= */
-.order-main-section {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  align-items: flex-start;
-  margin-top: 20px;
-}
-
-/* 왼쪽(주문내역) 패널 */
-.order-left-panel {
-  flex: 1.8;
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
-  min-height: 600px;
-
-  /* ✅ 추가 */
-  display: block; /* 테이블 레이아웃이 깨지지 않도록 flex 영향 제거 */
-}
-
-
-/* 오른쪽(대리 구매자) 패널 */
-.order-right-panel {
-  flex: 1;
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
-  min-height: 600px;
-  overflow-y: auto;
 }
 
 
 /* =============================
-   🔹 모바일 숨김 전용 클래스
+   🔥 모바일 테이블 완전 정상화 패치
 ============================= */
-@media (max-width: 900px) {
-  .hide-on-mobile {
-    display: none !important;
-  }
-}
 
-/* =============================
-   🔹 반응형 정리
-============================= */
 @media (max-width: 900px) {
 
-  .mobile-qty-row {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 16px; /* 두 그룹 사이 간격 */
-    margin-top: 6px;
-    overflow-x: auto;
-  }
-.qty-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-.qty-controls {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-.qty-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #333;
-  }
-
-  /* 전체 레이아웃 */
   .order-main-section {
     flex-direction: column;
   }
@@ -840,130 +326,66 @@
     width: 100%;
     min-height: auto;
     padding: 14px;
-    border-radius: 10px;
   }
 
-  .order-right-panel {
-    margin-top: 20px;
-  }
-
-  /* 제목, 버튼, 글자 크기 */
-  .order-left-panel h3,
-  .order-right-panel h3 {
-    font-size: 15px;
-  }
-
+  /* 🔥 테이블을 block + horizontal scroll 로 변경 */
   .order-table {
-    font-size: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    border: none;
+    width: 100%;
+    display: block;
     overflow-x: auto;
+    white-space: nowrap;
+    border-collapse: collapse;
   }
 
   .order-table thead {
-    display: none; /* 헤더 숨김 */
+    display: table-header-group;
+  }
+
+  .order-table tbody {
+    display: table-row-group;
   }
 
   .order-table tr {
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    padding: 10px 12px;
+    display: table-row;
   }
 
-  .order-table td {
-    display: block;
-    text-align: left;
-    border: none;
-    padding: 4px 0;
+  .order-table td,
+  .order-table th {
+    display: table-cell;
+    white-space: normal;
+    padding: 8px 6px;
   }
 
-  /* 옵션명 */
-  .option-name {
-    font-weight: 600;
+  .order-table .option-name {
+    max-width: 150px;
+    word-break: break-word;
+    line-height: 1.3;
     background-color: #d7e0ed;
-    font-size: 13px;
-    border-radius: 10px; 
-    line-height: 1.4;
-    margin-bottom: 6px;
-    text-indent: 6px;
-    word-break: keep-all;
+    border-radius: 6px;
+    padding: 6px;
   }
 
-  /* 버튼 줄 */
   .qty-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 15px;
-    border-radius: 6px;
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
   }
 
   .qty-input {
-    width: 42px;
-    text-align: center;
-    font-size: 14px;
-    border-radius: 6px;
+    width: 38px;
+    font-size: 12px;
   }
 
-  /* 하단 버튼 */
   .order-bottom-actions {
     flex-direction: column;
-    gap: 8px;
-    margin-top: 14px;
+    gap: 10px;
   }
 
   .order-bottom-actions button {
     width: 100%;
   }
-
-  .last-saved {
-    text-align: center;
-    font-size: 12px;
-    color: #555;
-  }
 }
 
-.show-on-mobile {
-  display: none !important;
-}
-
-/* 900px 이하 (모바일)일 때만 표시 */
-@media (max-width: 900px) {
-  .show-on-mobile {
-    display: block !important;
-  }
-}
-
-/* 옵션명 칼럼 줄이기 */
-.order-table .option-name {
-  max-width: 250px;  /* 🔥 기존보다 좁게 */
-  white-space: normal;   /* 줄바꿈 허용 */
-  word-break: break-word; /* 단어 단위 줄바꿈 */
-}
-
-/* TYPE 줄 스타일 */
-.type-line {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 2px;
-}
-
-/* OPTION/MEMBER 줄 스타일 */
-.sub-line {
-  color: #666;
-  font-size: 14px;
-}
-
-.qty-cell1,
-.qty-cell2,
-.qty-cell {
-  width: 120px; /* 원하는 값 */          /* 내부 요소들을 한 줄로 정렬 */
-  justify-content: center;   /* 가운데 정렬 */
-  align-items: center;
-  margin-left: 20px;      /* 세로 가운데 정렬 */
-  gap: 6px; 
-}
+/* =============================
+   끝
+============================= */
