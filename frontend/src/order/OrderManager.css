@@ -7,6 +7,10 @@
   padding-bottom: 80px;
   background-color: #fafafa;
 }
+.highlight-merged {
+  background-color: #ffe3e3 !important;
+  transition: background-color 0.3s ease;
+}
 
 /* =============================
    🔹 이벤트 목록
