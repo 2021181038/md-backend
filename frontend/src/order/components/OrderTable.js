@@ -201,12 +201,12 @@ function OrderTable({
       <table className="order-table">
         <thead>
           <tr>
-            <th>삭제</th>
+            <th className="hide-on-mobile ">삭제</th>
             <th>옵션명</th>
             <th>구매필요</th>
             <th>대리완료</th>
-            <th>수령완료</th>
-            <th>전체</th>
+            <th className="hide-on-mobile ">수령완료</th>
+            <th className="hide-on-mobile ">전체</th>
           </tr>
         </thead>
 
@@ -252,7 +252,7 @@ function OrderTable({
 
 
                 {/* 구매필요 */}
-                <td className="qty-cell1 hide-on-mobile">
+                <td className="qty-cell1 ">
                   <button
                     className="qty-btn"
                     onClick={() => {
@@ -295,7 +295,7 @@ function OrderTable({
                 </td>
 
                 {/* 대리완료 */}
-                <td className="qty-cell2 hide-on-mobile">
+                <td className="qty-cell2">
                   <button
                     className="qty-btn"
                     onClick={() => {
