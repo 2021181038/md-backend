@@ -198,17 +198,14 @@
    🔹 수량 조절 버튼
 ============================= */
 
-/* 데스크탑에서도 수량 조절을 가로 정렬로 고정 */
 .qty-cell,
 .qty-cell1,
 .qty-cell2 {
-  display: flex !important;
-  flex-direction: row !important;
+  display: flex;
   justify-content: center;
   align-items: center;
   gap: 6px;
 }
-
 
 .qty-cell input,
 .qty-input {
@@ -316,7 +313,7 @@
 ============================= */
 
 @media (max-width: 900px) {
-
+  
   .order-main-section {
     flex-direction: column;
   }
