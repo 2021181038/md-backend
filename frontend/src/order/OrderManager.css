@@ -304,8 +304,16 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;  /* ← 변경 */
 }
+
+/* 모달 내부 스크롤 적용 */
+.modal-body {
+  flex: 1;
+  overflow-y: auto;   /* ← 추가 */
+  padding-right: 10px; 
+}
+
 
 
 /* =============================
