@@ -1,11 +1,22 @@
+// 옵션 추가 모달
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
 
-function AddOptionModal({ closeModal, eventOrders, agent, setAgents, setEventOrders, selectedEvent }) {
+function AddOptionModal({
+  closeModal,
+  eventOrders,
+  agent,
+  setAgents,
+  setEventOrders,
+  selectedEvent,
+}) {
   const [localQty, setLocalQty] = useState(
     eventOrders.reduce((acc, o) => ({ ...acc, [o.option_name]: 0 }), {})
   );
 
+  // ================================
+  // 저장 로직
+  // ================================
   const handleConfirm = async () => {
     let updatedOrders = [...eventOrders];
 
@@ -16,7 +27,8 @@ function AddOptionModal({ closeModal, eventOrders, agent, setAgents, setEventOrd
       const target = updatedOrders.find((o) => o.option_name === optionName);
       if (!target) continue;
 
-      const newNeeded = Math.max(0, target.needed_qty - qty);
+      // 🔥 needed_qty 감소 (0 미만 허용)
+      const newNeeded = target.needed_qty - qty;
       const newProxy = (target.proxy_qty ?? 0) + qty;
 
       target.needed_qty = newNeeded;
@@ -49,37 +61,48 @@ function AddOptionModal({ closeModal, eventOrders, agent, setAgents, setEventOrd
     await supabase.from("agents").update({ items: updatedItems }).eq("id", agent.id);
 
     setAgents((prev) =>
-      prev.map((a) => (a.id === agent.id ? { ...a, items: updatedItems } : a))
+      prev.map((a) =>
+        a.id === agent.id ? { ...a, items: updatedItems } : a
+      )
     );
 
     setEventOrders(updatedOrders);
     closeModal();
   };
 
+  // ================================
+  // UI
+  // ================================
   return (
     <div className="modal-overlay simple">
       <div className="modal-container simple">
         <h2 className="modal-title">옵션 추가</h2>
 
-        <div>
+        <div className="option-list">
           {eventOrders.map((o) => (
-            <div key={o.option_name} style={{ marginBottom: "8px" }}>
-              <strong>{o.option_name}</strong>
+            <div className="option-item-row" key={o.option_name}>
+              <span className="option-name">{o.option_name}</span>
+
               <input
                 type="number"
-                min="0"
+                className="option-input"
                 value={localQty[o.option_name]}
+                placeholder="0"
                 onChange={(e) =>
-                  setLocalQty({ ...localQty, [o.option_name]: Number(e.target.value) })
+                  setLocalQty({
+                    ...localQty,
+                    [o.option_name]: Number(e.target.value),
+                  })
                 }
-                style={{ marginLeft: "10px", width: "60px" }}
               />
             </div>
           ))}
         </div>
 
         <div className="modal-actions">
-          <button onClick={closeModal}>취소</button>
+          <button className="mc-btn" onClick={closeModal}>
+            취소
+          </button>
           <button className="mc-btn mc-btn-blue" onClick={handleConfirm}>
             확인
           </button>

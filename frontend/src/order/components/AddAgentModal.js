@@ -50,7 +50,7 @@ function AddAgentModal({
       nickname: newAgent.nickname,
       status: newAgent.status,
       manager: newAgent.manager,
-      fee: Number(newAgent.fee) || 0,
+      fee: newAgent.fee.trim() === "" ? 0 : Number(newAgent.fee),
       is_received: false,
       items: filledOptions,
     };
@@ -163,6 +163,7 @@ function AddAgentModal({
           <input
             type="number"
             value={newAgent.fee}
+            placeholder="선택 입력 !!! 꼭 입력 안해도 돼"
             onChange={(e) =>
               setNewAgent({ ...newAgent, fee: e.target.value })
             }

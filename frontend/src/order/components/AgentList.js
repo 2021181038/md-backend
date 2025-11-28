@@ -365,11 +365,13 @@ const updateQty = async (agentId, itemIndex, newQty) => {
       <input
         type="number"
         className="agent-fee-input"
-        value={a.fee || ""}
+        value={a.fee === 0 ? "" : a.fee}
+        placeholder={a.fee === 0 ? "수고비입력 X" : ""}
         onClick={(e) => e.stopPropagation()}
         onChange={async (e) => {
-          const newFee = Number(e.target.value);
+          const newFee = Number(e.target.value) || 0;
           await supabase.from("agents").update({ fee: newFee }).eq("id", a.id);
+
           setAgents((prev) =>
             prev.map((ag) =>
               ag.id === a.id ? { ...ag, fee: newFee } : ag
@@ -514,8 +516,6 @@ const updateQty = async (agentId, itemIndex, newQty) => {
     </div>
   )}
 </li>
-
-
                 ))}
             </ul>
           ) : (
