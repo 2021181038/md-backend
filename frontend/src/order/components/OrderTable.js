@@ -257,7 +257,8 @@ function OrderTable({
                     className="qty-btn"
                     onClick={() => {
                       const updated = [...eventOrders];
-                      updated[idx].needed_qty = Math.max(0, needed - 1);
+                      updated[idx].needed_qty = needed - 1;
+
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
                       autoSave(updated[idx]); // 🔥 자동 저장
@@ -300,7 +301,7 @@ function OrderTable({
                     className="qty-btn"
                     onClick={() => {
                       const updated = [...eventOrders];
-                      updated[idx].proxy_qty = Math.max(0, proxy - 1);
+                      updated[idx].proxy_qty = proxy - 1;
                       updated[idx].needed_qty = needed + 1;
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
@@ -334,7 +335,8 @@ function OrderTable({
                     onClick={() => {
                       const updated = [...eventOrders];
                       updated[idx].proxy_qty = proxy + 1;
-                      updated[idx].needed_qty = Math.max(0, needed - 1);
+                      updated[idx].needed_qty = needed - 1;
+
 
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
@@ -351,7 +353,7 @@ function OrderTable({
                     className="qty-btn"
                     onClick={() => {
                       const updated = [...eventOrders];
-                      const newReceived = Math.max(0, received - 1);
+                      const newReceived = received - 1;
 
                       updated[idx].received_qty = newReceived;
                       updated[idx].proxy_qty = proxy + 1;
@@ -390,7 +392,7 @@ function OrderTable({
                       const newReceived = received + 1;
 
                       updated[idx].received_qty = newReceived;
-                      updated[idx].proxy_qty = Math.max(0, proxy - 1);
+                      updated[idx].proxy_qty = proxy - 1;
 
                       setEventOrders(updated);
                       markAsChanged(row.option_name);

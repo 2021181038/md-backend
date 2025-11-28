@@ -1,3 +1,9 @@
+.order-main-section {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+}
+
 .order-manager-container {
   display: flex;
   flex-direction: column;
