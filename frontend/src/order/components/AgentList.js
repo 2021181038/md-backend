@@ -23,8 +23,7 @@ function AgentList({
   }
 
   // ✅ 일부수령 (체크 시 바로 반영, 수량 포함)
-  // ✅ 일부수령 토글 기능 (체크/해제 둘 다 반영)
-const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
+const handlePartialReceive = async (agentId, itemIndex, optionName, qty, newValue) => {
   const updatedOrders = [...eventOrders];
   const target = updatedOrders.find((o) => o.option_name === optionName);
   if (!target) return;
@@ -32,50 +31,24 @@ const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
   const proxy = target.proxy_qty ?? 0;
   const received = target.received_qty ?? 0;
 
-  // 🔥 일부수령 시: proxy ↓ / received ↑
-  const newProxy = newValue
-    ? Math.max(0, proxy - qty)
-    : proxy + qty;
+  // 음수 허용 버전
+  const newProxy = newValue ? proxy - qty : proxy + qty;
+  const newReceived = newValue ? received + qty : received - qty;
 
-  const newReceived = newValue
-    ? received + qty
-    : Math.max(0, received - qty);
-
-  // ❗ 구매필요는 변경 없음
-  const newNeeded = target.needed_qty ?? target.quantity ?? 0;
-
-  // 프론트 반영
   target.proxy_qty = newProxy;
   target.received_qty = newReceived;
-  target.needed_qty = newNeeded;
-  target.quantity = newNeeded; 
   setEventOrders(updatedOrders);
 
-  // DB 반영
-  await supabase
-    .from("orders")
-    .update({
-      proxy_qty: newProxy,
-      received_qty: newReceived,
-      needed_qty: newNeeded,
-      quantity: newNeeded,
-    })
-    .eq("event_name", selectedEvent)
-    .eq("option_name", optionName);
-
-  // Agent item 상태 업데이트
+  // 🔥 여기! option_name 기준 → index 기준
   const agent = agents.find((a) => a.id === agentId);
   if (agent) {
-    const updatedItems = agent.items.map((it) =>
-      it.option_name === optionName
+    const updatedItems = agent.items.map((it, idx) =>
+      idx === itemIndex
         ? { ...it, is_partially_received: newValue }
         : it
     );
 
-    await supabase
-      .from("agents")
-      .update({ items: updatedItems })
-      .eq("id", agentId);
+    await supabase.from("agents").update({ items: updatedItems }).eq("id", agentId);
 
     setAgents((prev) =>
       prev.map((a) =>
@@ -106,7 +79,7 @@ const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
         const received = target.received_qty ?? 0;
 
         // ✅ 대리완료 → 수령완료
-        const newProxy = Math.max(0, proxy - it.qty);
+        const newProxy = proxy - it.qty;
         const newReceived = received + it.qty;
 
         // ✅ 구매필요는 그대로 두기
@@ -183,8 +156,8 @@ const updateQty = async (agentId, itemIndex, newQty) => {
     .maybeSingle();
 
   if (order) {
-    const newProxy = Math.max(0, (order.proxy_qty ?? 0) + diff);
-    const newNeeded = Math.max(0, (order.needed_qty ?? 0) - diff); // 🔥 핵심
+    const newProxy = (order.proxy_qty ?? 0) + diff;
+    const newNeeded = (order.needed_qty ?? 0) - diff;
 
     await supabase
       .from("orders")
@@ -444,10 +417,10 @@ const updateQty = async (agentId, itemIndex, newQty) => {
         style={{ marginRight: "8px", cursor: "pointer" }}
         onClick={(e) => e.stopPropagation()}
         onChange={(e) => {
-          e.stopPropagation();
           const checked = e.target.checked;
-          handlePartialReceive(a.id, it.option_name, it.qty, checked);
+          handlePartialReceive(a.id, i, it.option_name, it.qty, checked);
         }}
+
       />
     )}
 
@@ -520,14 +493,14 @@ const updateQty = async (agentId, itemIndex, newQty) => {
       </button>
 
       <button
-        className="footer-btn blue"
-        onClick={(e) => {
-          e.stopPropagation();
-          openAddAgentModal();
-        }}
-      >
-        옵션 추가
-      </button>
+            className="mc-btn mc-btn-blue"
+            onClick={(e) => {
+              e.stopPropagation();
+              openAddOptionModal(a); 
+            }}
+          >
+            옵션 추가
+          </button>
 
       <button
         className="footer-btn green"
