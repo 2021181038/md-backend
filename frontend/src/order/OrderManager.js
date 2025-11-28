@@ -9,6 +9,7 @@ import AddAgentModal from "./components/AddAgentModal";
 import UploadEventModal from "./components/UploadEventModal";
 import MergeEventModal from "./components/MergeEventModal";
 import UploadMarginModal from "./components/UploadMarginModal";
+import AddOptionModal from "./components/AddOptionModal";
 
 function OrderManager() {
   const [eventList, setEventList] = useState([]);
@@ -20,10 +21,12 @@ function OrderManager() {
     upload: false,
     merge: false,
     addAgent: false,
+    addOption: false,
     margin: false,
   });
 
   const [highlightedOptions, setHighlightedOptions] = useState([]);
+  
 
   // ----------------------------------------------------
   // 이벤트 목록 불러오기
@@ -137,6 +140,7 @@ function OrderManager() {
           setEventOrders={setEventOrders}
           refreshCurrentEvent={refreshCurrentEvent}
           openAddAgentModal={() => setModal({ ...modal, addAgent: true })}
+          openAddOptionModal={(agent) => setModal({ ...modal, addOption: agent })}
         />
       </div>
 
@@ -175,6 +179,18 @@ function OrderManager() {
           refreshCurrentEvent={refreshCurrentEvent}
         />
       )}
+
+      {modal.addOption && (
+        <AddOptionModal
+          closeModal={() => setModal({ ...modal, addOption: false })}
+          agent={modal.addOption}
+          eventOrders={eventOrders}
+          setEventOrders={setEventOrders}
+          setAgents={setAgents}
+          selectedEvent={selectedEvent}
+        />
+      )}
+
     </div>
   );
 }

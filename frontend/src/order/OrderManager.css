@@ -401,3 +401,261 @@
 /* =============================
    끝
 ============================= */
+
+/* =============================
+   AddAgentModal 심플 디자인
+============================= */
+
+.modal-overlay.simple {
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 40px;
+}
+
+.modal-container.simple {
+  width: 430px;
+  background: white;
+  border-radius: 14px;
+  padding: 26px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.form-section label {
+  margin-top: 10px;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.form-section input,
+.form-section select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.modal-subtitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.option-list {
+  border: 1px solid #eee;
+  background: #fafafa;
+  padding: 10px;
+  border-radius: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.option-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #ececec;
+}
+
+.option-item:last-child {
+  border-bottom: none;
+}
+
+.option-item input {
+  width: 70px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+
+
+/* =============================
+   대리 구매 리스트 전용 스타일 (우선순위 보장)
+============================= */
+
+.order-right-panel .agent-item {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.order-right-panel .agent-item:hover {
+  background: #f8f8f8;
+}
+
+/* 상단 라인 */
+.order-right-panel .agent-header-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* 왼쪽 (닉네임 + 수고비 + 상태) */
+.order-right-panel .agent-left-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.order-right-panel .agent-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* 수고비 입력 */
+.order-right-panel .agent-fee-input {
+  width: 70px;
+  padding: 4px 6px;
+  font-size: 13px;
+  text-align: right;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* 상태 select */
+.order-right-panel .agent-status-select {
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+}
+
+/* 담당자 */
+.order-right-panel .agent-right-info {
+  font-size: 13px;
+  color: #666;
+}
+
+/* 옵션 리스트 전체 */
+.order-right-panel .agent-option-list {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+/* 옵션 1줄 */
+.order-right-panel .agent-option-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #f3f3f3;
+}
+
+.order-right-panel .opt-name {
+  font-size: 14px;
+}
+
+/* 수량 박스 */
+.order-right-panel .opt-qty-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* - / + 버튼 */
+.order-right-panel .qty-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  background: #fafafa;
+  font-size: 16px;
+}
+
+/* 숫자 */
+.order-right-panel .qty-num {
+  width: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* 하단 버튼 라인 */
+.order-right-panel .agent-footer-line {
+  display: flex;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+/* 삭제 버튼 */
+.order-right-panel .delete-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+}
+
+/* 아래 주요 버튼 */
+.order-right-panel .footer-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.footer-btn.blue {
+  background: #3067b0;
+}
+
+.footer-btn.green {
+  background: #3d7d3d;
+}
+
+.order-right-panel .agent-item {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+
+.agent-header-line {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e6e6e6;
+}
+.agent-option-list {
+  padding: 16px 0;
+  border-bottom: 1px solid #e6e6e6;
+}
+.agent-footer-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+
+/* 버튼의 검정 테두리/그림자 제거 */
+.footer-btn.blue,
+.footer-btn.green {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.order-right-panel .product-list {
+  align-items: flex-start !important;
+}

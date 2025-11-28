@@ -9,6 +9,7 @@ function AgentList({
   setEventOrders,
   refreshCurrentEvent,
   openAddAgentModal,
+  openAddOptionModal,
 }) {
   const [expandedId, setExpandedId] = useState(null);
   const [partialMode, setPartialMode] = useState(false);
@@ -28,27 +29,35 @@ const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
   const target = updatedOrders.find((o) => o.option_name === optionName);
   if (!target) return;
 
-  const needed = target.needed_qty ?? target.quantity ?? 0;
+  const proxy = target.proxy_qty ?? 0;
   const received = target.received_qty ?? 0;
 
-  // ✅ 체크 여부에 따라 수량 조정
-  const newNeeded = newValue
-    ? Math.max(0, needed - qty) // 일부수령 시
-    : needed + qty; // 취소 시 원상복귀
-  const newReceived = newValue ? received + qty : Math.max(0, received - qty);
+  // 🔥 일부수령 시: proxy ↓ / received ↑
+  const newProxy = newValue
+    ? Math.max(0, proxy - qty)
+    : proxy + qty;
+
+  const newReceived = newValue
+    ? received + qty
+    : Math.max(0, received - qty);
+
+  // ❗ 구매필요는 변경 없음
+  const newNeeded = target.needed_qty ?? target.quantity ?? 0;
 
   // 프론트 반영
-  target.needed_qty = newNeeded;
+  target.proxy_qty = newProxy;
   target.received_qty = newReceived;
-  target.quantity = newNeeded;
+  target.needed_qty = newNeeded;
+  target.quantity = newNeeded; 
   setEventOrders(updatedOrders);
 
   // DB 반영
   await supabase
     .from("orders")
     .update({
-      needed_qty: newNeeded,
+      proxy_qty: newProxy,
       received_qty: newReceived,
+      needed_qty: newNeeded,
       quantity: newNeeded,
     })
     .eq("event_name", selectedEvent)
@@ -63,13 +72,19 @@ const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
         : it
     );
 
-    await supabase.from("agents").update({ items: updatedItems }).eq("id", agentId);
+    await supabase
+      .from("agents")
+      .update({ items: updatedItems })
+      .eq("id", agentId);
 
     setAgents((prev) =>
-      prev.map((a) => (a.id === agentId ? { ...a, items: updatedItems } : a))
+      prev.map((a) =>
+        a.id === agentId ? { ...a, items: updatedItems } : a
+      )
     );
   }
 };
+
 
 
   // ✅ 수령 완료 (일부수령된 항목 제외)
@@ -130,8 +145,9 @@ const handlePartialReceive = async (agentId, optionName, qty, newValue) => {
 
   // ✅ 수량 업데이트
   // ✅ 수량 업데이트 (Agent + OrderTable 연동)
+// ✅ 수량 업데이트 (Agent + OrderTable 연동)
 const updateQty = async (agentId, itemIndex, newQty) => {
-  // 프론트에 반영
+  // 프론트 반영
   setAgents((prev) =>
     prev.map((ag) =>
       ag.id === agentId
@@ -150,39 +166,46 @@ const updateQty = async (agentId, itemIndex, newQty) => {
 
   const targetItem = agent.items[itemIndex];
   const oldQty = targetItem.qty ?? 0;
-  const diff = newQty - oldQty; // 변경된 수량 차이 계산
+  const diff = newQty - oldQty; // +1 또는 -1
 
-  // ✅ Supabase - agents 업데이트
+  // Supabase - agents 업데이트
   const updatedItems = agent.items.map((it, i) =>
     i === itemIndex ? { ...it, qty: newQty } : it
   );
   await supabase.from("agents").update({ items: updatedItems }).eq("id", agentId);
 
-  // ✅ Supabase - orders 반영
+  // Supabase - orders 반영
   const { data: order } = await supabase
     .from("orders")
-    .select("id, proxy_qty")
+    .select("id, proxy_qty, needed_qty")
     .eq("event_name", selectedEvent)
     .eq("option_name", targetItem.option_name)
     .maybeSingle();
 
   if (order) {
     const newProxy = Math.max(0, (order.proxy_qty ?? 0) + diff);
+    const newNeeded = Math.max(0, (order.needed_qty ?? 0) - diff); // 🔥 핵심
+
     await supabase
       .from("orders")
-      .update({ proxy_qty: newProxy })
+      .update({
+        proxy_qty: newProxy,
+        needed_qty: newNeeded,
+        quantity: newNeeded, // quantity = needed
+      })
       .eq("id", order.id);
 
-    // ✅ 프론트 eventOrders도 즉시 반영
+    // 프론트 eventOrders 업데이트
     setEventOrders((prev) =>
       prev.map((o) =>
         o.option_name === targetItem.option_name
-          ? { ...o, proxy_qty: newProxy }
+          ? { ...o, proxy_qty: newProxy, needed_qty: newNeeded, quantity: newNeeded }
           : o
       )
     );
   }
 };
+
 
 
   // ✅ 상태 변경
@@ -310,7 +333,7 @@ const updateQty = async (agentId, itemIndex, newQty) => {
             className="mc-btn mc-btn-blue"
             onClick={(e) => {
               e.stopPropagation();
-              openAddAgentModal();
+              openAddOptionModal(agent);
             }}
           >
             옵션 추가
@@ -355,65 +378,171 @@ const updateQty = async (agentId, itemIndex, newQty) => {
                 .filter((a) => !a.is_received)
                 .map((a) => (
                   <li
-                    key={a.id}
-                    className="agent-item"
-                    onClick={() =>
-                      setExpandedId(expandedId === a.id ? null : a.id)
-                    }
-                  >
-                    <div className="agent-row">
-                      <div className="agent-info-wrapper">
-                        <span className="agent-info-left" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-  <span>[{a.contact_type}] {a.nickname} -</span>
-  <select
-    value={a.status}
-    onClick={(e) => e.stopPropagation()}
-    onChange={(e) => {
-      e.stopPropagation();
-      handleStatusChange(a.id, e.target.value);
+  key={a.id}
+  className="agent-item"
+  onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}
+>
+  {/* ⭐ 상단: 연락수단 / 닉네임 / 수고비 / 결제상태 / 담당자 */}
+  <div className="agent-header-line">
+    <div className="agent-left-info">
+      <span className="agent-title">
+        [{a.contact_type}] {a.nickname} -
+      </span>
+
+      <input
+        type="number"
+        className="agent-fee-input"
+        value={a.fee || ""}
+        onClick={(e) => e.stopPropagation()}
+        onChange={async (e) => {
+          const newFee = Number(e.target.value);
+          await supabase.from("agents").update({ fee: newFee }).eq("id", a.id);
+          setAgents((prev) =>
+            prev.map((ag) =>
+              ag.id === a.id ? { ...ag, fee: newFee } : ag
+            )
+          );
+        }}
+      />
+
+      <select
+        className="agent-status-select"
+        value={a.status}
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => {
+          e.stopPropagation();
+          handleStatusChange(a.id, e.target.value);
+        }}
+      >
+        <option value="입금전">입금전</option>
+        <option value="입금완료">입금완료</option>
+        <option value="배송완료">배송완료</option>
+      </select>
+    </div>
+
+    <div className="agent-right-info">by {a.manager}</div>
+  </div>
+
+  {/* ⭐ 옵션 리스트 */}
+  {expandedId === a.id && (
+    <div className="agent-option-list">
+      {a.items.map((it, i) => (
+  <div
+    key={i}
+    className="agent-option-row"
+    style={{
+      textDecoration: it.is_partially_received ? "line-through" : "none",
+      opacity: it.is_partially_received ? 0.5 : 1,
     }}
-    className="status-select"
-    style={{ height: "24px", fontSize: "13px" }}
   >
-    <option value="입금전">입금전</option>
-    <option value="입금완료">입금완료</option>
-    <option value="배송완료">배송완료</option>
-  </select>
 
-  {/* ✅ 수고비 입력칸 (옆에 붙이기) */}
-  <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-    수고비(₩):
-    <input
-      type="number"
-      value={a.fee || 0}
-      onClick={(e) => e.stopPropagation()}
-      onChange={async (e) => {
-        const newFee = Number(e.target.value);
-        await supabase.from("agents").update({ fee: newFee }).eq("id", a.id);
-        const updated = agents.map((ag) =>
-          ag.id === a.id ? { ...ag, fee: newFee } : ag
-        );
-        setAgents(updated);
-      }}
-      style={{
-        width: "70px",
-        textAlign: "right",
-        border: "1px solid #ccc",
-        borderRadius: "4px",
-        padding: "2px 4px",
-        height: "20px",
-        fontSize: "13px",
-      }}
-    />
-  </label>
-</span>
+    {/* ✅ 일부수령 체크박스 */}
+    {partialMode && (
+      <input
+        type="checkbox"
+        checked={!!it.is_partially_received}
+        style={{ marginRight: "8px", cursor: "pointer" }}
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => {
+          e.stopPropagation();
+          const checked = e.target.checked;
+          handlePartialReceive(a.id, it.option_name, it.qty, checked);
+        }}
+      />
+    )}
 
-                        <span className="agent-info-right">by {a.manager}</span>
-                      </div>
-                      
-                    </div>
-                    {renderAgentDetail(a)}
-                  </li>
+    {/* 옵션명 */}
+    <span className="opt-name">{it.option_name}</span>
+
+    {/* 수량 조절 */}
+    <div className="opt-qty-box">
+      <button
+        className="qty-btn"
+        disabled={it.is_partially_received}
+        style={{
+          opacity: it.is_partially_received ? 0.4 : 1,
+          cursor: it.is_partially_received ? "not-allowed" : "pointer",
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (it.is_partially_received) return;
+          updateQty(a.id, i, it.qty - 1);
+        }}
+      >
+        −
+      </button>
+
+      <span className="qty-num">{it.qty}</span>
+
+      <button
+        className="qty-btn"
+        disabled={it.is_partially_received}
+        style={{
+          opacity: it.is_partially_received ? 0.4 : 1,
+          cursor: it.is_partially_received ? "not-allowed" : "pointer",
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (it.is_partially_received) return;
+          updateQty(a.id, i, it.qty + 1);
+        }}
+      >
+        ＋
+      </button>
+    </div>
+  </div>
+))}
+
+    </div>
+  )}
+
+  {/* ⭐ 하단 버튼들 */}
+  {expandedId === a.id && (
+    <div className="agent-footer-line">
+      <button
+        className="delete-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDelete(a.id);
+        }}
+      >
+        🗑
+      </button>
+
+      <button
+        className="footer-btn blue"
+        onClick={(e) => {
+          e.stopPropagation();
+          setPartialMode(!partialMode);
+        }}
+      >
+        {partialMode ? "일부수령 OFF" : "일부수령 ON"}
+      </button>
+
+      <button
+        className="footer-btn blue"
+        onClick={(e) => {
+          e.stopPropagation();
+          openAddAgentModal();
+        }}
+      >
+        옵션 추가
+      </button>
+
+      <button
+        className="footer-btn green"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleReceive(a);
+        }}
+      >
+        수령완료
+      </button>
+    </div>
+  )}
+</li>
+
+
                 ))}
             </ul>
           ) : (
