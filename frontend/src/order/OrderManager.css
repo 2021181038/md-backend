@@ -683,3 +683,7 @@
   border: 1px solid #ccc;
   border-radius: 6px;
 }
+
+.agent-item.selected {
+  background-color: #e6f0ff !important; /* 연한 하늘색 */
+}

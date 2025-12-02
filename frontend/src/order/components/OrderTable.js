@@ -19,6 +19,39 @@ function OrderTable({
 
   const totalFee = agents.reduce((sum, a) => sum + Number(a.fee || 0), 0);
 
+
+  const handleSortByNeeded = async () => {
+  const sorted = [...eventOrders].sort((a, b) => {
+    const neededA = a.needed_qty ?? a.quantity ?? 0;
+    const neededB = b.needed_qty ?? b.quantity ?? 0;
+
+    // 1) 구매필요 1 이상 항목을 최상단으로
+    if (neededA > 0 && neededB === 0) return -1;
+    if (neededA === 0 && neededB > 0) return 1;
+
+    // 2) 그 안에서는 기존 오름차순 규칙 적용
+    const nameA = a.option_name?.trim() || "";
+    const nameB = b.option_name?.trim() || "";
+    const numA = parseInt(nameA.match(/\[(\d+)\]/)?.[1] || "");
+    const numB = parseInt(nameB.match(/\[(\d+)\]/)?.[1] || "");
+
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    if (!isNaN(numA) && isNaN(numB)) return -1;
+    if (isNaN(numA) && !isNaN(numB)) return 1;
+
+    return nameA.localeCompare(nameB, "ko", { numeric: true });
+  });
+
+  setEventOrders(sorted);
+
+  // DB order_index 업데이트
+  await Promise.all(
+    sorted.map((row, i) =>
+      supabase.from("orders").update({ order_index: i }).eq("id", row.id)
+    )
+  );
+};
+
   // 🔥 자동 저장 함수
   const autoSave = async (row) => {
     await supabase
@@ -414,7 +447,6 @@ function OrderTable({
 
       {/* 옵션 추가 */}
       <div
-        className="hide-on-mobile"
         style={{
           display: "flex",
           alignItems: "center",
@@ -462,6 +494,9 @@ function OrderTable({
       <div className="order-bottom-actions">
         <button className="mc-btn mc-btn-green" onClick={handleSort}>
           오름차순 정렬
+        </button>
+        <button className="mc-btn mc-btn-green" onClick={handleSortByNeeded}>
+        구매필요 정렬
         </button>
 
         <button

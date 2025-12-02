@@ -178,6 +178,7 @@ function AddAgentModal({
               <span>{item.option_name}</span>
               <input
                 type="number"
+                onWheel={(e) => e.target.blur()}
                 min="0"
                 value={optionQtyMap[item.option_name] || ""}
                 placeholder="0"

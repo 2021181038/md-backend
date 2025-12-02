@@ -85,6 +85,7 @@ function AddOptionModal({
 
               <input
                 type="number"
+                onWheel={(e) => e.target.blur()}
                 className="option-input"
                 value={localQty[o.option_name]}
                 placeholder="0"

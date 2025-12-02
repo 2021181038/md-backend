@@ -191,19 +191,34 @@ const updateQty = async (agentId, itemIndex, newQty) => {
 
   // ✅ 구매자 삭제
   const handleDelete = async (agentId) => {
-    const target = agents.find((a) => a.id === agentId);
-    if (!target) return;
+  const target = agents.find((a) => a.id === agentId);
+  if (!target) return;
 
-    if (!window.confirm(`'${target.nickname}' 구매자를 삭제하시겠습니까?`)) return;
+  // 🔥 1) 이미 수령완료된 구매자는 삭제 금지
+  if (target.is_received) {
+    alert("이미 수령완료된 구매자는 삭제할 수 없습니다.");
+    return;
+  }
 
-    const { error } = await supabase.from("agents").delete().eq("id", agentId);
-    if (!error) {
-      alert("삭제 완료 ✅");
-      setAgents((prev) => prev.filter((a) => a.id !== agentId));
-    } else {
-      alert("삭제 실패 ❌");
-    }
-  };
+  // 🔥 2) 일부수령된 항목이 하나라도 있으면 삭제 금지
+  if (target.items.some((it) => it.is_partially_received)) {
+    alert("일부수령된 항목이 있어 삭제할 수 없습니다.");
+    return;
+  }
+
+  // 원래 삭제 로직
+  if (!window.confirm(`'${target.nickname}' 구매자를 삭제하시겠습니까?`)) return;
+
+  const { error } = await supabase.from("agents").delete().eq("id", agentId);
+  if (!error) {
+    alert("삭제 완료 ✅");
+    setAgents((prev) => prev.filter((a) => a.id !== agentId));
+  } else {
+    alert("삭제 실패 ❌");
+  }
+};
+
+
 
   // ✅ 구매자 상세 렌더링
   const renderAgentDetail = (agent) => {
@@ -352,7 +367,7 @@ const updateQty = async (agentId, itemIndex, newQty) => {
                 .map((a) => (
                   <li
   key={a.id}
-  className="agent-item"
+  className={`agent-item ${expandedId === a.id ? "selected" : ""}`}
   onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}
 >
   {/* ⭐ 상단: 연락수단 / 닉네임 / 수고비 / 결제상태 / 담당자 */}
