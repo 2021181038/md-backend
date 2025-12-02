@@ -237,22 +237,27 @@ function OrderTable({
       <table className="order-table">
         
         {isMobile && (
-  <div style={{ marginBottom: "10px" }}>
+  <div style={{ marginBottom: "14px" }}>
     <select
       value={mobileMode}
       onChange={(e) => setMobileMode(e.target.value)}
       style={{
-        padding: "6px 10px",
-        borderRadius: "6px",
-        border: "1px solid #ccc",
-        width: "100%",
+        padding: "14px 16px",      // 🔥 패딩 크게
+        borderRadius: "12px",      // 🔥 라운드 크게
+        border: "2px solid #8faaff",// 🔥 더 두껍고 보기 좋은 테두리
+        width: "100%",             // 🔥 전체 너비 꽉 채우기
+        fontSize: "18px",          // 🔥 글자 크게 (터치 대상 명확)
+        fontWeight: "600",         // 🔥 강조
+        backgroundColor: "#f8faff",// 🔥 밝고 깔끔한 배경
+        color: "#333",
       }}
     >
-      <option value="sung">성한나</option>
+      <option value="sung">대찍아님!!!!!성한나강유나손현서</option>
       <option value="daejjik">대찍</option>
     </select>
   </div>
 )}
+
 
         <thead>
           <tr>
