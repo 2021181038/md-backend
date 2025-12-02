@@ -297,22 +297,23 @@ function OrderTable({
                 </td>
 
                 <td className="option-name">
-  {row.option_name.includes("TYPE:")
-    ? (
-      <>
-        {/* TYPE 부분 줄바꿈 */}
-        <div className="type-line">
-          {row.option_name.split(" / ")[0]}
-        </div>
+  {(() => {
+    const cleanName = row.option_name
+      .replace(/TYPE:?/gi, "")
+      .replace(/OPTION:?/gi, "")
+      .trim();
 
-        {/* OPTION 또는 MEMBER 부분 */}
-        <div className="sub-line">
-          {row.option_name.split(" / ").slice(1).join(" / ")}
-        </div>
-      </>
-    )
-    : row.option_name}
+    return cleanName.includes("/")
+      ? (
+        <>
+          <div className="type-line">{cleanName.split("/")[0]}</div>
+          <div className="sub-line">{cleanName.split("/").slice(1).join("/")}</div>
+        </>
+      )
+      : cleanName;
+  })()}
 </td>
+
 
 
                 {/* 구매필요 */}
