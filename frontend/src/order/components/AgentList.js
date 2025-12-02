@@ -33,10 +33,8 @@ const handlePartialReceive = async (agentId, itemIndex, optionName, qty, newValu
 
   // 음수 허용 버전
   const newProxy = newValue ? proxy - qty : proxy + qty;
-  const newReceived = newValue ? received + qty : received - qty;
 
   target.proxy_qty = newProxy;
-  target.received_qty = newReceived;
   setEventOrders(updatedOrders);
 
   // 🔥 여기! option_name 기준 → index 기준
@@ -80,13 +78,12 @@ const handlePartialReceive = async (agentId, itemIndex, optionName, qty, newValu
 
         // ✅ 대리완료 → 수령완료
         const newProxy = proxy - it.qty;
-        const newReceived = received + it.qty;
+            
 
         // ✅ 구매필요는 그대로 두기
         const newNeeded = target.needed_qty ?? target.quantity ?? 0;
 
         target.proxy_qty = newProxy;
-        target.received_qty = newReceived;
         target.needed_qty = newNeeded; // 변경 없음
         target.quantity = newNeeded;
 
@@ -94,7 +91,6 @@ const handlePartialReceive = async (agentId, itemIndex, optionName, qty, newValu
           .from("orders")
           .update({
             proxy_qty: newProxy,
-            received_qty: newReceived,
             needed_qty: newNeeded, // ❗ 변경 없이 그대로 저장
             quantity: newNeeded,
           })
@@ -194,22 +190,59 @@ const updateQty = async (agentId, itemIndex, newQty) => {
   const target = agents.find((a) => a.id === agentId);
   if (!target) return;
 
-  // 🔥 1) 이미 수령완료된 구매자는 삭제 금지
+  // 🔒 이미 수령완료된 구매자 삭제 금지
   if (target.is_received) {
     alert("이미 수령완료된 구매자는 삭제할 수 없습니다.");
     return;
   }
 
-  // 🔥 2) 일부수령된 항목이 하나라도 있으면 삭제 금지
+  // 🔒 일부수령된 항목이 하나라도 있으면 삭제 금지
   if (target.items.some((it) => it.is_partially_received)) {
     alert("일부수령된 항목이 있어 삭제할 수 없습니다.");
     return;
   }
 
-  // 원래 삭제 로직
   if (!window.confirm(`'${target.nickname}' 구매자를 삭제하시겠습니까?`)) return;
 
+  // 🔥 1) 옵션 복구 로직
+  let updatedOrders = [...eventOrders];
+
+  for (const it of target.items) {
+    const optionName = it.option_name;
+    const qty = it.qty;
+
+    const orderRow = updatedOrders.find((o) => o.option_name === optionName);
+    if (!orderRow) continue;
+
+    // 구매필요 + qty
+    const newNeeded = (orderRow.needed_qty ?? 0) + qty;
+
+    // 대리완료 - qty
+    const newProxy = Math.max(0, (orderRow.proxy_qty ?? 0) - qty);
+
+    // 반영
+    orderRow.needed_qty = newNeeded;
+    orderRow.proxy_qty = newProxy;
+    orderRow.quantity = newNeeded;
+
+    // 🔥 supabase 반영
+    await supabase
+      .from("orders")
+      .update({
+        needed_qty: newNeeded,
+        proxy_qty: newProxy,
+        quantity: newNeeded,
+      })
+      .eq("event_name", selectedEvent)
+      .eq("option_name", optionName);
+  }
+
+  // 화면 업데이트
+  setEventOrders(updatedOrders);
+
+  // 🔥 2) 실제 구매자 삭제
   const { error } = await supabase.from("agents").delete().eq("id", agentId);
+
   if (!error) {
     alert("삭제 완료 ✅");
     setAgents((prev) => prev.filter((a) => a.id !== agentId));
@@ -217,6 +250,7 @@ const updateQty = async (agentId, itemIndex, newQty) => {
     alert("삭제 실패 ❌");
   }
 };
+
 
 
 
@@ -247,7 +281,7 @@ const updateQty = async (agentId, itemIndex, newQty) => {
                 onChange={async (e) => {
                   e.stopPropagation();
                   const newValue = e.target.checked; // true → 일부수령 / false → 취소
-                  await handlePartialReceive(agent.id, it.option_name, it.qty, newValue);
+                  await handlePartialReceive(agent.id, i, it.option_name, it.qty, newValue);
                 }}
               />
             )}

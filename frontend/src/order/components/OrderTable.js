@@ -1,4 +1,3 @@
-// 주문 목록, 수량 조정, 저장 → 자동저장 + 확인하기 버튼 버전
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
@@ -16,6 +15,8 @@ function OrderTable({
   const [lastSavedTime, setLastSavedTime] = useState(null);
   const [margins, setMargins] = useState([]);
   const exchangeRate = 9.43;
+  const [mobileMode, setMobileMode] = useState("daejjik"); 
+  const isMobile = window.innerWidth < 768;
 
   const totalFee = agents.reduce((sum, a) => sum + Number(a.fee || 0), 0);
 
@@ -61,6 +62,7 @@ function OrderTable({
         proxy_qty: row.proxy_qty ?? 0,
         received_qty: row.received_qty ?? 0,
         quantity: row.needed_qty ?? 0,
+        proxy_daejjik_qty: row.proxy_daejjik_qty ?? 0,
       })
       .eq("id", row.id);
   };
@@ -200,6 +202,7 @@ function OrderTable({
     received_qty: 0,
     quantity: Number(newOptionQty) || 0,
     order_index: maxIndex,
+    proxy_daejjik_qty: 0,
   };
 
   const { error } = await supabase.from("orders").insert([newRow]);
@@ -230,15 +233,37 @@ function OrderTable({
           (≈ {totalProfitKRW.toLocaleString()}원) / 수고비 {totalFee.toLocaleString()}₩
         </span>
       </h3>
-
+      
       <table className="order-table">
+        
+        {isMobile && (
+  <div style={{ marginBottom: "10px" }}>
+    <select
+      value={mobileMode}
+      onChange={(e) => setMobileMode(e.target.value)}
+      style={{
+        padding: "6px 10px",
+        borderRadius: "6px",
+        border: "1px solid #ccc",
+        width: "100%",
+      }}
+    >
+      <option value="sung">성한나</option>
+      <option value="daejjik">대찍</option>
+    </select>
+  </div>
+)}
+
         <thead>
           <tr>
             <th className="hide-on-mobile ">삭제</th>
             <th>옵션명</th>
             <th>구매필요</th>
-            <th>대리완료</th>
-            <th className="hide-on-mobile ">수령완료</th>
+            {!isMobile && <th>대리완료</th>}
+            {isMobile && mobileMode === "sung" && <th>대리완료</th>}
+            {!isMobile && <th>대찍완료</th>}
+            {isMobile && mobileMode === "daejjik" && <th>대찍완료</th>}
+            <th className="hide-on-mobile ">정산완료</th>
             <th className="hide-on-mobile ">전체</th>
           </tr>
         </thead>
@@ -247,8 +272,9 @@ function OrderTable({
           {eventOrders.map((row, idx) => {
             const needed = row.needed_qty ?? row.quantity ?? 0;
             const proxy = row.proxy_qty ?? 0;
+            const daejjik = row.proxy_daejjik_qty ?? 0;
             const received = row.received_qty ?? 0;
-            const total = needed + proxy + received;
+            const total = needed + proxy + daejjik + received;
 
             return (
               <tr
@@ -329,6 +355,7 @@ function OrderTable({
                 </td>
 
                 {/* 대리완료 */}
+                {(!isMobile || mobileMode === "sung") && (
                 <td className="qty-cell2">
                   <button
                     className="qty-btn"
@@ -355,7 +382,7 @@ function OrderTable({
 
                       const updated = [...eventOrders];
                       updated[idx].proxy_qty = newValue;
-                      updated[idx].needed_qty = Math.max(0, needed - diff);
+                      updated[idx].needed_qty =  needed - diff;
 
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
@@ -379,6 +406,61 @@ function OrderTable({
                     ＋
                   </button>
                 </td>
+                )}
+
+
+                {(!isMobile || mobileMode === "daejjik") && (
+                <td className="qty-cell">
+                  <button
+                    className="qty-btn"
+                    onClick={() => {
+                      const updated = [...eventOrders];
+                      updated[idx].proxy_daejjik_qty = daejjik - 1;
+                      updated[idx].needed_qty = needed + 1;
+
+                      setEventOrders(updated);
+                      markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
+                    }}
+                  >
+                    −
+                  </button>
+
+                  <input
+                    type="number"
+                    value={daejjik}
+                    min="0"
+                    className="qty-input"
+                    onChange={(e) => {
+                      const newValue = Number(e.target.value);
+                      const diff = newValue - daejjik;
+
+                      const updated = [...eventOrders];
+                      updated[idx].proxy_daejjik_qty = newValue;
+                      updated[idx].needed_qty = Math.max(0, needed - diff);
+
+                      setEventOrders(updated);
+                      markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
+                    }}
+                  />
+
+                  <button
+                    className="qty-btn"
+                    onClick={() => {
+                      const updated = [...eventOrders];
+                      updated[idx].proxy_daejjik_qty = daejjik + 1;
+                      updated[idx].needed_qty = needed - 1;
+
+                      setEventOrders(updated);
+                      markAsChanged(row.option_name);
+                      autoSave(updated[idx]);
+                    }}
+                  >
+                    ＋
+                  </button>
+                </td>
+                )}
 
                 {/* 수령완료 */}
                 <td className="qty-cell hide-on-mobile">
@@ -389,7 +471,7 @@ function OrderTable({
                       const newReceived = received - 1;
 
                       updated[idx].received_qty = newReceived;
-                      updated[idx].proxy_qty = proxy + 1;
+                      updated[idx].proxy_daejjik_qty = daejjik + 1;
 
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
@@ -410,7 +492,7 @@ function OrderTable({
 
                       const updated = [...eventOrders];
                       updated[idx].received_qty = newValue;
-                      updated[idx].proxy_qty = Math.max(0, proxy - diff);
+                      updated[idx].proxy_daejjik_qty = daejjik - diff;
 
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
@@ -425,7 +507,7 @@ function OrderTable({
                       const newReceived = received + 1;
 
                       updated[idx].received_qty = newReceived;
-                      updated[idx].proxy_qty = proxy - 1;
+                      updated[idx].proxy_daejjik_qty = daejjik - 1;
 
                       setEventOrders(updated);
                       markAsChanged(row.option_name);
