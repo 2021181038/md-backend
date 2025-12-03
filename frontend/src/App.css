@@ -259,3 +259,51 @@
     display: none !important;
   }
 }
+
+.form-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.form-label {
+  width: 280px;        /* 라벨 고정 너비 */
+  font-weight: 600;
+  color: #333;
+}
+
+.form-input {
+  width: 300px;        /* 입력칸 영역 너비를 지정 → 오른쪽 끝으로 안 감 */
+  display: flex;
+  justify-content: flex-start; /* 왼쪽 정렬 */
+}
+
+.form-input input[type="text"],
+.form-input input[type="date"],
+.form-input input[type="file"] {
+  width: 220px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.form-input input[type="checkbox"] {
+  transform: scale(1.2);
+}
+
+.upload-box {
+  border: 2px dashed #999;
+  padding: 20px;
+  margin-top: 10px;
+  text-align: center;
+  color: #444;
+  border-radius: 10px;
+}

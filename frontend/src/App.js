@@ -27,7 +27,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [hasAlbum, setHasAlbum] = useState(false);
-  
+  const [hasPreorder, setHasPreorder] = useState(false);
+  const [preorderShippingDate, setPreorderShippingDate] = useState('');
+
 
 
 
@@ -202,6 +204,7 @@ function App() {
   }
 
   const dateText = formatThumbnailDate(thumbnailShippingDate); 
+  const preorderDateText = formatThumbnailDate(preorderShippingDate);
   const bonusText = hasBonus ? "[特典贈呈]" : "";
 
   const result = `[${groupName.toUpperCase()}][${dateText}発送][現地購入]${bonusText}${eventName} OFFICIAL MD`;
@@ -295,12 +298,66 @@ function App() {
     return;
   }
 
-  const dateText = formatThumbnailDate(thumbnailShippingDate); 
+  const dateText = formatThumbnailDate(thumbnailShippingDate);
 
-  let baseText = `
+  // ============================
+  // 📌 특전 정보 (항상 맨 위로 이동)
+  // ============================
+  let bonusText = "";
+
+  if (hasBonus && bonusSets.length > 0) {
+    bonusText = `
+
+  <b>🎁【特典情報】</b><br><br>
+
+  購入金額に応じて、以下のように公式特典を差し上げます。<br><br>
+    `;
+
+    if (bonusSets.length === 1 && bonusSets[0].base) {
+      const base = Number(bonusSets[0].base);
+      bonusText += `${base * 2000 - 100}円以上 : 公式特典1枚<br>`;
+      bonusText += `${base * 4000 - 200}円以上 : 公式特典2枚<br>`;
+      bonusText += `${base * 6000 - 300}円以上 : 公式特典3枚 (以降も金額に応じて自動追加となります。)<br>`;
+    } else if (bonusSets.length > 1) {
+      bonusSets.forEach((set) => {
+        if (set.base && set.label) {
+          const base = Number(set.base);
+          bonusText += `${base * 2000 - 100}円ごとに ${set.label} 1枚ずつ支給 (以降も金額に応じて自動追加となります。)<br>`;
+        }
+      });
+
+      const maxBase = Math.max(...bonusSets.map(s => Number(s.base)));
+      bonusText += `<br>例: ${maxBase * 2000 - 100}円の場合 →`;
+
+      bonusSets.forEach((set, idx) => {
+        bonusText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚`;
+        if (idx !== bonusSets.length - 1) bonusText += " + ";
+      });
+    }
+
+    bonusText += `
+
+  <br>
+  ✔️送料を除く<b>決済金額</b>が対象となります。<br>
+  ✔️メンバーは可能な限りご希望に合わせ、重複のないようにお届けいたします。<br>
+  ${hasAlbum ? "✔️アルバムは特典の価格に含まれておりません。" : ""}<br><br>
+    `;
+  }
+
+  // ============================
+  // 📌 배송 안내문 구성 (PRE-ORDER 여부로 분기)
+  // ============================
+  let shippingText = "";
+
+  if (!hasPreorder) {
+    // ============================
+    // PRE-ORDER 없음 → 기존 형태 + 오프라인 특전 안내
+    // ============================
+    shippingText = `
   <b>【発送について】</b><br><br>
 
   <b>${dateText}</b>より、ご注文順に順次出荷されます。できるだけ早くお届けできるよう努めます。<br>
+  ${hasBonus ? "特典はオフラインバージョン特典のみで発送されます。<br>" : ""}
 
   *「入金待ち」*の状態が続きますと、現地での商品確保ができず、ご注文がキャンセルになる場合がございます。できるだけ早い決済をお願いいたします。<br>
 
@@ -309,56 +366,50 @@ function App() {
   商品はすべて100%正規品です。<br>
 
   迅速な配送のため、現地で商品を順次確保して発送しております。そのため、ご購入いただいた商品は予約配送に切り替わることはありません。現地の状況に合わせて順次スピーディーに購入し、配送を進めておりますのでご安心ください。<br><br>
-  `;
-
-  if (hasBonus && bonusSets.length > 0) {
-    baseText += `
-
-  <b>🎁【特典情報】</b><br>
-
-  購入金額に応じて、以下のように公式特典を差し上げます。<br>
-  `;
-
-    if (bonusSets.length === 1 && bonusSets[0].base) {
-      // 특전 1개일 때
-      const base = Number(bonusSets[0].base);
-      baseText += `\n${base * 2000 - 100}円以上 : 公式特典1枚<br>`;
-      baseText += `\n${base * 4000 - 200}円以上 : 公式特典2枚<br>`;
-      baseText += `\n${base * 6000 - 300}円以上 : 公式特典3枚 (以降も金額に応じて自動追加となります。)<br>`;
-    } else if (bonusSets.length > 1) {
-      // 특전 여러 개일 때
-      bonusSets.forEach((set) => {
-        if (set.base && set.label) {
-          const base = Number(set.base);
-          baseText += `\n${base * 2000 - 100}円ごとに ${set.label} 1枚ずつ支給 (以降も金額に応じて自動追加となります。)<br>`;
-        }
-      });
-
-      // 예시 문구 추가 (2개 이상일 때만)
-      const maxBase = Math.max(...bonusSets.map(s => Number(s.base)));
-      const maxSet = bonusSets.find(s => Number(s.base) === maxBase);
-      baseText += `\n例: ${maxBase * 2000 - 100}円の場合 →`;
-      bonusSets.forEach((set, idx) => {
-        baseText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚`;
-        if (idx !== bonusSets.length - 1) baseText += " + ";
-      });
+    `;
+  } else {
+    // ============================
+    // PRE-ORDER 있음 → ① ② 분리 구조
+    // ============================
+    if (!preorderShippingDate) {
+      alert("PRE-ORDER 발송 날짜를 입력해주세요.");
+      return;
     }
 
-    baseText += `<br>
+    const preorderDateText = formatThumbnailDate(preorderShippingDate);
 
-  ✔️送料を除く<b>決済金額</b>が対象となります。<br>
-  ✔️重複なく発送いたします。<br>
-  ${hasAlbum ? "✔️アルバムは特典の価格に含まれておりません。" : ""}<br><br>
+    shippingText = `
+  <b>【発送について】</b><br><br>
+
+  <b>① PRE-ORDERではない商品のみをご購入の場合</b><br>
+  サムネイルに記載されている日付に合わせて発送されます。<br>
+  現地で商品を確保した後、できるだけ早くお届けできるよう準備いたします。<br>
+  ${hasBonus ? "特典はオフラインバージョン特典のみで発送されます。<br>" : ""}
+  発送予定日：<b>${dateText}</b>より順次出荷<br><br>
+
+  <b>② PRE-ORDER商品と一緒にご購入の場合</b><br>
+  PRE-ORDER商品の発送予定日に合わせて同梱発送となるため、配送が遅れる可能性がございます。<br>
+  ${hasBonus ? "特典はオンラインバージョンとオフラインバージョンに区別されている場合、ランダムで発送されます。<br>" : ""}
+  発送予定日：<b>${preorderDateText}</b>より順次出荷<br><br>
+
+  迅速な配送をご希望の場合は、PRE-ORDER商品と分けてご注文いただくことをおすすめいたします。<br><br>
     `;
   }
 
-  baseText += `
-
+  // ============================
+  // 📌 전체 HTML 조립
+  // ============================
+  let baseText = `
+  ${bonusText}
+  ${shippingText}
   ご不明な点やご希望がございましたら、いつでもお気軽にお問い合わせください ^^<br>
   `;
 
   setDetailDescription(baseText.trim());
 };
+
+
+
 
   const handleImageUpload = (e) => {
     setImages([...e.target.files]);
@@ -623,67 +674,124 @@ function App() {
       <div style={{ padding: '20px' }}>
       {/* 기본정보입력 */}
         <h2>상품 등록</h2>
-        <div>
-          <label>📌 상세 이미지 업로드: </label>
-          <input type="file" accept="image/*" multiple onChange={handleImageUpload} />
-        </div>
+        <div className="form-section">
 
-        {/* 붙여넣기 지원 영역 */}
-        <div
-          onPaste={handlePaste}
-          style={{
-            border: "2px dashed gray",
-            padding: "20px",
-            marginTop: "10px",
-            textAlign: "center"
-          }}
-        >
-          네모박스 한 번 클릭 후 이미지를 여기에 복사붙여넣기
-        </div>
+  {/* 상세 이미지 업로드 */}
+  <div className="form-row">
+    <div className="form-label">📌 상세 이미지 업로드</div>
+    <div className="form-input">
+      <input 
+        type="file" 
+        accept="image/*" 
+        multiple 
+        onChange={handleImageUpload} 
+      />
+    </div>
+  </div>
 
-        {/* 업로드된 이미지 미리보기 */}
-        <div style={{ marginTop: "10px" }}>
-          {images.map((img, idx) => (
-            <p key={idx}>{img.name || `clipboard-image-${idx}`}</p>
-          ))}
-        </div>
+  {/* 붙여넣기 지원 */}
+  <div 
+    onPaste={handlePaste} 
+    className="upload-box"
+  >
+    네모 박스를 클릭한 후 이미지를 여기에 복사·붙여넣기
+  </div>
 
-        {/* 그룹명   */}
-        <div>
-          <label>📌 그룹명: </label>
-          <input type="text" placeholder = "영어로 입력" value={groupName} onChange={(e) => setGroupName(e.target.value.toUpperCase())} />
-        </div>
+  {/* 업로드된 이미지 미리보기 */}
+  <div style={{ marginTop: "10px" }}>
+    {images.map((img, idx) => (
+      <p key={idx}>{img.name || `clipboard-image-${idx}`}</p>
+    ))}
+  </div>
 
-        {/* 썸네일기준발송날짜   */}
-        <div>
-          <label>📌 썸네일 기준 발송날짜: </label>
-          <input
-            type="date"
-            value={thumbnailShippingDate}
-            onChange={(e) => setThumbnailShippingDate(e.target.value)}
-          />
-        </div>
+  {/* 그룹명 */}
+  <div className="form-row">
+    <div className="form-label">📌 그룹명</div>
+    <div className="form-input">
+      <input 
+        type="text" 
+        placeholder="영어로 입력" 
+        value={groupName}
+        onChange={(e) => setGroupName(e.target.value.toUpperCase())}
+      />
+    </div>
+  </div>
 
-        {/* 콘서트/팝업명   */}
-        <div>
-          <label>📌 콘서트/팝업명: </label>
-          <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} />
-        </div>
-        
-        {/* 특전유무   */}
-        <div>
-          <label>📌 특전 유무: </label>
-          <input type="checkbox" checked={hasBonus} onChange={(e) => setHasBonus(e.target.checked)} />
-        </div>
-          {/* 팝업인데 앨범도 팔아요! */}
-<div style={{ marginTop: "5px" }}>
-  <label>📌 팝업에서 앨범도 팔면 체크 </label>
-  <input 
-    type="checkbox" 
-    checked={hasAlbum} 
-    onChange={(e) => setHasAlbum(e.target.checked)} 
-  />
+  {/* 현장구매 발송 날짜 */}
+  <div className="form-row">
+    <div className="form-label">📌 현장구매 발송날짜</div>
+    <div className="form-input">
+      <input 
+        type="date"
+        value={thumbnailShippingDate}
+        onChange={(e) => setThumbnailShippingDate(e.target.value)}
+      />
+    </div>
+  </div>
+
+  {/* PRE-ORDER 상품 여부 */}
+  <div className="form-row">
+    <div className="form-label">📌 PRE-ORDER 상품도 있어요</div>
+    <div className="form-input">
+      <input 
+        type="checkbox"
+        checked={hasPreorder}
+        onChange={(e) => setHasPreorder(e.target.checked)}
+      />
+    </div>
+  </div>
+
+  {/* PRE-ORDER 발송 날짜 */}
+  {hasPreorder && (
+    <div className="form-row">
+      <div className="form-label">📌 PRE-ORDER 발송날짜</div>
+      <div className="form-input">
+        <input 
+          type="date"
+          value={preorderShippingDate}
+          onChange={(e) => setPreorderShippingDate(e.target.value)}
+        />
+      </div>
+    </div>
+  )}
+
+  {/* 콘서트/팝업명 */}
+  <div className="form-row">
+    <div className="form-label">📌 콘서트 / 팝업명</div>
+    <div className="form-input">
+      <input 
+        type="text" 
+        value={eventName}
+        onChange={(e) => setEventName(e.target.value)}
+      />
+    </div>
+  </div>
+
+  {/* 특전 유무 */}
+  <div className="form-row">
+    <div className="form-label">📌 특전 유무</div>
+    <div className="form-input">
+      <input 
+        type="checkbox"
+        checked={hasBonus}
+        onChange={(e) => setHasBonus(e.target.checked)}
+      />
+    </div>
+  </div>
+
+  {/* 팝업에서 앨범도 판매 */}
+  <div className="form-row">
+    <div className="form-label">📌 팝업에서 앨범도 팔아요</div>
+    <div className="form-input">
+      <input 
+        type="checkbox" 
+        checked={hasAlbum}
+        onChange={(e) => setHasAlbum(e.target.checked)}
+      />
+    </div>
+  </div>
 </div>
+
 
         {/* 상세이미지 특전 조건 입력 UI */}
         {hasBonus && (
@@ -1172,7 +1280,6 @@ function App() {
     </div>
   )}
       </div>  
-    );
   </div>
     )}
 
