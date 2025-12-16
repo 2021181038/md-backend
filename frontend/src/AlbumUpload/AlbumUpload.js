@@ -3,8 +3,6 @@ import "./AlbumUpload.css";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-
-
 // 끝 두 자리를 90으로 맞추기
 const applyEnding90 = (yen) => {
   return Math.floor(yen / 100) * 100 + 90;
@@ -16,6 +14,53 @@ const convertToYen = (krw) => {
   let yen = Math.round(Number(krw) / 9.42);
   return applyEnding90(yen);
 };
+
+const getRowHighlight = (rank, total) => {
+  const upper = Math.round(total * 0.25); // 상위그룹
+  const lower = upper; // 하위그룹
+
+  const middleStart = upper + 1;
+  const middleEnd = total - lower;
+  const middleCount = middleEnd - middleStart + 1;
+
+  const middleHalf = Math.floor(middleCount / 2);
+
+  if (rank <= upper) return true; // 상위 전부
+
+  if (rank >= total - lower + 1) {
+    // 하위그룹 절반만
+    return rank < total - lower + 1 + lower / 2;
+  }
+
+  // 중위그룹 절반만
+  if (rank >= middleStart && rank < middleStart + middleHalf) return true;
+
+  return false;
+};
+
+const recalcOptionResult = (set) => {
+  const memberCount = set.rows.length;
+
+  const upperCount = Math.round(memberCount * 0.25);
+  const lowerCount = upperCount;
+
+  const highlightedRows = set.rows.filter(
+    r => getRowHighlight(r.rank, set.rows.length)
+  );
+
+  const expectedSales = highlightedRows.reduce(
+    (acc, r) => acc + Number(r.priceKrw),
+    0
+  );
+
+  const purchaseCost = Number(set.basePrice) * memberCount;
+
+  return {
+    expectedSales,
+    purchaseCost,
+  };
+};
+
 
 // 옵션 있는 상품 배수 계산 (상/중/하 그룹 규칙)
 const getMultiplier = (rank, total) => {
@@ -33,6 +78,13 @@ const formatDateJP = (dateStr) => {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 };
 
+
+
+
+
+
+
+
 function AlbumUpload() {
   const [sets, setSets] = useState([]);
   const [groupName, setGroupName] = useState("");
@@ -46,6 +98,14 @@ const [detailDescription, setDetailDescription] = useState("");
   const [tempSingleName, setTempSingleName] = useState("");
   const [tempSinglePrice, setTempSinglePrice] = useState("");
   const [groupedData, setGroupedData] = useState([]);
+  const canGroupPrices = () => {
+    const optionSets = sets.filter(s => s.type === "withOption");
+
+    if (optionSets.length === 0) return true;
+
+    return optionSets.every(s => s.memberLocked);
+  };
+
   const handleGenerateDescription = () => {
   if (!groupName || !eventName || !releaseDate) {
     alert("그룹명 / 발송날짜 / 앨범명을 모두 입력해주세요");
@@ -55,20 +115,75 @@ const [detailDescription, setDetailDescription] = useState("");
   const jpDate = formatDateJP(releaseDate);
 
   const text = `
-【発送について】
+    <div style="text-align:center; font-size:14px; line-height:1.9;">
 
-${jpDate}より、ご注文順に順次出荷されます。できるだけ早くお届けできるよう努めます。
+  <h3 style="margin-bottom:14px;">【発送について】</h3>
 
-*「入金待ち」*の状態が続きますと、現地での商品確保ができず、ご注文がキャンセルになる場合がございます。
+  <p>
+    <b>${jpDate}</b>より、ご注文順に順次発送予定です。<br/>
+    できる限り早くお届けできるよう努めてまいります。
+  </p>
 
-関税はこちらで負担いたしますのでご安心ください。
-商品はすべて100%正規品です。
+  <p style="margin-top:18px;">
+    <span style="background-color:#0000ff; color:#ffffff; padding:4px 8px;">
+      ※音盤商品につき、取引先への入荷が遅れた場合、
+    </span>
+    <br/>
+    <span style="background-color:#0000ff; color:#ffffff; padding:4px 8px;">
+      当店からの発送が<strong>1〜2週間程度遅延</strong>する可能性がございます。
+    </span>
+  </p>
 
-📦【商品情報】
-『${eventName}』${groupName} OFFICIAL ALBUM
-  `;
+  <p style="margin-top:18px;">
+    <span style="background-color:#ff0000; color:#ffffff; padding:5px 10px; font-weight:bold;">
+      本商品は予約商品のため、
+    </span>
+    <br/>
+    <span style="background-color:#ff0000; color:#ffffff; padding:5px 10px; font-weight:bold;">
+      ご注文確定後のキャンセル・返金はお受けできません。
+    </span>
+  </p>
 
-  setDetailDescription(text.trim());
+  <p style="margin-top:18px;">
+      あらかじめご了承のうえ、ご注文くださいますようお願いいたします。
+  </p>
+
+  <p style="margin-top:22px;">
+      当店でご購入いただいたすべてのアルバムは、
+    <br/>
+      <strong>HANTEOチャート／GAONチャート／CIRCLEチャート</strong>に100％反映され、
+    <br/>
+    初動チャートにも100％反映されます。
+  </p>
+
+  <p style="margin-top:18px;">
+    また、バージョン別のアルバムを複数枚ご購入いただいた場合、可能な限り<strong>同一バージョンが重複しないよう</strong>発送いたします。
+  </p>
+
+  <p>
+    ラッキードローフォトカードにつきましても、複数枚ご購入の場合は、できる限り重複しないように発送いたします。
+  </p>
+
+  <p style="margin-top:20px;">
+    ※「入金待ち」の状態が続いた場合、現地での商品確保ができず、ご注文がキャンセルとなる可能性がございます。
+  </p>
+
+  <p style="margin-top:18px;">
+    関税は当店が負担いたしますので、ご安心ください。<br/>
+    商品はすべて<strong>100％正規品（公式商品）</strong>です。
+  </p>
+
+  <p style="margin-top:20px;">
+    ご不明な点がございましたら、いつでもお気軽にお問い合わせください。 たくさんのご関心をお待ちしております。^^
+  </p>
+
+</div>
+
+`;
+
+
+setDetailDescription(text);
+
 };
   /* --------------------------------------------------------
       옵션 있는 상품 세트 생성
@@ -101,6 +216,21 @@ ${jpDate}より、ご注文順に順次出荷されます。できるだけ早�
   );
 };
 
+  const handleCopyDescription = async () => {
+  if (!detailDescription) {
+    alert("복사할 상세페이지 글이 없습니다.");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(detailDescription); // ⭐ 이 줄이 빠져있었음
+  } catch (err) {
+    alert("복사에 실패했습니다. 브라우저를 확인해주세요.");
+  }
+};
+
+
+
 const handleMemberNameChange = (setId, rowIndex, value) => {
   setSets(prev =>
     prev.map(s =>
@@ -132,20 +262,22 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
 
       // 연한 초록색 그룹 = 상위 + 하위 그룹
       const highlightedRows = s.rows.filter(r =>
-        r.rank <= upperCount || r.rank > memberCount - lowerCount
+        getRowHighlight(r.rank, s.rows.length)
       );
 
-      // 예상매출 = 초록색 행 priceKrw 합
+      // 매입액
+      const purchaseCost = Number(s.basePrice) * memberCount;
+
+      // 예상매출
       const expectedSales = highlightedRows.reduce(
         (acc, r) => acc + Number(r.priceKrw),
         0
       );
 
-      // 매입액 = basePrice × 멤버수
-      const purchaseCost = Number(s.basePrice) * memberCount;
+      // ⭐ 새로운 가능 / 불가능 기준
+      const result = expectedSales > purchaseCost ? "가능 !" : "불가능 !";
 
-      // 가능/불가능 판정
-      const result = multiplierSum >= memberCount ? "가능 !" : "불가능 !";
+
 
       return {
         ...s,
@@ -157,29 +289,6 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
   );
 };
 
-
-  const getRowHighlight = (rank, total) => {
-  const upper = Math.round(total * 0.25); // 상위그룹
-  const lower = upper; // 하위그룹
-
-  const middleStart = upper + 1;
-  const middleEnd = total - lower;
-  const middleCount = middleEnd - middleStart + 1;
-
-  const middleHalf = Math.floor(middleCount / 2);
-
-  if (rank <= upper) return true; // 상위 전부
-
-  if (rank >= total - lower + 1) {
-    // 하위그룹 절반만
-    return rank < total - lower + 1 + lower / 2;
-  }
-
-  // 중위그룹 절반만
-  if (rank >= middleStart && rank < middleStart + middleHalf) return true;
-
-  return false;
-};
   const getMultiplierSum = (set) => {
   return set.rows.reduce((sum, r) => sum + Number(r.multiplier), 0);
 };
@@ -239,6 +348,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
     setTempProductName("");
     setTempMemberCount("");
     setTempBasePrice("");
+    setPopupSeller("");
   };
 
   /* --------------------------------------------------------
@@ -333,70 +443,134 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
   --------------------------------------------------------- */
 
   const groupByCustomPrice = (items) => {
-    const sorted = [...items].sort((a, b) => Number(a.price) - Number(b.price));
-    let remaining = [...sorted];
-    const groups = [];
+  const sorted = [...items].sort((a, b) => Number(a.price) - Number(b.price));
+  let remaining = [...sorted];
+  const groups = [];
 
-    while (remaining.length > 0) {
-      const prices = remaining.map((i) => Number(i.price));
-      const min = Math.min(...prices);
+  // ⭐ 옵션 상품이 어느 그룹에 들어갔는지 기록
+  const optionGroupMap = {};
 
-      const rawStandard = min * 2;
-      const lowerBound = rawStandard * 0.5;
-      const upperBound = rawStandard * 1.5;
+  while (remaining.length > 0) {
+    const prices = remaining.map((i) => Number(i.price));
+    const min = Math.min(...prices);
 
-      const group = remaining.filter((item) => {
-        const p = Number(item.price);
-        return p >= lowerBound && p <= upperBound;
-      });
+    const rawStandard = min * 2;
+    const lowerBound = rawStandard * 0.5;
+    const upperBound = rawStandard * 1.5;
 
-      let standardPrice;
-      if (group.length === 1) {
-        standardPrice = Number(group[0].price);
-      } else {
-        const maxPrice = Math.max(...group.map((g) => Number(g.price)));
-        let raw = Math.round(maxPrice * 0.68);
-        standardPrice = Math.ceil(raw / 100) * 100 - 10;
+    const group = remaining.filter((item) => {
+      const p = Number(item.price);
+      return p >= lowerBound && p <= upperBound;
+    });
+
+    /* ===============================
+       ⭐ 여기서 즉시 검사
+    =============================== */
+    for (const item of group) {
+      if (!item.hasOption) continue;
+
+      const baseName = item.name.split(" - ")[0];
+
+      if (!(baseName in optionGroupMap)) {
+        // 처음 등장 → 현재 그룹 index 기록
+        optionGroupMap[baseName] = groups.length;
+      } else if (optionGroupMap[baseName] !== groups.length) {
+        // ❌ 다른 그룹으로 들어가려는 순간
+        const memberName = item.name.split(" - ")[1] || item.name;
+        alert(`${memberName} 가격을 조정해야해요.`);
+        return null; // ⭐ 즉시 중단
       }
+    }
+    /* =============================== */
 
-      const hasStandard = group.some(
-        (item) => Number(item.price) === standardPrice
-      );
-
-      if (!hasStandard) {
-        group.push({
-          name: "–",
-          price: standardPrice.toString(),
-          hasOption: false,
-        });
-      }
-
-      const updatedGroup = group.map((item) => ({
-        ...item,
-        diffFromStandard: Number(item.price) - standardPrice,
-      }));
-
-      groups.push({ standardPrice, items: updatedGroup });
-
-      const ids = new Set(group.map((g) => g.name + g.price));
-      remaining = remaining.filter((item) => !ids.has(item.name + item.price));
+    let standardPrice;
+    if (group.length === 1) {
+      standardPrice = Number(group[0].price);
+    } else {
+      const maxPrice = Math.max(...group.map((g) => Number(g.price)));
+      let raw = Math.round(maxPrice * 0.68);
+      standardPrice = Math.ceil(raw / 100) * 100 - 10;
     }
 
-    return groups;
-  };
+    const hasStandard = group.some(
+      (item) => Number(item.price) === standardPrice
+    );
+
+    if (!hasStandard) {
+      group.push({
+        name: "–",
+        price: standardPrice.toString(),
+        hasOption: false,
+      });
+    }
+
+    const updatedGroup = group.map((item) => {
+      const diff = Number(item.price) - standardPrice;
+      const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
+
+      return {
+        ...item,
+        displayName: `${item.name} ${diffText}`,
+        diffFromStandard: diff,
+      };
+    });
+
+    const sortedGroup = [...updatedGroup].sort(
+      (a, b) => a.name.localeCompare(b.name, "ko")
+    );
+
+    groups.push({ standardPrice, items: sortedGroup });
+
+    const ids = new Set(group.map((g) => g.name + g.price));
+    remaining = remaining.filter((item) => !ids.has(item.name + item.price));
+  }
+
+  return groups;
+};
+
 
   /* --------------------------------------------------------
       그룹 만들기 버튼
   --------------------------------------------------------- */
   const handleGroupPrices = () => {
-    const all = collectAllItems();
-    if (all.length === 0) {
-      alert("상품이 없습니다!");
-      return;
+
+    if (!canGroupPrices()) {
+    alert("옵션 상품의 멤버명 입력을 먼저 완료해주세요.");
+    return;
+  }
+  const all = collectAllItems();
+  if (all.length === 0) {
+    alert("상품이 없습니다!");
+    return;
+  }
+
+  const groups = groupByCustomPrice(all);
+  if (!groups) return; 
+  const optionGroupMap = {};
+
+  for (let g = 0; g < groups.length; g++) {
+    const group = groups[g];
+
+    for (let i = 0; i < group.items.length; i++) {
+      const item = group.items[i];
+      if (!item.hasOption) continue;
+
+      const baseName = item.name.split(" - ")[0];
+
+      if (!optionGroupMap[baseName]) {
+        optionGroupMap[baseName] = g;
+      } else if (optionGroupMap[baseName] !== g) {
+        const memberName = item.name.split(" - ")[1] || item.name;
+        alert(`${memberName} 가격을 조정해야해요. 같은 상품은 하나의 그룹에 묶이게!`);
+        return; // ⭐ 여기서 함수 자체 종료
+      }
     }
-    const g = groupByCustomPrice(all);
-    setGroupedData(g);
-  };
+  }
+
+  setGroupedData(groups);
+};
+
+
 
   /* --------------------------------------------------------
       그룹별 엑셀 다운로드
@@ -454,15 +628,6 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
   </div>
 
   <div className="basic-info-field-inline">
-    <label>썸네일 기준 발송날짜</label>
-    <input
-      type="date"
-      value={releaseDate}
-      onChange={(e) => setReleaseDate(e.target.value)}
-    />
-  </div>
-
-  <div className="basic-info-field-inline">
     <label>앨범명</label>
     <input
       type="text"
@@ -471,23 +636,50 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
     />
   </div>
 
-  <button className="pretty-button" onClick={setDetailDescription}>
-    상세페이지 글 생성
-  </button>
+  <div className="basic-info-field-inline">
+    <label>썸네일 기준 발송날짜</label>
+    <input
+      type="date"
+      value={releaseDate}
+      onChange={(e) => setReleaseDate(e.target.value)}
+    />
+  </div>
+
+  <button className="pretty-button" onClick={handleGenerateDescription}>
+  상세페이지 글 생성
+</button>
+
 
 </div>
 
 </div>
       {detailDescription && (
   <div className="section-box">
-    <h3>📝 상세페이지 글</h3>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "8px"
+      }}
+    >
+      <h3 style={{ margin: 0 }}>📝 상세페이지 글</h3>
+    </div>
+
     <textarea
       value={detailDescription}
       readOnly
       style={{ width: "100%", height: "180px" }}
     />
+    <button
+        className="btn-secondary small"
+        onClick={handleCopyDescription}
+      >
+        복사하기
+      </button>
   </div>
 )}
+
 
       <div className="option-add-wrapper">
       {/* --------------------------- 옵션 있는 상품 입력 --------------------------- */}
@@ -496,28 +688,28 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
 
         <input
           type="text"
-          placeholder="상품명(OPTION)"
+          placeholder="옵션1"
           value={tempProductName}
           onChange={(e) => setTempProductName(e.target.value)}
         />
 
         <input
           type="text"
-          placeholder="판매처(TYPE)-쉼표 구분"
+          placeholder="옵션2 - 쉼표 구분"
           value={popupSeller}
           onChange={(e) => setPopupSeller(e.target.value)}
         />
 
         <input
           type="number"
-          placeholder="옵션 개수 or 멤버 수"
+          placeholder="옵션3-멤버/종류 수 입력"
           value={tempMemberCount}
           onChange={(e) => setTempMemberCount(e.target.value)}
         />
 
         <input
           type="number"
-          placeholder="원가 (원화)"
+          placeholder="원가(₩)"
           value={tempBasePrice}
           onChange={(e) => setTempBasePrice(e.target.value)}
         />
@@ -576,16 +768,61 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
                       ) : (
                         <button
                           className="edit-btn edit-btn-save"
-                          onClick={() => toggleEditMode(set.id)}
+                          onClick={() => {
+                            // 1️⃣ 기준값 검사 (배수 합 조건)
+                            const multiplierSum = getMultiplierSum(set);
+                            const requiredSum = Number((1.6 * set.rows.length).toFixed(1));
+
+                            if (multiplierSum < requiredSum) {
+                              alert(`배수의 합이 ${requiredSum} 이 되어야합니다`);
+                              return;
+                            }
+
+                            // 2️⃣ 매입액 계산
+                            const memberCount = set.rows.length;
+                            const purchaseCost = Number(set.basePrice) * memberCount;
+
+                            // 3️⃣ 예상매출 계산 (초록색 행 기준)
+                            const upperCount = Math.round(memberCount * 0.25);
+                            const lowerCount = upperCount;
+
+                            const highlightedRows = set.rows.filter(
+                              r => getRowHighlight(r.rank, set.rows.length)
+                            );
+
+                            const expectedSales = highlightedRows.reduce(
+                              (acc, r) => acc + Number(r.priceKrw),
+                              0
+                            );
+
+                            // 4️⃣ 가능 / 불가능 재판정 ⭐⭐⭐
+                            const result = expectedSales > purchaseCost ? "가능 !" : "불가능 ! 가격 조정 다시 하세요";
+
+                            // 5️⃣ state 반영
+                            setSets(prev =>
+                              prev.map(s =>
+                                s.id === set.id
+                                  ? {
+                                      ...s,
+                                      editing: false,
+                                      purchaseCost,
+                                      expectedSales,
+                                      optionCheckResult: result,
+                                    }
+                                  : s
+                              )
+                            );
+                          }}
                         >
                           수정완료
                         </button>
+
                       )}
 
                     </div>
 
                   <div className="seller-line">
-                    판매처 : <strong>{set.seller}</strong>
+                    OPTION 2 : <strong>{set.seller}</strong>
                   </div>
                 <table className="set-table">
                   <thead>
@@ -668,6 +905,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
       <div style={{ fontSize: "14px" }}>
         <div>매입액 : {Number(set.purchaseCost).toLocaleString()}원</div>
         <div>예상매출 : {Number(set.expectedSales).toLocaleString()}원</div>
+        <div>** 초록색 행이 다 팔렸을 때 기준 매출이에요.</div>
       </div>
     )}
   </div>
@@ -763,13 +1001,34 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
       </div>
 
               {/* --------------------------- 가격 그룹 묶기 --------------------------- */}
-      <div className="section-box">
-        <h3>가격 그룹 묶기</h3>
+        <div style={{ marginTop: "16px", textAlign: "left" }}>
+          <button
+            className="btn-primary"
+            onClick={handleGroupPrices}
+            disabled={!canGroupPrices()}
+            style={{
+              opacity: canGroupPrices() ? 1 : 0.5,
+              cursor: canGroupPrices() ? "pointer" : "not-allowed"
+            }}
+          >
+            가격대별 그룹 만들기
+          </button>
 
-        <button className="btn-primary" onClick={handleGroupPrices}>
-          가격대별 그룹 만들기
-        </button>
-      </div>
+          {/* 🔽 disabled 상태 안내 문구 */}
+          {!canGroupPrices() && (
+            <div
+              style={{
+                marginTop: "8px",
+                fontSize: "13px",
+                color: "#d9534f",
+                fontWeight: "500"
+              }}
+            >
+              ⚠️ 옵션O 상품의 <b>멤버명 입력 완료</b> 버튼을 모두 눌러주세요
+            </div>
+          )}
+        </div>
+
 
       {/* --------------------------- 그룹 출력 --------------------------- */}
       {groupedData.length > 0 && (
@@ -796,16 +1055,8 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
 
                 <ul className="group-item-list">
                   {group.items.map((item, i) => (
-                    <li
-                      key={i}
-                      className={item.hasOption ? "option-item" : ""}
-                    >
-                      {item.name}
-                      <span style={{ marginLeft: "10px" }}>
-                        {item.diffFromStandard >= 0
-                          ? `+${item.diffFromStandard}`
-                          : item.diffFromStandard}
-                      </span>
+                    <li key={i} className={item.hasOption ? "option-item" : ""}>
+                      {item.displayName}
                     </li>
                   ))}
                 </ul>
