@@ -298,22 +298,42 @@ function OrderTable({
 
                 <td className="option-name">
   {(() => {
-    const cleanName = row.option_name
+    let cleanName = row.option_name || "";
+
+    // 🔥 제거할 '동의 문구' 패턴들
+    const REMOVE_PATTERNS = [
+      /\/\s*配送日程の内容に同意[^/]*/g,
+      /\/\s*キャンセルと払い戻し不可に同意[^/]*/g,
+    ];
+
+    // 🔥 동의 문구만 제거
+    REMOVE_PATTERNS.forEach((pattern) => {
+      cleanName = cleanName.replace(pattern, "");
+    });
+
+    // TYPE / OPTION 제거
+    cleanName = cleanName
       .replace(/TYPE:?/gi, "")
       .replace(/OPTION:?/gi, "")
+      .replace(/\s*\/\s*$/, "") // 끝에 남은 / 정리
       .trim();
 
+    // 완전히 비어 있으면 표시 안 함
+    if (!cleanName) return null;
+
+    // 기존 "/" 구조 유지
     return cleanName.includes("/")
       ? (
         <>
           <div className="type-line">{cleanName.split("/")[0]}</div>
-          <div className="sub-line">{cleanName.split("/").slice(1).join("/")}</div>
+          <div className="sub-line">
+            {cleanName.split("/").slice(1).join("/")}
+          </div>
         </>
       )
       : cleanName;
   })()}
 </td>
-
 
 
                 {/* 구매필요 */}

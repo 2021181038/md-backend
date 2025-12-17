@@ -98,6 +98,14 @@ const [detailDescription, setDetailDescription] = useState("");
   const [tempSingleName, setTempSingleName] = useState("");
   const [tempSinglePrice, setTempSinglePrice] = useState("");
   const [groupedData, setGroupedData] = useState([]);
+  const [mainProductName, setMainProductName] = useState("");
+  const handleGenerateMainProductName = () => {
+  const result = generateMainProductName();
+  if (result) setMainProductName(result);
+};
+
+  
+
   const canGroupPrices = () => {
     const optionSets = sets.filter(s => s.type === "withOption");
 
@@ -105,6 +113,21 @@ const [detailDescription, setDetailDescription] = useState("");
 
     return optionSets.every(s => s.memberLocked);
   };
+  const generateMainProductName = () => {
+  if (!groupName || !eventName || !releaseDate) {
+    alert("그룹명 / 발송날짜 / 앨범명을 모두 입력해주세요");
+    return "";
+  }
+
+  const dateText = formatDateJP(releaseDate);
+
+  return `[${groupName.toUpperCase()}][${dateText}発送]${eventName}`;
+};
+
+  const handleGenerateAll = () => {
+  handleGenerateMainProductName(); // 메인상품명 생성
+  handleGenerateDescription();     // 상세페이지 글 생성
+};
 
   const handleGenerateDescription = () => {
   if (!groupName || !eventName || !releaseDate) {
@@ -477,7 +500,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
       } else if (optionGroupMap[baseName] !== groups.length) {
         // ❌ 다른 그룹으로 들어가려는 순간
         const memberName = item.name.split(" - ")[1] || item.name;
-        alert(`${memberName} 가격을 조정해야해요.`);
+        alert(`${memberName} 가격을 조정해야해요. 같은 앨범이 하나의 그룹으로 묶이지 않아요`);
         return null; // ⭐ 즉시 중단
       }
     }
@@ -576,37 +599,140 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
       그룹별 엑셀 다운로드
   --------------------------------------------------------- */
 
-  const exportGroupExcel = (group, idx) => {
-    const rows = group.items.map((item) => ({
-      option_title_1: "OPTION",
-      option_name_1: item.name,
-      option_price_yen: item.price,
-      diff_from_standard: item.diffFromStandard,
-    }));
+ const exportGroupExcel = (group, idx) => {
+  const rows = [];
 
-    const headers = [
-      "option_title_1",
-      "option_name_1",
-      "option_price_yen",
-      "diff_from_standard",
-    ];
+  // ===========================
+  // 0. group / items 방어
+  // ===========================
+  if (!group || !Array.isArray(group.items)) {
+    console.error("exportGroupExcel: group.items 없음", group);
+    return;
+  }
 
-    const ws = XLSX.utils.aoa_to_sheet([headers]);
-    XLSX.utils.sheet_add_json(ws, rows, {
-      header: headers,
-      skipHeader: true,
-      origin: "A2",
+  // ===========================
+  // 1. 옵션2 판매처 (쉼표 구분 입력값)
+  // ===========================
+  const sellers =
+    typeof popupSeller === "string"
+      ? popupSeller
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean)
+      : [];
+
+  // ===========================
+  // 2. 상품(item) 순회
+  // ===========================
+  group.items.forEach(item => {
+    /**
+     * 기준:
+     * - item.rows ❌ → 옵션 없는 상품
+     * - item.rows ⭕ → 옵션 있는 상품
+     */
+
+    // ------------------------------------------------
+    // 옵션 ❌ (옵션 없는 상품)
+    // ------------------------------------------------
+    if (!Array.isArray(item.rows)) {
+      rows.push({
+        option_title_1: "OPTION",
+        option_name_1: item.name ?? "-",
+
+        option_title_2: "TYPE",
+        option_name_2: "-",
+
+        option_title_3: "MEMBER",
+        option_name_3: "-",
+
+        option_price_yen: item.diffFromStandard ?? 0,
+        option_quantity: 5,
+
+        seller_unique_option_id: "",
+        external_product_hs_id: "",
+        q_inventory_id: ""
+      });
+      return; // 다음 item
+    }
+
+    // ------------------------------------------------
+    // 옵션 ⭕ (옵션 있는 상품)
+    // 구조: 판매처 × 멤버
+    // ------------------------------------------------
+    item.rows.forEach(row => {
+      // 멤버명 없으면 스킵
+      if (!row || !row.memberName) return;
+
+      sellers.forEach(seller => {
+        rows.push({
+          option_title_1: "OPTION",
+          option_name_1: item.name,        // 옵션1 이름 (YES OPTIONS)
+
+          option_title_2: "TYPE",
+          option_name_2: seller,           // 옵션2 판매처
+
+          option_title_3: "MEMBER",
+          option_name_3: row.memberName,   // 옵션3 멤버명
+
+          option_price_yen: row.diffFromStandard ?? 0,
+          option_quantity: 5,
+
+          seller_unique_option_id: "",
+          external_product_hs_id: "",
+          q_inventory_id: ""
+        });
+      });
     });
+  });
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, `Group${idx + 1}`);
+  // ===========================
+  // 3. 생성된 row 없으면 중단
+  // ===========================
+  if (rows.length === 0) {
+    alert("엑셀로 추출할 데이터가 없습니다.");
+    return;
+  }
 
-    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    saveAs(
-      new Blob([buffer], { type: "application/octet-stream" }),
-      `group_${idx + 1}.xlsx`
-    );
-  };
+  // ===========================
+  // 4. Qoo10 엑셀 헤더
+  // ===========================
+  const headers = [
+    "option_title_1",
+    "option_name_1",
+    "option_title_2",
+    "option_name_2",
+    "option_title_3",
+    "option_name_3",
+    "option_price_yen",
+    "option_quantity",
+    "seller_unique_option_id",
+    "external_product_hs_id",
+    "q_inventory_id"
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers]);
+  XLSX.utils.sheet_add_json(ws, rows, {
+    header: headers,
+    skipHeader: true,
+    origin: "A2"
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `Group${idx + 1}`);
+
+  const buffer = XLSX.write(wb, {
+    bookType: "xlsx",
+    type: "array"
+  });
+
+  saveAs(
+    new Blob([buffer], { type: "application/octet-stream" }),
+    `album_group_${idx + 1}_qoo10_optiondownitem.xlsx`
+  );
+};
+
+
+
 
   /* --------------------------------------------------------
       렌더링 시작
@@ -645,12 +771,34 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
     />
   </div>
 
-  <button className="pretty-button" onClick={handleGenerateDescription}>
-  상세페이지 글 생성
+  <button className="btn-primary" onClick={handleGenerateAll}>
+  다음
 </button>
 
 
 </div>
+
+
+  {mainProductName && (
+    <>
+    <div className="section-box">
+    <h3>메인상품명</h3>
+      <input
+        value={mainProductName}
+        readOnly
+        style={{ width: "100%", marginTop: "8px" }}
+      />
+
+      <button
+        className="btn-secondary"
+        onClick={() => navigator.clipboard.writeText(mainProductName)}
+      >
+        복사하기
+      </button>
+      </div>
+    </>
+  )}
+
 
 </div>
       {detailDescription && (
@@ -663,7 +811,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
         marginBottom: "8px"
       }}
     >
-      <h3 style={{ margin: 0 }}>📝 상세페이지 글</h3>
+      <h3 style={{ margin: 0 }}>상세페이지 글</h3>
     </div>
 
     <textarea
@@ -682,51 +830,57 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
 
 
       <div className="option-add-wrapper">
-      {/* --------------------------- 옵션 있는 상품 입력 --------------------------- */}
+
+        {/* --------------------------- 옵션 없는 상품 입력 --------------------------- */}
       <div className="section-box">
-        <h3>옵션 있는 상품 추가</h3>
-
-        <input
-          type="text"
-          placeholder="옵션1"
-          value={tempProductName}
-          onChange={(e) => setTempProductName(e.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="옵션2 - 쉼표 구분"
-          value={popupSeller}
-          onChange={(e) => setPopupSeller(e.target.value)}
-        />
-
-        <input
-          type="number"
-          placeholder="옵션3-멤버/종류 수 입력"
-          value={tempMemberCount}
-          onChange={(e) => setTempMemberCount(e.target.value)}
-        />
-
-        <input
-          type="number"
-          placeholder="원가(₩)"
-          value={tempBasePrice}
-          onChange={(e) => setTempBasePrice(e.target.value)}
-        />
-
-        <button className="btn-primary" onClick={createOptionSet}>
-          생성
-        </button>
-      </div>
-
-      {/* --------------------------- 옵션 없는 상품 입력 --------------------------- */}
-      <div className="section-box">
-        <h3>옵션 없는 상품 추가</h3>
+        <h3>멤버(종류)선택 없는 상품</h3>
 
         <button className="btn-primary" onClick={createSingleSet}>
           생성
         </button>
       </div>
+      {/* --------------------------- 옵션 있는 상품 입력 --------------------------- */}
+     <div className="section-box">
+  <h3>멤버(종류)선택 있는 상품</h3>
+
+  <div className="option-input-column">
+    <input
+      type="text"
+      placeholder="옵션1 - 앨범종류 입력"
+      value={tempProductName}
+      onChange={(e) => setTempProductName(e.target.value.toUpperCase())}
+    />
+
+    <input
+      type="text"
+      placeholder="옵션2 - 쉼표 구분, 판매처 입력"
+      value={popupSeller}
+      onChange={(e) => setPopupSeller(e.target.value.toUpperCase())}
+    />
+
+    <input
+      type="number"
+      placeholder="옵션3 - 멤버/종류 수 입력"
+      value={tempMemberCount}
+      onChange={(e) => setTempMemberCount(e.target.value)}
+    />
+
+    <input
+      type="number"
+      placeholder="원가 (₩) "
+      value={tempBasePrice}
+      onChange={(e) => setTempBasePrice(e.target.value)}
+    />
+
+    <button className="btn-primary" onClick={createOptionSet}>
+  생성
+</button>
+
+  </div>
+</div>
+
+
+       
       </div>
 
 
@@ -740,22 +894,6 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
               <>
                 <h3>옵션 O - {set.productName}</h3>
                     <div className="set-edit-area">
-                      <button
-                        className="btn-primary small"
-                        onClick={() => {
-                          // 1) 멤버명 입력 잠금
-                          setSets(prev =>
-                            prev.map(s =>
-                              s.id === set.id ? { ...s, memberLocked: true } : s
-                            )
-                          );
-
-                          // 2) 가능/불가능 계산 실행
-                          handleConfirmMembers(set.id);
-                        }}
-                      >
-                        멤버명 입력 완료
-                      </button>
 
 
                       {!set.editing ? (
@@ -821,6 +959,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
 
                     </div>
 
+
                   <div className="seller-line">
                     OPTION 2 : <strong>{set.seller}</strong>
                   </div>
@@ -865,7 +1004,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
     <input
       className="member-input"
       value={r.memberName}
-      onChange={(e) => handleMemberNameChange(set.id, idx, e.target.value)}
+      onChange={(e) => handleMemberNameChange(set.id, idx, e.target.value.toUpperCase())}
     />
   ) : set.memberLocked ? (
     // 수정모드 X + 입력 완료됨 → 텍스트 표시
@@ -875,7 +1014,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
     <input
       className="member-input"
       value={r.memberName}
-      onChange={(e) => handleMemberNameChange(set.id, idx, e.target.value)}
+      onChange={(e) => handleMemberNameChange(set.id, idx, e.target.value.toUpperCase())}
     />
   )}
 </td>
@@ -910,7 +1049,22 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
     )}
   </div>
 )}
+<button
+                        className="btn-primary"
+                        onClick={() => {
+                          // 1) 멤버명 입력 잠금
+                          setSets(prev =>
+                            prev.map(s =>
+                              s.id === set.id ? { ...s, memberLocked: true } : s
+                            )
+                          );
 
+                          // 2) 가능/불가능 계산 실행
+                          handleConfirmMembers(set.id);
+                        }}
+                      >
+                        멤버명 입력 완료
+                      </button>
 
               </>
             )}
@@ -938,7 +1092,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
         <input
           value={row.productName}
           onChange={(e) =>
-            updateSingleRow(set.id, idx, "productName", e.target.value)
+            updateSingleRow(set.id, idx, "productName", e.target.value.toUpperCase())
           }
         />
       </td>
@@ -984,9 +1138,11 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
       </td>
     </tr>
   ))}
+  
 </tbody>
 
                 </table>
+                
 
                 <button
                   className="btn-secondary"

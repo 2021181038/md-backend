@@ -30,7 +30,9 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  margin-left: 10px;
+  margin-left: 2px;
+  width: 220px;
+  margin-top:5px
 }
 
 .btn-primary:hover {
@@ -44,6 +46,7 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  margin-top: 5px;
 }
 
 .btn-secondary:hover {
@@ -183,9 +186,8 @@
 
 .option-add-wrapper {
   display: flex;
+  flex-direction: column; /* ⭐ 핵심 */
   gap: 20px;
-  width: 100%;
-  margin-top: 40px;
 }
 
 .option-add-box {
@@ -258,6 +260,8 @@
 .edit-btn-edit {
   background-color: #3348ff; /* 파랑 */
   color: white;
+  margin-left: 5px;
+  border-radius: 5px;
 }
 
 .edit-btn-save {
@@ -277,4 +281,18 @@
 
 .btn-yen:hover {
   background: #2a4eb5;
+}
+
+.option-input-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* 줄 간격 */
+}
+
+.option-input-column input {
+  padding: 10px 12px;      /* ⬆️ 안쪽 여백 */
+  font-size: 15px;         /* ⬆️ 글자 크기 */
+  height: 30px;            /* ⬆️ 입력칸 높이 */
+  border-radius: 8px;      /* 살짝 둥글게 */
+  border: 1.5px solid #cfd3e1;
 }
