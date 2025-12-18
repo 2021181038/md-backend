@@ -602,42 +602,32 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
  const exportGroupExcel = (group, idx) => {
   const rows = [];
 
-  // ===========================
-  // 0. group / items 방어
-  // ===========================
   if (!group || !Array.isArray(group.items)) {
-    console.error("exportGroupExcel: group.items 없음", group);
+    alert("엑셀로 추출할 데이터가 없습니다.");
     return;
   }
 
-  // ===========================
-  // 1. 옵션2 판매처 (쉼표 구분 입력값)
-  // ===========================
-  const sellers =
-    typeof popupSeller === "string"
-      ? popupSeller
-          .split(",")
-          .map(s => s.trim())
-          .filter(Boolean)
-      : [];
+  // 옵션2 판매처 (쉼표 구분)
+  const findSellersByProductName = (productName) => {
+  const set = sets.find(
+    s => s.type === "withOption" && s.productName === productName
+  );
+  return set?.seller
+    ? set.seller.split(",").map(s => s.trim()).filter(Boolean)
+    : [];
+};
 
-  // ===========================
-  // 2. 상품(item) 순회
-  // ===========================
+
   group.items.forEach(item => {
-    /**
-     * 기준:
-     * - item.rows ❌ → 옵션 없는 상품
-     * - item.rows ⭕ → 옵션 있는 상품
-     */
+    const diff = item.diffFromStandard ?? 0;
 
-    // ------------------------------------------------
+    // =========================
     // 옵션 ❌ (옵션 없는 상품)
-    // ------------------------------------------------
-    if (!Array.isArray(item.rows)) {
+    // =========================
+    if (!item.hasOption) {
       rows.push({
         option_title_1: "OPTION",
-        option_name_1: item.name ?? "-",
+        option_name_1: item.name,
 
         option_title_2: "TYPE",
         option_name_2: "-",
@@ -645,57 +635,51 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
         option_title_3: "MEMBER",
         option_name_3: "-",
 
-        option_price_yen: item.diffFromStandard ?? 0,
+        option_price_yen: diff,
         option_quantity: 5,
 
         seller_unique_option_id: "",
         external_product_hs_id: "",
         q_inventory_id: ""
       });
-      return; // 다음 item
+      return;
     }
 
-    // ------------------------------------------------
+    // =========================
     // 옵션 ⭕ (옵션 있는 상품)
-    // 구조: 판매처 × 멤버
-    // ------------------------------------------------
-    item.rows.forEach(row => {
-      // 멤버명 없으면 스킵
-      if (!row || !row.memberName) return;
+    // =========================
+    // item.name 예: "JEWEL VER - RIKU"
+    const [productName, memberName] = item.name.split(" - ");
+const sellers = findSellersByProductName(productName);
 
-      sellers.forEach(seller => {
-        rows.push({
-          option_title_1: "OPTION",
-          option_name_1: item.name,        // 옵션1 이름 (YES OPTIONS)
+sellers.forEach(seller => {
+  rows.push({
+    option_title_1: "OPTION",
+    option_name_1: productName,
 
-          option_title_2: "TYPE",
-          option_name_2: seller,           // 옵션2 판매처
+    option_title_2: "TYPE",
+    option_name_2: seller,
 
-          option_title_3: "MEMBER",
-          option_name_3: row.memberName,   // 옵션3 멤버명
+    option_title_3: "MEMBER",
+    option_name_3: memberName,
 
-          option_price_yen: row.diffFromStandard ?? 0,
-          option_quantity: 5,
+    option_price_yen: diff,
+    option_quantity: 5,
 
-          seller_unique_option_id: "",
-          external_product_hs_id: "",
-          q_inventory_id: ""
-        });
-      });
-    });
+    seller_unique_option_id: "",
+    external_product_hs_id: "",
+    q_inventory_id: ""
+  });
+});
+
   });
 
-  // ===========================
-  // 3. 생성된 row 없으면 중단
-  // ===========================
   if (rows.length === 0) {
     alert("엑셀로 추출할 데이터가 없습니다.");
     return;
   }
 
-  // ===========================
-  // 4. Qoo10 엑셀 헤더
-  // ===========================
+  // Qoo10 엑셀 헤더
   const headers = [
     "option_title_1",
     "option_name_1",
