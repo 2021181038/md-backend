@@ -29,6 +29,19 @@ function App() {
   const [hasAlbum, setHasAlbum] = useState(false);
   const [hasPreorder, setHasPreorder] = useState(false);
   const [preorderShippingDate, setPreorderShippingDate] = useState('');
+  const handleCopyHtmlSource = () => {
+  if (!detailDescription) {
+    alert("복사할 상세페이지 내용이 없습니다.");
+    return;
+  }
+
+  navigator.clipboard.writeText(detailDescription)
+    .then(() => {
+    })
+    .catch(() => {
+      alert("복사 실패");
+    });
+};
 
 
   useEffect(() => {
@@ -295,116 +308,128 @@ function App() {
     return;
   }
 
-  const dateText = formatThumbnailDate(thumbnailShippingDate);
+  const normalDateText = formatThumbnailDate(thumbnailShippingDate);
+  const preorderDateText = hasPreorder
+    ? formatThumbnailDate(preorderShippingDate)
+    : "";
 
-  // ============================
-  // 📌 특전 정보 (항상 맨 위로 이동)
-  // ============================
-  let bonusText = "";
+  let html = "";
 
+  /* =========================
+     🎁 특전 정보
+  ========================= */
   if (hasBonus && bonusSets.length > 0) {
-    bonusText = `
-
-  <b>🎁【特典情報】</b><br><br>
-
-  購入金額に応じて、以下のように公式特典を差し上げます。<br><br>
-    `;
+    html += `
+<div style="text-align:center;"><strong>🎁【特典情報】</strong></div>
+<div style="text-align:center;">購入金額に応じて、以下のように公式特典を差し上げます。</div>
+`;
 
     if (bonusSets.length === 1 && bonusSets[0].base) {
       const base = Number(bonusSets[0].base);
-      bonusText += `${base * 2000 - 100}円以上 : 公式特典1枚<br>`;
-      bonusText += `${base * 4000 - 200}円以上 : 公式特典2枚<br>`;
-      bonusText += `${base * 6000 - 300}円以上 : 公式特典3枚 (以降も金額に応じて自動追加となります。)<br>`;
-    } else if (bonusSets.length > 1) {
-      bonusSets.forEach((set) => {
+      html += `
+<div style="text-align:center;">${base * 2000 - 100}円以上 : 公式特典1枚</div>
+<div style="text-align:center;">${base * 4000 - 200}円以上 : 公式特典2枚</div>
+<div style="text-align:center;">${base * 6000 - 300}円以上 : 公式特典3枚 (以降も金額に応じて自動追加となります。)</div>
+`;
+    } else {
+      bonusSets.forEach(set => {
         if (set.base && set.label) {
-          const base = Number(set.base);
-          bonusText += `${base * 2000 - 100}円ごとに ${set.label} 1枚ずつ支給 (以降も金額に応じて自動追加となります。)<br>`;
+          html += `
+<div style="text-align:center;">
+  ${set.base * 2000 - 100}円ごとに ${set.label} 1枚ずつ支給
+</div>
+`;
         }
       });
 
       const maxBase = Math.max(...bonusSets.map(s => Number(s.base)));
-      bonusText += `<br>例: ${maxBase * 2000 - 100}円の場合 →`;
+      html += `<div style="text-align:center;">例: ${maxBase * 2000 - 100}円の場合 → `;
 
-      bonusSets.forEach((set, idx) => {
-        bonusText += `${set.label} ${Math.floor((maxBase * 2000 - 100) / (set.base * 2000 - 100))}枚`;
-        if (idx !== bonusSets.length - 1) bonusText += " + ";
-      });
+      html += bonusSets
+        .map(
+          s =>
+            `${s.label} ${Math.floor(
+              (maxBase * 2000 - 100) / (s.base * 2000 - 100)
+            )}枚`
+        )
+        .join(" + ");
+
+      html += `</div>`;
     }
 
-    bonusText += `
-
-  <br>
-  ✔️送料を除く<b>決済金額</b>が対象となります。<br>
-  ✔️メンバーは可能な限りご希望に合わせ、重複のないようにお届けいたします。<br>
-  ${hasAlbum ? "✔️アルバムは特典の価格に含まれておりません。" : ""}<br><br>
-    `;
+    html += `
+<br>
+<div style="text-align:center;">
+  <span style="font-size:14pt; color:#ff0000; background-color:#ffff00;">
+    ✔️送料を除く<strong>決済金額</strong>が対象となります。
+  </span>
+</div>
+<div style="text-align:center;">✔️メンバーは可能な限りご希望に合わせ、重複のないようにお届けいたします。</div>
+${
+  hasAlbum
+    ? `<div style="text-align:center;">✔️アルバムは特典の価格に含まれておりません。</div>`
+    : ""
+}
+<br>
+`;
   }
 
-  // ============================
-  // 📌 배송 안내문 구성 (PRE-ORDER 여부로 분기)
-  // ============================
-  let shippingText = "";
+  /* =========================
+     🚚 発송 안내
+  ========================= */
+  html += `<div style="text-align:center;"><strong>【発送について】</strong></div>`;
 
   if (!hasPreorder) {
-    // ============================
-    // PRE-ORDER 없음 → 기존 형태 + 오프라인 특전 안내
-    // ============================
-    shippingText = `
-  <b>【発送について】</b><br><br>
-
-  <b>${dateText}</b>より、ご注文順に順次出荷されます。できるだけ早くお届けできるよう努めます。<br>
-  ${hasBonus ? "特典はオフラインバージョン特典のみで発送されます。<br>" : ""}
-
-  *「入金待ち」*の状態が続きますと、現地での商品確保ができず、ご注文がキャンセルになる場合がございます。できるだけ早い決済をお願いいたします。<br>
-
-  関税はこちらで負担いたしますのでご安心ください。<br>
-
-  商品はすべて100%正規品です。<br>
-
-  迅速な配送のため、現地で商品を順次確保して発送しております。そのため、ご購入いただいた商品は予約配送に切り替わることはありません。現地の状況に合わせて順次スピーディーに購入し、配送を進めておりますのでご安心ください。<br><br>
-    `;
+    html += `
+<div style="text-align:center;">${normalDateText}より、ご注文順に順次出荷されます。</div>
+<div style="text-align:center;">できるだけ早くお届けできるよう努めます。</div>
+${
+  hasBonus
+    ? `<div style="text-align:center;">特典はオフラインバージョン特典のみで発送されます。</div>`
+    : ""
+}
+<div style="text-align:center;">※「入金待ち」の状態が続いた場合、ご注文がキャンセルとなる可能性がございます。</div>
+<div style="text-align:center;">関税は当店が負担いたします。</div>
+<div style="text-align:center;">商品はすべて<strong>100％正規品</strong>です。</div>
+<br>
+`;
   } else {
-    // ============================
-    // PRE-ORDER 있음 → ① ② 분리 구조
-    // ============================
     if (!preorderShippingDate) {
       alert("PRE-ORDER 발송 날짜를 입력해주세요.");
       return;
     }
 
-    const preorderDateText = formatThumbnailDate(preorderShippingDate);
+    html += `
+<div style="text-align:center;">
+  <span style="font-size:14pt;"><strong>① PRE-ORDERではない商品のみをご購入の場合</strong></span>
+</div>
+<div style="text-align:center;">サムネイルに記載されている日付に合わせて発送されます。</div>
+<div style="text-align:center;">発送予定日：<strong>${normalDateText}</strong></div>
+<br>
 
-    shippingText = `
-  <b>【発送について】</b><br><br>
+<div style="text-align:center;">
+  <span style="font-size:14pt;"><strong>② PRE-ORDER商品と一緒にご購入の場合</strong></span>
+</div>
+<div style="text-align:center;">PRE-ORDER商品の発送予定日に合わせて同梱発送となります。</div>
+<div style="text-align:center;">発送予定日：<strong>${preorderDateText}</strong></div>
 
-  <b>① PRE-ORDERではない商品のみをご購入の場合</b><br>
-  サムネイルに記載されている日付に合わせて発送されます。<br>
-  現地で商品を確保した後、できるだけ早くお届けできるよう準備いたします。<br>
-  ${hasBonus ? "特典はオフラインバージョン特典のみで発送されます。<br>" : ""}
-  発送予定日：<b>${dateText}</b>より順次出荷<br><br>
-
-  <b>② PRE-ORDER商品と一緒にご購入の場合</b><br>
-  PRE-ORDER商品の発送予定日に合わせて同梱発送となるため、配送が遅れる可能性がございます。<br>
-  ${hasBonus ? "特典はオンラインバージョンとオフラインバージョンに区別されている場合、ランダムで発送されます。<br>" : ""}
-  発送予定日：<b>${preorderDateText}</b>より順次出荷<br><br>
-
-  迅速な配送をご希望の場合は、PRE-ORDER商品と分けてご注文いただくことをおすすめいたします。<br><br>
-    `;
+<div style="text-align:center;">
+  <span style="font-size:14pt; color:#ff0000; background-color:#ffff00;">
+    <strong>迅速な配送をご希望の場合は、PRE-ORDER商品と分けてご注文ください。</strong>
+  </span>
+</div>
+<br>
+`;
   }
 
-  // ============================
-  // 📌 전체 HTML 조립
-  // ============================
-  let baseText = `
-  ${bonusText}
-  ${shippingText}
-  ご不明な点やご希望がございましたら、いつでもお気軽にお問い合わせください ^^<br>
-  `;
+  html += `
+<div style="text-align:center;">
+  ご不明な点やご希望がございましたら、いつでもお気軽にお問い合わせください ^^
+</div>
+`;
 
-  setDetailDescription(baseText.trim());
+  setDetailDescription(html);
 };
-
 
 
 
@@ -919,30 +944,30 @@ function App() {
 
         {/* 생성된 상세 설명 출력 */}
         {detailDescription && (
-          <div style={{ marginTop: '0px', marginBottom:'5px' }}>
-            <h3>📝 상세페이지 글</h3>
-            <div
-            id="detailDescriptionHtml"
-              style={{
-                width: "100%",
-                minHeight: "200px",
-                fontSize: "14px",
-                border: "1px solid #ccc",
-                padding: "10px",
-                whiteSpace: "pre-wrap"
-              }}
-              dangerouslySetInnerHTML={{ __html: detailDescription }}
-            ></div>
+  <div style={{ marginTop: "10px" }}>
+    <h3>📝 상세페이지</h3>
 
-            <button 
-              className="COPY-button" 
-              style={{ marginTop: '8px' }}
-              onClick={handleCopyHtmlRendered}
-            >
-              복사하기
-            </button>
-          </div>
-        )}
+    <textarea
+      value={detailDescription}
+      readOnly
+      style={{
+        width: "100%",
+        height: "300px",
+        fontSize: "13px",
+        fontFamily: "monospace"
+      }}
+    />
+
+    <button
+      className="COPY-button"
+      style={{ marginTop: "8px" }}
+      onClick={() => navigator.clipboard.writeText(detailDescription)}
+    >
+      복사하기
+    </button>
+  </div>
+)}
+
       </div>
         {/* 추출 결과 */}
         {mdList.length > 0 && (
