@@ -31,9 +31,6 @@ function App() {
   const [preorderShippingDate, setPreorderShippingDate] = useState('');
 
 
-
-
-
   useEffect(() => {
   // 조건이 하나만 있는 경우 (label 없음 → 기본 방식)
   if (bonusSets.length === 1 && bonusSets[0].base) {

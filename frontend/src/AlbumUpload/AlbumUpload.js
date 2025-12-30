@@ -11,9 +11,24 @@ const applyEnding90 = (yen) => {
 // 원화 → 엔화 (공통 방식)
 const convertToYen = (krw) => {
   if (!krw || Number(krw) <= 0) return 0;
-  let yen = Math.round(Number(krw) / 9.42);
+  let yen = Math.round(Number(krw) / 9.32);
   return applyEnding90(yen);
 };
+
+// 옵션 X 전용 엔화 변환 (×1.6 적용)
+const convertSingleToYen = (krw) => {
+  if (!krw || Number(krw) <= 0) return 0;
+
+  // 1️⃣ 원화 → 엔화 기본 환산
+  let yen = Math.round(Number(krw) / 9.42);
+
+  // 2️⃣ 1.6배 적용
+  yen = Math.round(yen * 1.6);
+
+  // 3️⃣ 끝자리 90 보정
+  return Math.floor(yen / 100) * 100 + 90;
+};
+
 
 const getRowHighlight = (rank, total) => {
   const upper = Math.round(total * 0.25); // 상위그룹
@@ -99,6 +114,10 @@ const [detailDescription, setDetailDescription] = useState("");
   const [tempSinglePrice, setTempSinglePrice] = useState("");
   const [groupedData, setGroupedData] = useState([]);
   const [mainProductName, setMainProductName] = useState("");
+  const [isMemberSelectable, setIsMemberSelectable] = useState(false);
+  const [isSiteSelectable, setIsSiteSelectable] = useState(false); // ⭐ 추가
+const [hasBonus, setHasBonus] = useState(false);
+
   const handleGenerateMainProductName = () => {
   const result = generateMainProductName();
   if (result) setMainProductName(result);
@@ -121,7 +140,12 @@ const [detailDescription, setDetailDescription] = useState("");
 
   const dateText = formatDateJP(releaseDate);
 
-  return `[${groupName.toUpperCase()}][${dateText}発送]${eventName}`;
+  return `[${groupName.toUpperCase()}][${dateText}発送]` +
+       `${isMemberSelectable ? "[メンバー選択]" : ""}` +
+       `${isSiteSelectable ? "[サイトを選択]" : ""}` +
+       `${hasBonus ? "[特典贈呈]" : ""}` +
+       `${eventName}`;
+
 };
 
   const handleGenerateAll = () => {
@@ -695,11 +719,12 @@ sellers.forEach(seller => {
   ];
 
   const ws = XLSX.utils.aoa_to_sheet([headers]);
-  XLSX.utils.sheet_add_json(ws, rows, {
-    header: headers,
-    skipHeader: true,
-    origin: "A2"
-  });
+XLSX.utils.sheet_add_json(ws, rows, {
+  header: headers,
+  skipHeader: true,
+  origin: "A5"   // ⭐ 5행부터 데이터 시작
+});
+
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, `Group${idx + 1}`);
@@ -754,6 +779,41 @@ sellers.forEach(seller => {
       onChange={(e) => setReleaseDate(e.target.value)}
     />
   </div>
+
+  <div className="checkbox-inline">
+  <label>
+    <input
+      type="checkbox"
+      checked={isMemberSelectable}
+      onChange={(e) => setIsMemberSelectable(e.target.checked)}
+    />
+    멤버 선택 가능
+  </label>
+</div>
+
+<div className="checkbox-inline">
+  <label>
+    <input
+      type="checkbox"
+      checked={isSiteSelectable}
+      onChange={(e) => setIsSiteSelectable(e.target.checked)}
+    />
+    사이트 선택
+  </label>
+</div>
+
+<div className="checkbox-inline">
+  <label>
+    <input
+      type="checkbox"
+      checked={hasBonus}
+      onChange={(e) => setHasBonus(e.target.checked)}
+    />
+    특전 증정
+  </label>
+</div>
+
+
 
   <button className="btn-primary" onClick={handleGenerateAll}>
   다음
@@ -1092,7 +1152,7 @@ sellers.forEach(seller => {
         <button
           className="btn-yen"
           onClick={() =>
-            updateSingleRow(set.id, idx, "priceYen", convertToYen(row.priceKrw))
+            updateSingleRow(set.id, idx, "priceYen", convertSingleToYen(row.priceKrw))
           }
         >
           엔화변환

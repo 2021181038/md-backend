@@ -296,3 +296,16 @@
   border-radius: 8px;      /* 살짝 둥글게 */
   border: 1.5px solid #cfd3e1;
 }
+
+.checkbox-inline label {
+  display: flex;
+  align-items: center !important;   /* ⭐ 세로 가운데 정렬 */
+  gap: 6px;              /* 체크박스 - 텍스트 간격 */
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.checkbox-inline input[type="checkbox"] {
+  margin: 0;             /* 기본 margin 제거 */
+}
