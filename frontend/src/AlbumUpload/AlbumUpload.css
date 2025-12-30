@@ -309,3 +309,23 @@
 .checkbox-inline input[type="checkbox"] {
   margin: 0;             /* 기본 margin 제거 */
 }
+
+.set-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.set-remove-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: 700;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+}
+
+.set-remove-btn:hover {
+  color: #e53935; /* 빨간색 */
+}

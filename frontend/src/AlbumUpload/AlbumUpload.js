@@ -123,7 +123,21 @@ const [hasBonus, setHasBonus] = useState(false);
   if (result) setMainProductName(result);
 };
 
-  
+  const judgeOptionResult = (rows, purchaseCost, expectedSales) => {
+  // ⭐ 종류(멤버) 1개면 무조건 가능
+  if (rows.length === 1) return "가능 !";
+
+  // 기본 판정
+  return expectedSales > purchaseCost
+    ? "가능 !"
+    : "불가능 ! 가격 조정 다시 하세요";
+};
+
+  const removeSet = (setId) => {
+  if (!window.confirm("이 옵션 상품을 삭제할까요?")) return;
+
+  setSets(prev => prev.filter(s => s.id !== setId));
+};
 
   const canGroupPrices = () => {
     const optionSets = sets.filter(s => s.type === "withOption");
@@ -322,7 +336,13 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
       );
 
       // ⭐ 새로운 가능 / 불가능 기준
-      const result = expectedSales > purchaseCost ? "가능 !" : "불가능 !";
+      const result = judgeOptionResult(
+        s.rows,
+        purchaseCost,
+        expectedSales
+      );
+
+
 
 
 
@@ -936,7 +956,18 @@ XLSX.utils.sheet_add_json(ws, rows, {
             {/* 옵션 있는 상품 세트 */}
             {set.type === "withOption" && (
               <>
-                <h3>옵션 O - {set.productName}</h3>
+                <div className="set-header">
+  <h3 className="set-title">옵션 O - {set.productName}</h3>
+
+  <button
+    className="set-remove-btn"
+    onClick={() => removeSet(set.id)}
+    aria-label="옵션 삭제"
+  >
+    ✕
+  </button>
+</div>
+
                     <div className="set-edit-area">
 
 
@@ -977,8 +1008,12 @@ XLSX.utils.sheet_add_json(ws, rows, {
                               0
                             );
 
-                            // 4️⃣ 가능 / 불가능 재판정 ⭐⭐⭐
-                            const result = expectedSales > purchaseCost ? "가능 !" : "불가능 ! 가격 조정 다시 하세요";
+                            const result = judgeOptionResult(
+                              set.rows,
+                              purchaseCost,
+                              expectedSales
+                            );
+
 
                             // 5️⃣ state 반영
                             setSets(prev =>
@@ -1073,6 +1108,7 @@ XLSX.utils.sheet_add_json(ws, rows, {
                 </table>
                 {set.optionCheckResult && (
   <div className="option-check-result">
+    {/* 결과 문구는 항상 표시 */}
     <div
       style={{
         fontWeight: "700",
@@ -1083,8 +1119,8 @@ XLSX.utils.sheet_add_json(ws, rows, {
       {set.optionCheckResult}
     </div>
 
-    {/* ⭐ 가능일 때만 숫자 출력 */}
-    {set.optionCheckResult === "가능 !" && (
+    {/* ⭐ 종류가 2개 이상일 때만 상세 수치 표시 */}
+    {set.optionCheckResult === "가능 !" && set.rows.length > 1 && (
       <div style={{ fontSize: "14px" }}>
         <div>매입액 : {Number(set.purchaseCost).toLocaleString()}원</div>
         <div>예상매출 : {Number(set.expectedSales).toLocaleString()}원</div>
@@ -1093,6 +1129,7 @@ XLSX.utils.sheet_add_json(ws, rows, {
     )}
   </div>
 )}
+
 <button
                         className="btn-primary"
                         onClick={() => {
