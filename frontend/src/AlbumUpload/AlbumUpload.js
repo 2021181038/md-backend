@@ -8,7 +8,7 @@ const applyEnding90 = (yen) => {
   return Math.floor(yen / 100) * 100 + 90;
 };
 
-// 원화 → 엔화 (공통 방식)
+// 원화 → 엔화
 const convertToYen = (krw) => {
   if (!krw || Number(krw) <= 0) return 0;
   let yen = Math.round(Number(krw) / 9.32);
@@ -18,66 +18,50 @@ const convertToYen = (krw) => {
 // 옵션 X 전용 엔화 변환 (×1.6 적용)
 const convertSingleToYen = (krw) => {
   if (!krw || Number(krw) <= 0) return 0;
-
-  // 1️⃣ 원화 → 엔화 기본 환산
   let yen = Math.round(Number(krw) / 9.42);
-
-  // 2️⃣ 1.6배 적용
   yen = Math.round(yen * 1.6);
-
-  // 3️⃣ 끝자리 90 보정
   return Math.floor(yen / 100) * 100 + 90;
 };
 
+  const isRowHighlighted = (row, total) => {
+  if (row.isHighlighted !== null) {
+    return row.isHighlighted;
+  }
+  return getRowHighlight(row.rank, total);
+};
+
+const calcPreviewResult = (set) => {
+  const memberCount = set.rows.length;
+  const purchaseCost = Number(set.basePrice) * memberCount;
+  const highlightedRows = set.rows.filter(r =>
+  isRowHighlighted(r, set.rows.length)
+);
+
+  const expectedSales = highlightedRows.reduce(
+    (acc, r) => acc + Number(r.priceKrw || 0),
+    0
+  );
+  return { purchaseCost, expectedSales };
+};
 
 const getRowHighlight = (rank, total) => {
-  const upper = Math.round(total * 0.25); // 상위그룹
-  const lower = upper; // 하위그룹
+  const upper = Math.round(total * 0.25); 
+  const lower = upper; 
 
   const middleStart = upper + 1;
   const middleEnd = total - lower;
   const middleCount = middleEnd - middleStart + 1;
-
   const middleHalf = Math.floor(middleCount / 2);
 
-  if (rank <= upper) return true; // 상위 전부
-
+  if (rank <= upper) return true; 
   if (rank >= total - lower + 1) {
-    // 하위그룹 절반만
     return rank < total - lower + 1 + lower / 2;
   }
-
-  // 중위그룹 절반만
   if (rank >= middleStart && rank < middleStart + middleHalf) return true;
 
   return false;
 };
 
-const recalcOptionResult = (set) => {
-  const memberCount = set.rows.length;
-
-  const upperCount = Math.round(memberCount * 0.25);
-  const lowerCount = upperCount;
-
-  const highlightedRows = set.rows.filter(
-    r => getRowHighlight(r.rank, set.rows.length)
-  );
-
-  const expectedSales = highlightedRows.reduce(
-    (acc, r) => acc + Number(r.priceKrw),
-    0
-  );
-
-  const purchaseCost = Number(set.basePrice) * memberCount;
-
-  return {
-    expectedSales,
-    purchaseCost,
-  };
-};
-
-
-// 옵션 있는 상품 배수 계산 (상/중/하 그룹 규칙)
 const getMultiplier = (rank, total) => {
   const upper = Math.round(total * 0.25);
   const lower = upper;
@@ -93,19 +77,15 @@ const formatDateJP = (dateStr) => {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 };
 
-
-
-
-
-
+const API_BASE = process.env.REACT_APP_API_BASE;
 
 
 function AlbumUpload() {
   const [sets, setSets] = useState([]);
   const [groupName, setGroupName] = useState("");
-const [eventName, setEventName] = useState("");
-const [releaseDate, setReleaseDate] = useState("");
-const [detailDescription, setDetailDescription] = useState("");
+  const [eventName, setEventName] = useState("");
+  const [releaseDate, setReleaseDate] = useState("");
+  const [detailDescription, setDetailDescription] = useState("");
   const [popupSeller, setPopupSeller] = useState("");
   const [tempProductName, setTempProductName] = useState("");
   const [tempMemberCount, setTempMemberCount] = useState("");
@@ -115,19 +95,154 @@ const [detailDescription, setDetailDescription] = useState("");
   const [groupedData, setGroupedData] = useState([]);
   const [mainProductName, setMainProductName] = useState("");
   const [isMemberSelectable, setIsMemberSelectable] = useState(false);
-  const [isSiteSelectable, setIsSiteSelectable] = useState(false); // ⭐ 추가
-const [hasBonus, setHasBonus] = useState(false);
+  const [isSiteSelectable, setIsSiteSelectable] = useState(false);  
+  const [hasBonus, setHasBonus] = useState(false);
+  const [bonusAlbumName, setBonusAlbumName] = useState("");
+  const [rawKeywords, setRawKeywords] = useState("");
+  const [isKeywordLoading, setIsKeywordLoading] = useState(false);
+  const [generatedKeywords, setGeneratedKeywords] = useState("");
+  const [keywordType, setKeywordType] = useState("アルバム");
+  const [memberText, setMemberText] = useState("");
+  const [keywords, setKeywords] = useState([]);
+  const [albumNameEn, setAlbumNameEn] = useState("");
+const [albumNameJp, setAlbumNameJp] = useState("");
+
+
 
   const handleGenerateMainProductName = () => {
   const result = generateMainProductName();
   if (result) setMainProductName(result);
 };
+  const handleGenerateKeywordsByGPT = async () => {
+  if (!rawKeywords.trim()) {
+    alert("키워드를 입력해주세요.");
+    return;
+  }
+
+  setIsKeywordLoading(true);
+
+  try {
+    const res = await fetch(
+      "https://md-backend-blond.vercel.app/generate-album-keywords",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          keywords: rawKeywords,
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.error) {
+      alert(data.error);
+      return;
+    }
+
+    setGeneratedKeywords(data.result);
+  } catch (e) {
+    alert("키워드 생성 실패");
+  } finally {
+    setIsKeywordLoading(false);
+  }
+};
+
+const handleGenerateKeywordsAlbum = async () => {
+  if (!keywordType) {
+    alert("키워드 타입이 없습니다.");
+    return;
+  }
+
+  if (!memberText) {
+    alert("멤버명을 입력하세요!");
+    return;
+  }
+
+  const members = memberText
+    .split(",")
+    .map(m => m.trim())
+    .filter(Boolean);
+
+  try {
+    // EN
+    const enRes = await fetch(`${API_BASE}/translate-members-en`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ members }),
+    });
+    const { translatedMembersEn } = await enRes.json();
+
+    // JP
+    const jpRes = await fetch(`${API_BASE}/translate-members-jp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ members }),
+    });
+    const { translatedMembersJp } = await jpRes.json();
+
+    // 그룹명 JP
+    const groupRes = await fetch(`${API_BASE}/translate-members-jp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ members: [groupName] }),
+    });
+    const { translatedMembersJp: groupNameJpArr } = await groupRes.json();
+    const groupNameJp = groupNameJpArr[0] || groupName;
+
+    let extraKeywordEn = "";
+    let extraKeywordJp = "";
+    if (keywordType === "アルバム") {
+      extraKeywordEn = "CD";
+      extraKeywordJp = "CD";
+    } else if (keywordType === "フォトカード") {
+      extraKeywordEn = "POCA";
+      extraKeywordJp = "ポカ";
+    }
+
+    const albumNameEn = eventName;
+// ⭐ 앨범명 JP만 번역
+const albumJpRes = await fetch(`${API_BASE}/translate-members-jp`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ members: [eventName] }),
+});
+const { translatedMembersJp: [albumNameJp] } = await albumJpRes.json();
+
+setAlbumNameEn(albumNameEn);
+setAlbumNameJp(albumNameJp);
+
+
+
+    const result = members.map((_, idx) => ({
+      en: translatedMembersEn[idx] || "",
+      jp: translatedMembersJp[idx] || "",
+      type: "member"
+    }));
+
+    const finalKeywords = [
+  {
+    en: `${groupName} ${albumNameEn} ${extraKeywordEn}`.trim(),
+    jp: `${groupNameJp} ${albumNameJp} ${extraKeywordJp}`.trim(),
+    type: "main"
+  },
+  ...result
+];
+
+
+    setKeywords(finalKeywords);
+
+  } catch (error) {
+    console.error("키워드 추출 실패:", error);
+    alert("키워드 생성 실패");
+  }
+};
+
 
   const judgeOptionResult = (rows, purchaseCost, expectedSales) => {
-  // ⭐ 종류(멤버) 1개면 무조건 가능
   if (rows.length === 1) return "가능 !";
-
-  // 기본 판정
   return expectedSales > purchaseCost
     ? "가능 !"
     : "불가능 ! 가격 조정 다시 하세요";
@@ -135,7 +250,6 @@ const [hasBonus, setHasBonus] = useState(false);
 
   const removeSet = (setId) => {
   if (!window.confirm("이 옵션 상품을 삭제할까요?")) return;
-
   setSets(prev => prev.filter(s => s.id !== setId));
 };
 
@@ -146,6 +260,7 @@ const [hasBonus, setHasBonus] = useState(false);
 
     return optionSets.every(s => s.memberLocked);
   };
+
   const generateMainProductName = () => {
   if (!groupName || !eventName || !releaseDate) {
     alert("그룹명 / 발송날짜 / 앨범명을 모두 입력해주세요");
@@ -153,7 +268,6 @@ const [hasBonus, setHasBonus] = useState(false);
   }
 
   const dateText = formatDateJP(releaseDate);
-
   return `[${groupName.toUpperCase()}][${dateText}発送]` +
        `${isMemberSelectable ? "[メンバー選択]" : ""}` +
        `${isSiteSelectable ? "[サイトを選択]" : ""}` +
@@ -163,22 +277,47 @@ const [hasBonus, setHasBonus] = useState(false);
 };
 
   const handleGenerateAll = () => {
-  handleGenerateMainProductName(); // 메인상품명 생성
-  handleGenerateDescription();     // 상세페이지 글 생성
+  handleGenerateMainProductName(); 
+  handleGenerateDescription();     
 };
 
+
   const handleGenerateDescription = () => {
+    if (hasBonus && !bonusAlbumName) {
+  alert("특전 대상 앨범명을 입력해주세요");
+  return;
+}
   if (!groupName || !eventName || !releaseDate) {
     alert("그룹명 / 발송날짜 / 앨범명을 모두 입력해주세요");
     return;
   }
 
   const jpDate = formatDateJP(releaseDate);
+  const bonusText = hasBonus && bonusAlbumName
+  ? `
+  <h3 style="margin-bottom:14px;">🎁【特典情報】</h3>
+
+  <p>
+    <b>${bonusAlbumName}</b>のご購入枚数に応じて、以下の公式特典をお付けいたします。
+  </p>
+
+  <p>
+    ・1枚ご購入：公式特典 1枚<br/>
+    ・2枚ご購入：公式特典 2枚<br/>
+    ※以降もご購入枚数に応じて、自動的に特典が追加されます。
+  </p>
+
+  <div style="height:16px;"></div>
+`
+  : "";
+
 
   const text = `
     <div style="text-align:center; font-size:14px; line-height:1.9;">
 
-  <h3 style="margin-bottom:14px;">【発送について】</h3>
+${bonusText}
+
+<h3 style="margin-bottom:14px;">【発送について】</h3>
 
   <p>
     <b>${jpDate}</b>より、ご注文順に順次発送予定です。<br/>
@@ -257,8 +396,16 @@ setDetailDescription(text);
       const updatedRows = s.rows.map((r, i) => {
         if (i !== rowIndex) return r;
 
-        const mul = Number(value);
-        const newKrw = Math.round(Number(s.basePrice) * mul);  // ⭐ 세트의 basePrice 사용
+        // ⭐ 빈 값이면 숫자 계산 안 함
+        if (value === "") {
+          return {
+            ...r,
+            multiplier: "",
+          };
+        }
+
+        const mul = value;
+        const newKrw = Math.round(Number(s.basePrice) * mul);
         const newYen = convertToYen(newKrw);
 
         return {
@@ -269,13 +416,11 @@ setDetailDescription(text);
         };
       });
 
-      return {
-        ...s,
-        rows: updatedRows,
-      };
+      return { ...s, rows: updatedRows };
     })
   );
 };
+
 
   const handleCopyDescription = async () => {
   if (!detailDescription) {
@@ -356,9 +501,6 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
   );
 };
 
-  const getMultiplierSum = (set) => {
-  return set.rows.reduce((sum, r) => sum + Number(r.multiplier), 0);
-};
 
   const toggleEditMode = (setId) => {
   setSets(prev =>
@@ -391,6 +533,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
         memberName: "",
         priceKrw,
         priceYen,
+        isHighlighted: null,
       });
     }
 
@@ -568,6 +711,7 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
         name: "–",
         price: standardPrice.toString(),
         hasOption: false,
+        isDummy: true, 
       });
     }
 
@@ -680,7 +824,8 @@ const handleMemberNameChange = (setId, rowIndex, value) => {
         option_name_3: "-",
 
         option_price_yen: diff,
-        option_quantity: 5,
+        option_quantity: item.isDummy ? 0 : 5,
+
 
         seller_unique_option_id: "",
         external_product_hs_id: "",
@@ -708,7 +853,8 @@ sellers.forEach(seller => {
     option_name_3: memberName,
 
     option_price_yen: diff,
-    option_quantity: 5,
+    option_quantity: item.isDummy ? 0 : 5,
+
 
     seller_unique_option_id: "",
     external_product_hs_id: "",
@@ -722,6 +868,13 @@ sellers.forEach(seller => {
     alert("엑셀로 추출할 데이터가 없습니다.");
     return;
   }
+  // ⭐ D열(option_name_2) 기준 내림차순 정렬
+rows.sort((a, b) =>
+  String(b.option_name_2 || "").localeCompare(
+    String(a.option_name_2 || ""),
+    "ja"
+  )
+);
 
   // Qoo10 엑셀 헤더
   const headers = [
@@ -822,7 +975,7 @@ XLSX.utils.sheet_add_json(ws, rows, {
   </label>
 </div>
 
-<div className="checkbox-inline">
+<div className="checkbox-inline" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
   <label>
     <input
       type="checkbox"
@@ -831,7 +984,18 @@ XLSX.utils.sheet_add_json(ws, rows, {
     />
     특전 증정
   </label>
+
+  {hasBonus && (
+    <input
+      type="text"
+      placeholder="특전 대상 앨범명 입력"
+      value={bonusAlbumName}
+      onChange={(e) => setBonusAlbumName(e.target.value)}
+      style={{ width: "260px" }}
+    />
+  )}
 </div>
+
 
 
 
@@ -969,78 +1133,39 @@ XLSX.utils.sheet_add_json(ws, rows, {
 </div>
 
                     <div className="set-edit-area">
+  {!set.editing ? (
+    <button
+      className="edit-btn edit-btn-edit"
+      onClick={() => toggleEditMode(set.id)}
+    >
+      수정하기
+    </button>
+  ) : (
+    <button
+      className="edit-btn edit-btn-save"
+      onClick={() => toggleEditMode(set.id)}
+    >
+      수정완료
+    </button>
+  )}
+</div>
 
-
-                      {!set.editing ? (
-                        <button
-                          className="edit-btn edit-btn-edit"
-                          onClick={() => toggleEditMode(set.id)}
-                        >
-                          수정하기
-                        </button>
-                      ) : (
-                        <button
-                          className="edit-btn edit-btn-save"
-                          onClick={() => {
-                            // 1️⃣ 기준값 검사 (배수 합 조건)
-                            const multiplierSum = getMultiplierSum(set);
-                            const requiredSum = Number((1.6 * set.rows.length).toFixed(1));
-
-                            if (multiplierSum < requiredSum) {
-                              alert(`배수의 합이 ${requiredSum} 이 되어야합니다`);
-                              return;
-                            }
-
-                            // 2️⃣ 매입액 계산
-                            const memberCount = set.rows.length;
-                            const purchaseCost = Number(set.basePrice) * memberCount;
-
-                            // 3️⃣ 예상매출 계산 (초록색 행 기준)
-                            const upperCount = Math.round(memberCount * 0.25);
-                            const lowerCount = upperCount;
-
-                            const highlightedRows = set.rows.filter(
-                              r => getRowHighlight(r.rank, set.rows.length)
-                            );
-
-                            const expectedSales = highlightedRows.reduce(
-                              (acc, r) => acc + Number(r.priceKrw),
-                              0
-                            );
-
-                            const result = judgeOptionResult(
-                              set.rows,
-                              purchaseCost,
-                              expectedSales
-                            );
-
-
-                            // 5️⃣ state 반영
-                            setSets(prev =>
-                              prev.map(s =>
-                                s.id === set.id
-                                  ? {
-                                      ...s,
-                                      editing: false,
-                                      purchaseCost,
-                                      expectedSales,
-                                      optionCheckResult: result,
-                                    }
-                                  : s
-                              )
-                            );
-                          }}
-                        >
-                          수정완료
-                        </button>
-
-                      )}
-
-                    </div>
+                    {/* ⭐ 여기! */}
+{set.editing && (
+  <div
+    style={{
+      fontSize: "14px",
+      color: "#ff5fa2",
+      margin: "6px 0"
+    }}
+  >
+    👉 초록색으로 만들 행을 클릭하세요
+  </div>
+)}
 
 
                   <div className="seller-line">
-                    OPTION 2 : <strong>{set.seller}</strong>
+                    판매처 : <strong>{set.seller}</strong>
                   </div>
                 <table className="set-table">
                   <thead>
@@ -1057,80 +1182,127 @@ XLSX.utils.sheet_add_json(ws, rows, {
                     {set.rows.map((r, idx) => (
                       <tr
                         key={idx}
-                        className={
-                          getRowHighlight(r.rank, set.rows.length) ? "row-highlight" : ""
-                        }
-                      >
+                        className={isRowHighlighted(r, set.rows.length) ? "row-highlight" : ""}
+                        style={{
+                          cursor: set.editing ? "pointer" : "default"
+                        }}
+                        onClick={() => {
+                          if (!set.editing) return;
 
+                          setSets(prev =>
+                            prev.map(s => {
+                              if (s.id !== set.id) return s;
+
+                              return {
+                                ...s,
+                                rows: s.rows.map((row, i) =>
+                                  i === idx
+                                    ? {
+                                        ...row,
+                                        isHighlighted:
+                                          row.isHighlighted === null
+                                            ? !getRowHighlight(row.rank, s.rows.length)
+                                            : !row.isHighlighted,
+                                      }
+                                    : row
+                                ),
+                              };
+                            })
+                          );
+                        }}
+                      >
                         <td>{r.rank}</td>
                         <td>
                           {set.editing ? (
                             <input
                               type="number"
+                              step="0.1"
                               value={r.multiplier}
-                              onChange={(e) => updateMultiplier(set.id, idx, e.target.value)}
+                              onWheel={(e) => e.target.blur()}
+                              onClick={(e) => e.stopPropagation()}  
+                              onChange={(e) => {
+                                const v = e.target.value;
+
+                                // ⭐ 완전히 지웠을 때
+                                if (v === "") {
+                                  updateMultiplier(set.id, idx, "");
+                                  return;
+                                }
+
+                                const num = parseFloat(v);
+                                if (!isNaN(num)) {
+                                  updateMultiplier(set.id, idx, num);
+                                }
+                              }}
                             />
+
+                              ) : (
+                                r.multiplier
+                              )}
+                            </td>
+                        <td>
+                          {set.editing ? (
+                            // 수정 모드 → 무조건 인풋 활성화
+                            <input
+                              className="member-input"
+                              value={r.memberName}
+                              onChange={(e) => handleMemberNameChange(set.id, idx, e.target.value.toUpperCase())}
+                              onClick={(e) => e.stopPropagation()} 
+                            />
+                          ) : set.memberLocked ? (
+                            // 수정모드 X + 입력 완료됨 → 텍스트 표시
+                            <div className="member-display">{r.memberName}</div>
                           ) : (
-                            r.multiplier
+                            // 수정모드 X + 입력 완료 안됨 → 인풋 표시
+                            <input
+                              className="member-input"
+                              value={r.memberName}
+                              onChange={(e) => handleMemberNameChange(set.id, idx, e.target.value.toUpperCase())}
+                              onClick={(e) => e.stopPropagation()} 
+                            />
                           )}
                         </td>
-
-
-
-                        <td>
-  {set.editing ? (
-    // 수정 모드 → 무조건 인풋 활성화
-    <input
-      className="member-input"
-      value={r.memberName}
-      onChange={(e) => handleMemberNameChange(set.id, idx, e.target.value.toUpperCase())}
-    />
-  ) : set.memberLocked ? (
-    // 수정모드 X + 입력 완료됨 → 텍스트 표시
-    <div className="member-display">{r.memberName}</div>
-  ) : (
-    // 수정모드 X + 입력 완료 안됨 → 인풋 표시
-    <input
-      className="member-input"
-      value={r.memberName}
-      onChange={(e) => handleMemberNameChange(set.id, idx, e.target.value.toUpperCase())}
-    />
-  )}
-</td>
-
-
-
                         <td>{r.priceKrw}</td>
                         <td>{r.priceYen}</td>
                       </tr>
                     ))}
+
                   </tbody>
+                  
                 </table>
-                {set.optionCheckResult && (
-  <div className="option-check-result">
-    {/* 결과 문구는 항상 표시 */}
-    <div
-      style={{
-        fontWeight: "700",
-        color: set.optionCheckResult === "가능 !" ? "green" : "red",
-        marginBottom: "6px"
-      }}
-    >
-      {set.optionCheckResult}
-    </div>
-
-    {/* ⭐ 종류가 2개 이상일 때만 상세 수치 표시 */}
-    {set.optionCheckResult === "가능 !" && set.rows.length > 1 && (
-      <div style={{ fontSize: "14px" }}>
-        <div>매입액 : {Number(set.purchaseCost).toLocaleString()}원</div>
-        <div>예상매출 : {Number(set.expectedSales).toLocaleString()}원</div>
-        <div>** 초록색 행이 다 팔렸을 때 기준 매출이에요.</div>
-      </div>
-    )}
-  </div>
-)}
-
-<button
+                {(() => {
+                  const { purchaseCost, expectedSales } = calcPreviewResult(set);
+                                  const previewResult =
+                    set.rows.length === 1
+                      ? "가능 !"
+                      : expectedSales > purchaseCost
+                      ? "가능 !"
+                      : "불가능 !";
+                  return (
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        padding: "10px",
+                        background: "#fcffe3ff",
+                        borderRadius: "6px",
+                        fontSize: "14px"
+                      }}
+                    >
+                      <div>🧾 매입액 : {purchaseCost.toLocaleString()}원</div>
+                      <div>💰 예상 매출 : {expectedSales.toLocaleString()}원</div>
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          fontWeight: "700",
+                          color: previewResult === "가능 !" ? "green" : "red"
+                        }}
+                      >
+                        {previewResult}
+                      </div>
+                    </div>
+                  );
+                })()}
+                        <button
                         className="btn-primary"
                         onClick={() => {
                           // 1) 멤버명 입력 잠금
@@ -1302,7 +1474,133 @@ XLSX.utils.sheet_add_json(ws, rows, {
           })}
         </div>
       )}
+
+      <div className="section-box">
+        <h3>🔍 검색 키워드 (앨범)</h3>
+
+        <input
+  type="text"
+  placeholder="멤버명 (콤마 구분)"
+  value={memberText}
+  onChange={(e) => setMemberText(e.target.value)}
+/>
+
+<button onClick={handleGenerateKeywordsAlbum}>
+  검색 키워드 생성
+</button>
+
+{keywords.length > 0 && (
+  <div style={{ marginBottom: "16px" }}>
+
+    {(() => {
+      const main = keywords.find(k => k.type === "main");
+      if (!main) return null;
+      const groupEn = groupName; 
+      const albumEn = albumNameEn; 
+      const albumJp = albumNameJp; 
+      const extraEn = "CD";
+      const groupJp = main.jp.split(" ")[0];
+
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+
+  {/* 그룹명 */}
+  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <strong style={{ width: "70px" }}>그룹명</strong>
+    <span style={{ flex: 1 }}>{groupEn}</span>
+
+    <button
+    className="btn-secondary small"
+    onClick={() => navigator.clipboard.writeText(groupJp)}
+  >
+    JP
+  </button>
+  </div>
+
+  {/* 앨범명 */}
+  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <strong style={{ width: "70px" }}>앨범명</strong>
+    <span style={{ flex: 1 }}>{albumEn}</span>
+    <button
+      className="btn-secondary small"
+      onClick={() => navigator.clipboard.writeText(albumJp)}
+    >
+      JP
+    </button>
+  </div>
+
+  {/* CD */}
+  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <strong style={{ width: "70px" }}>앨범</strong>
+    <span style={{ flex: 1 }}>CD</span>
+
+    <button
+      className="btn-secondary small"
+      onClick={() => navigator.clipboard.writeText("CD")}
+    >
+      EN
+    </button>
+  </div>
+
+</div>
+      );
+    })()}
+  </div>
+)}
+
+{keywords.length > 0 && (
+  <div style={{ marginTop: "12px" }}>
+    {keywords
+  .filter(k => k.type === "member")
+  .map((k, idx) => (
+      <div
+        key={idx}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 0",
+          borderBottom: "1px solid #eee",
+          fontSize: "14px"
+        }}
+      >
+        {/* 키워드 텍스트 */}
+        <div style={{ flex: 1 }}>
+          <div>
+            <strong>[EN]</strong> {k.en}
+          </div>
+          <div style={{ color: "#666", marginTop: "2px" }}>
+            <strong>[JP]</strong> {k.jp}
+          </div>
+        </div>
+
+        {/* 복사 버튼 */}
+        <button
+          className="btn-secondary small"
+          onClick={() => navigator.clipboard.writeText(k.en)}
+        >
+          EN
+        </button>
+
+        <button
+          className="btn-secondary small"
+          onClick={() => navigator.clipboard.writeText(k.jp)}
+        >
+          JP
+        </button>
+      </div>
+    ))}
+  </div>
+)}
+
+
+      </div>
+      
+
+
     </div>
+
+    
   );
 }
 
