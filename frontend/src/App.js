@@ -22,6 +22,7 @@ function App() {
   const [keywordType, setKeywordType] = useState(''); 
   const [memberText, setMemberText] = useState('');
   const [keywords, setKeywords] = useState([]);
+  const [isKeywordLoading, setIsKeywordLoading] = useState(false);
   const [bonusSets, setBonusSets] = useState([
   { base: "", label: "" }   // base = 기준 숫자, label = 특전 이름
 ]);
@@ -555,7 +556,7 @@ ${
   // 3. GPT 상품명/가격 추출하기
   await handleSubmit();
 };
-  const handleGenerateKeywords = async () => { 
+  const handleGenerateKeywords = async () => {
   if (!keywordType) {
     alert("응원봉/앨범/MD/포카 중 하나를 선택하세요!");
     return;
@@ -566,65 +567,90 @@ ${
     return;
   }
 
+  if (!groupName) {
+    alert("그룹명을 입력하세요!");
+    return;
+  }
+
   const members = memberText
     .split(",")
     .map(m => m.trim())
     .filter(Boolean);
 
+  if (members.length === 0) {
+    alert("멤버명을 올바르게 입력하세요.");
+    return;
+  }
+
+  setIsKeywordLoading(true);
+
   try {
-    // 영어 변환 요청
-    const enRes = await fetch(`${API_BASE}/translate-members-en`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ members }),
-    });
-    const { translatedMembersEn } = await enRes.json();
+    // ✅ 병렬 요청 (속도 개선)
+    const [enRes, jpRes, groupRes] = await Promise.all([
+      fetch(`${API_BASE}/translate-members-en`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ members }),
+      }),
+      fetch(`${API_BASE}/translate-members-jp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ members }),
+      }),
+      fetch(`${API_BASE}/translate-members-jp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ members: [groupName] }),
+      }),
+    ]);
 
-    // 일본어 변환 요청
-    const jpRes = await fetch(`${API_BASE}/translate-members-jp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ members }),
-    });
-    const { translatedMembersJp } = await jpRes.json();
+    const { translatedMembersEn = [] } = await enRes.json();
+    const { translatedMembersJp = [] } = await jpRes.json();
+    const { translatedMembersJp: groupNameJpArr = [] } = await groupRes.json();
 
-    const groupRes = await fetch(`${API_BASE}/translate-members-jp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ members: [groupName] }),
-    });
-    const { translatedMembersJp: groupNameJpArr } = await groupRes.json();
+    if (!translatedMembersEn.length || !translatedMembersJp.length) {
+      alert("키워드 생성에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
+
     const groupNameJp = groupNameJpArr[0] || groupName;
     const groupNameEn = groupName;
 
-    // ✅ 추가 키워드 로직
+    // ✅ 추가 키워드
     let extraKeywordEn = "";
     let extraKeywordJp = "";
+
     if (keywordType === "アルバム") {
       extraKeywordEn = "CD";
       extraKeywordJp = "CD";
-    } else if (keywordType === "포カ" || keywordType === "フォトカード") {
+    } else if (keywordType === "포카" || keywordType === "フォトカード") {
       extraKeywordEn = "POCA";
-      extraKeywordJp = "ポカ"; // 또는 "POCA" 그대로 써도 OK
+      extraKeywordJp = "ポカ";
     }
 
-    const result = members.map((_, idx) => ({
+    const memberKeywords = members.map((_, idx) => ({
       en: translatedMembersEn[idx] || "",
       jp: translatedMembersJp[idx] || "",
-      type: "member"
+      type: "member",
     }));
 
-    // ✅ 그룹명 + 메인 키워드 생성
     const finalKeywords = [
-      { en: `${groupNameEn} ${keywordType} ${extraKeywordEn}`.trim(), jp: `${groupNameJp} ${keywordType} ${extraKeywordJp}`.trim(), type: "main" },
-      ...result
+      {
+        en: `${groupNameEn} ${keywordType} ${extraKeywordEn}`.trim(),
+        jp: `${groupNameJp} ${keywordType} ${extraKeywordJp}`.trim(),
+        type: "main",
+      },
+      ...memberKeywords,
     ];
 
     setKeywords(finalKeywords);
 
   } catch (error) {
     console.error("키워드 추출 실패:", error);
-    alert("GPT 요청 실패");
+    alert("키워드 생성 중 오류가 발생했습니다.");
+  } finally {
+    // ✅ 이게 제일 중요
+    setIsKeywordLoading(false);
   }
 };
 
@@ -1196,7 +1222,6 @@ ${
         })}
 
         {/* 🔎 검색 키워드 추출 섹션 (그룹이 생성된 후에만 표시) */}
-        {grouped.length > 0 && (
           <div style={{ marginTop: '30px' }}>
             <h3>🔎 검색 키워드 추출</h3>
 
@@ -1258,13 +1283,13 @@ ${
             />
           </div>
 
-      <button 
-        className="pretty-button" 
-        style={{ marginTop: '10px' }}
-        onClick={handleGenerateKeywords}
-      >
-        생성하기
-      </button>
+      <button
+  className="pretty-button"
+  disabled={isKeywordLoading}
+  onClick={handleGenerateKeywords}
+>
+  {isKeywordLoading ? "키워드 생성 중..." : "생성하기"}
+</button>
 
       {/* 결과 출력 */}
       {keywords.length > 0 && (
@@ -1329,7 +1354,6 @@ ${
   )}
 
     </div>
-  )}
       </div>  
   </div>
     )}

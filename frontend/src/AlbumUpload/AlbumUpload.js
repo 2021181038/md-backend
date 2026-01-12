@@ -151,11 +151,6 @@ const [albumNameJp, setAlbumNameJp] = useState("");
 };
 
 const handleGenerateKeywordsAlbum = async () => {
-  if (!keywordType) {
-    alert("키워드 타입이 없습니다.");
-    return;
-  }
-
   if (!memberText) {
     alert("멤버명을 입력하세요!");
     return;
@@ -197,9 +192,6 @@ const handleGenerateKeywordsAlbum = async () => {
     if (keywordType === "アルバム") {
       extraKeywordEn = "CD";
       extraKeywordJp = "CD";
-    } else if (keywordType === "フォトカード") {
-      extraKeywordEn = "POCA";
-      extraKeywordJp = "ポカ";
     }
 
     const albumNameEn = eventName;
