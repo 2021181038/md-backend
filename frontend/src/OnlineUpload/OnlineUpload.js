@@ -36,7 +36,7 @@ const groupByCustomPrice = (items) => {
   while (remaining.length > 0) {
     const prices = remaining.map(item => Number(item.price));
     const min = Math.min(...prices);
-    const rawStandard = min * 2; // ✅ 1단계: 임시 기준가격
+    const rawStandard = min * 1.6; // ✅ 1단계: 임시 기준가격
     const lowerBound = rawStandard * 0.5;
     const upperBound = rawStandard * 1.5;
 
@@ -342,9 +342,13 @@ const handleSubmit = async () => {
         match = line.match(/\[(\d+)\]\s*(.+?)\s+([\d,]+)\s*(\u20a9|WON|\uC6D0|\u5186)?\s*$/i);
         if (match) {
           const rawPrice = Number(match[3].replace(/[^\d]/g, ""));
-          const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
-          const methodB = rawPrice * 0.2;
-          const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
+          let finalPrice;
+
+        if (activeTab === "online") {
+        // 온라인: 원가 * 0.16
+        finalPrice = Math.ceil((rawPrice * 0.16) / 100) * 100 - 10;
+        } 
+
 
           return {
             name: `[${match[1]}] ${match[2].trim().replace(/[-\u2013:]+$/, "")}`,
@@ -355,18 +359,22 @@ const handleSubmit = async () => {
 
         // 2) 상품명 ₩가격
         match = line.match(/^(.+?)\s*[₩\u20a9](\d[\d,]*)/);
-        if (match) {
-          const rawPrice = Number(match[2].replace(/[^\d]/g, ""));
-          const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
-          const methodB = rawPrice * 0.2;
-          const finalPrice = ceilToNearestHundred(Math.max(methodA, methodB));
+            if (match) {
+            const rawPrice = Number(match[2].replace(/[^\d]/g, ""));
+            let finalPrice;
 
-          return {
-            name: match[1].trim().replace(/[-\u2013:]+$/, ""),
-            price: finalPrice.toString(),
-            options: []
-          };
-        }
+            if (activeTab === "online") {
+                // ✅ 온라인: 원가 * 0.16
+                finalPrice = Math.ceil((rawPrice * 0.16) / 100) * 100 - 10;
+            } 
+
+            return {
+                name: match[1].trim().replace(/[-\u2013:]+$/, ""),
+                price: finalPrice.toString(),
+                originalPriceKrw: rawPrice.toString(),
+                options: []
+            };
+            }
 
         // 3) 매칭 안 되면 그대로
         return { name: line.trim(), price: "", options: [] };
@@ -923,15 +931,9 @@ const activeTab = "online";
 
                           if (activeTab === "online") {
                             // ✅ 온라인 업로드
-                            finalPrice = Math.ceil((rawPrice * 0.16) / 100) * 100;
+                            finalPrice = Math.ceil((rawPrice * 0.16) / 100) * 100 -10;
 
-                          } else {
-                            // ✅ 현장구매 업로드 (기존 로직)
-                            const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
-                            const methodB = rawPrice * 0.2;
-                            finalPrice =
-                              ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
-                          }
+                          } 
 
                           newList[idx].originalPriceKrw = rawPrice.toString();
                           newList[idx].price = finalPrice.toString();
