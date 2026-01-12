@@ -268,13 +268,15 @@ setAlbumNameJp(albumNameJp);
   }
 
   const dateText = formatDateJP(releaseDate);
-  return `[${groupName.toUpperCase()}][${dateText}発送]` +
-       `${isMemberSelectable ? "[メンバー選択]" : ""}` +
-       `${isSiteSelectable ? "[サイトを選択]" : ""}` +
-       `${hasBonus ? "[特典贈呈]" : ""}` +
-       `${eventName}`;
 
+  return `[${groupName.toUpperCase()}][${dateText}発送]` +
+    `${isMemberSelectable ? "[メンバー選択]" : ""}` +
+    `${isSiteSelectable ? "[サイトを選択]" : ""}` +
+    `${hasBonus ? "[特典贈呈]" : ""}` +
+    `[PRE-ORDER]` +
+    `${eventName} LUCKY DRAW EVENT`;
 };
+
 
   const handleGenerateAll = () => {
   handleGenerateMainProductName(); 

@@ -1,246 +1,34 @@
-import React, { useState ,useEffect} from 'react';
-import './App.css';
+import { useState } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import MarginCalculator from './margin/MarginCalculator';
-import OrderManager from './order/OrderManager';
-import AlbumUpload from './AlbumUpload/AlbumUpload';
-import OnlineUpload from "./OnlineUpload/OnlineUpload";
 
 
-function App() {
-  const [groupName, setGroupName] = useState('');
-  const [eventName, setEventName] = useState('');
-  const [hasBonus, setHasBonus] = useState(false);
-  const [images, setImages] = useState([]);
-  const [mdList, setMdList] = useState([]);
-  const [grouped, setGrouped] = useState([]);
-  const [tempOptionValues, setTempOptionValues] = useState({});
-  const [thumbnailShippingDate, setThumbnailShippingDate] = useState('');
-  const [mainName, setMainName] = useState('');
-  const [detailDescription, setDetailDescription] = useState('');
-  const [keywordType, setKeywordType] = useState(''); 
-  const [memberText, setMemberText] = useState('');
-  const [keywords, setKeywords] = useState([]);
-  const [bonusSets, setBonusSets] = useState([
-  { base: "", label: "" }   // base = 기준 숫자, label = 특전 이름
-]);
-  const [activeTab, setActiveTab] = useState("order");
-  const priceMode = activeTab === "online" ? "online" : "offline";
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [hasAlbum, setHasAlbum] = useState(false);
-  const [hasPreorder, setHasPreorder] = useState(false);
-  const [preorderShippingDate, setPreorderShippingDate] = useState('');
-  const handleCopyHtmlSource = () => {
-  if (!detailDescription) {
-    alert("복사할 상세페이지 내용이 없습니다.");
-    return;
-  }
+function OnlineUpload() {
+const API_BASE = process.env.REACT_APP_API_BASE;
+const [images, setImages] = useState([]);
+const [groupName, setGroupName] = useState("");
+const [thumbnailShippingDate, setThumbnailShippingDate] = useState("");
+const [hasPreorder, setHasPreorder] = useState(false);
+const [preorderShippingDate, setPreorderShippingDate] = useState("");
+const [eventName, setEventName] = useState("");
+const [hasBonus, setHasBonus] = useState(false);
+const [hasAlbum, setHasAlbum] = useState(false);
 
-  navigator.clipboard.writeText(detailDescription)
-    .then(() => {
-    })
-    .catch(() => {
-      alert("복사 실패");
-    });
-};
+const [bonusSets, setBonusSets] = useState([{ base: "", label: "" }]);
 
+const [mdList, setMdList] = useState([]);
+const [grouped, setGrouped] = useState([]);
 
-  useEffect(() => {
-  // 조건이 하나만 있는 경우 (label 없음 → 기본 방식)
-  if (bonusSets.length === 1 && bonusSets[0].base) {
-    const base = Number(bonusSets[0].base);
-    setDetailDescription(prev => {
-      return prev; // 여기서는 글만 수정 안 하고, UI에서 보여주는 부분 처리
-    });
-  }
-}, [bonusSets]);
+const [isLoading, setIsLoading] = useState(false);
+const [errorMsg, setErrorMsg] = useState("");
 
-  const resizeImage = (file, maxSize = 1080) => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
+const [mainName, setMainName] = useState("");
+const [detailDescription, setDetailDescription] = useState("");
 
-        if (width > height) {
-          if (width > maxSize) {
-            height *= maxSize / width;
-            width = maxSize;
-          }
-        } else {
-          if (height > maxSize) {
-            width *= maxSize / height;
-            height = maxSize;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob((blob) => resolve(blob), file.type, 0.9);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-};  
-  const chunkArray = (arr, size) => {
-  const result = [];
-  for (let i = 0; i < arr.length; i += size) {
-    result.push(arr.slice(i, i + size));
-  }
-  return result;
-};
-  const handleCopyHtmlRendered = () => {
-  const htmlElement = document.getElementById("detailDescriptionHtml");
-  if (!htmlElement) return;
-
-  const range = document.createRange();
-  const selection = window.getSelection();
-
-  selection.removeAllRanges();
-  range.selectNodeContents(htmlElement);
-  selection.addRange(range);
-
-  document.execCommand("copy");
-  selection.removeAllRanges();
-};
-
-  const handleDownloadExcelByGroup = (group, groupIdx) => {
-  const rows = [];
-  const hasAnyOptions = group.items.some(item => item.hasOption && item.optionText);
-
-  group.items.forEach((item) => {
-    if (item.hasOption && item.optionText) {
-      const members = item.optionText.split(",").map(m => m.trim()).filter(Boolean);
-      members.forEach((member) => {
-        rows.push({
-          option_title_1: "OPTION",
-          option_name_1: item.name,
-          option_title_2: hasAnyOptions ? "TYPE" : "",   
-          option_name_2: hasAnyOptions ? member : "",   
-          option_title_3: "",
-          option_name_3: "",
-          option_price_yen: Number(item.price) - group.standardPrice, // ✅ 차액
-          option_quantity: item.name === "–" ? 0 : 20,
-          seller_unique_option_id: "",
-          external_product_hs_id: "",
-          q_inventory_id: ""
-        });
-      });
-    } else {
-      rows.push({
-        option_title_1: "OPTION",
-        option_name_1: item.name,
-        option_title_2: hasAnyOptions ? "TYPE" : "",   // ✅ 없으면 비우기
-        option_name_2: hasAnyOptions ? "-" : "", 
-        option_title_3: "",
-        option_name_3: "",
-        option_price_yen: Number(item.price) - group.standardPrice,
-        option_quantity: item.name === "–" ? 0 : 20,
-        seller_unique_option_id: "",
-        external_product_hs_id: "",
-        q_inventory_id: ""
-      });
-    }
-  });
-
-  rows.sort((a, b) => {
-    const numA = parseInt(a.option_name_1.match(/^\[(\d+)\]/)?.[1] || 9999, 10);
-    const numB = parseInt(b.option_name_1.match(/^\[(\d+)\]/)?.[1] || 9999, 10);
-    return numA - numB;
-  });
-
-  // ✅ 워크북 생성
-    const headers = [
-      "option_title_1",
-      "option_name_1",
-      "option_title_2",
-      "option_name_2",
-      "option_title_3",
-      "option_name_3",
-      "option_price_yen",
-      "option_quantity",
-      "seller_unique_option_id",
-      "external_product_hs_id",
-      "q_inventory_id"
-    ];
-
-  const worksheet = XLSX.utils.aoa_to_sheet([headers]);
-
-  // ✅ 2) 데이터는 A5부터 넣기 (2~4행 공백)
-  // header 옵션으로 컬럼 매핑을 고정하고 skipHeader로 데이터에선 헤더 미출력
-  XLSX.utils.sheet_add_json(worksheet, rows, {
-    header: headers,
-    skipHeader: true,
-    origin: "A5"      // ← 여기서 5행부터 시작
-  });
-
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, `Group${groupIdx + 1}`);
-
-  // ✅ 파일 저장 (그룹 번호 포함)
-  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  saveAs(
-    new Blob([excelBuffer], { type: "application/octet-stream" }),
-    `group_${groupIdx + 1}_qoo10_optiondownitem.xlsx`
-  );
-};
-
-
-  const API_BASE = process.env.REACT_APP_API_BASE;
-  const ceilToNearestHundred = (num) => Math.ceil(num / 100) * 100;
-  const handleOptionValueChange = (idx, newValue) => {
-  setTempOptionValues({ ...tempOptionValues, [idx]: newValue });
-  };
-
-
-  const handleCopy = (text, label) => {
-  if (!text) {
-    alert(`${label}이(가) 없습니다.`);
-    return;
-  }
-  navigator.clipboard.writeText(text)
-    .then(() => {
-    })
-    .catch((err) => {
-      console.error("복사 실패:", err);
-    });
-  };
-  const handleGenerateMainName = () => {
-  if (!groupName || !thumbnailShippingDate || !eventName) {
-    alert("그룹명, 발송날짜, 콘서트명을 모두 입력해주세요.");
-    return;
-  }
-
-  const dateText = formatThumbnailDate(thumbnailShippingDate); 
-  const preorderDateText = formatThumbnailDate(preorderShippingDate);
-  const bonusText = hasBonus ? "[特典贈呈]" : "";
-
-  const result = `[${groupName.toUpperCase()}][${dateText}発送][現地購入]${bonusText}${eventName} OFFICIAL MD`;
-  setMainName(result);
-  };
-  const toggleOptionForItem = (itemIdx, optIdx) => {  
-    const updatedList = [...mdList];
-    const item = updatedList[itemIdx];
-    if (!item.options) item.options = [];
-
-    if (item.options.includes(optIdx)) {
-      item.options = item.options.filter(i => i !== optIdx);
-    } else {
-      item.options.push(optIdx);
-    }
-    setMdList(updatedList);
-  };
-  // 가격 묶는 코드 
-  const groupByCustomPrice = (items) => {
+const [keywordType, setKeywordType] = useState("MD");
+const [memberText, setMemberText] = useState("");
+const [keywords, setKeywords] = useState([]);
+const groupByCustomPrice = (items) => {
   const sorted = [...items].sort((a, b) => Number(a.price) - Number(b.price));
   let remaining = [...sorted];
   const groups = [];
@@ -294,22 +82,55 @@ function App() {
 
   return groups;
 };
+const resizeImage = (file, maxSize = 1080) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
 
+        if (width > height) {
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
+          }
+        }
 
-  // 가격 묶는 코드 버튼 누르기
-  const handleGroup = () => {
-    const result = groupByCustomPrice(mdList); 
-    setGrouped(result);
-  };
-  const formatThumbnailDate = (isoDate) => {
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => resolve(blob), file.type, 0.9);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};  
+  const chunkArray = (arr, size) => {
+  const result = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+};
+const formatThumbnailDate = (isoDate) => {
   if (!isoDate) return '';
   const date = new Date(isoDate);
   const month = date.getMonth() + 1;
   const day = date.getDate();
   return `${month}月${day}日`;
 };
-  //상세설명글
-  const handleGenerateDescription = () => {
+const handleGenerateDescription = () => {
   if (!thumbnailShippingDate) {
     alert("발송 날짜를 입력해주세요.");
     return;
@@ -392,7 +213,7 @@ ${
 <div style="text-align:center;">できるだけ早くお届けできるよう努めます。</div>
 ${
   hasBonus
-    ? `<div style="text-align:center;">特典はオフラインバージョン特典のみで発送されます。</div>`
+    ? `<div style="text-align:center;">特典がオフライン版とオンライン版で分かれている場合、オンライン版の特典のみをお届けいたします。</div>`
     : ""
 }
 <div style="text-align:center;">※「入金待ち」の状態が続いた場合、ご注文がキャンセルとなる可能性がございます。</div>
@@ -438,13 +259,39 @@ ${
   setDetailDescription(html);
 };
 
-
-
-  const handleImageUpload = (e) => {
+const handleImageUpload = (e) => {
     setImages([...e.target.files]);
   };
+const handlePaste = (e) => {
+    const items = e.clipboardData.items;
+    const newFiles = [];
 
-  const handleSubmit = async () => {
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") !== -1) {
+        const blob = items[i].getAsFile();
+        newFiles.push(blob);
+      }
+    }
+
+    if (newFiles.length > 0) {
+      setImages([...images, ...newFiles]);
+    }
+  };
+const handleGenerateMainName = () => {
+  if (!groupName || !thumbnailShippingDate || !eventName) {
+    alert("그룹명, 발송날짜, 콘서트명을 모두 입력해주세요.");
+    return;
+  }
+
+  const dateText = formatThumbnailDate(thumbnailShippingDate); 
+  const preorderDateText = formatThumbnailDate(preorderShippingDate);
+  const bonusText = hasBonus ? "[特典贈呈]" : "";
+
+  const result = `[${groupName.toUpperCase()}][${dateText}発送][PRE-ORDER]${bonusText}${eventName} OFFICIAL MD`;
+  setMainName(result);
+  };
+
+const handleSubmit = async () => {
   if (!images.length) {
     alert("이미지를 업로드해주세요.");
     return;
@@ -546,8 +393,7 @@ ${
   }
 };
 
-
-  const handleOnetoThree = async () => {
+const handleOnetoThree = async () => {
   // 1. 상품명 만들기
   handleGenerateMainName();
   // 2. 상세페이지 글 만들기
@@ -555,7 +401,103 @@ ${
   // 3. GPT 상품명/가격 추출하기
   await handleSubmit();
 };
-  const handleGenerateKeywords = async () => { 
+const handleCopy = (text, label) => {
+  if (!text) {
+    alert(`${label}이(가) 없습니다.`);
+    return;
+  }
+  navigator.clipboard.writeText(text)
+    .then(() => {
+    })
+    .catch((err) => {
+      console.error("복사 실패:", err);
+    });
+  };
+const handleGroup = () => {
+    const result = groupByCustomPrice(mdList); 
+    setGrouped(result);
+  };
+const handleDownloadExcelByGroup = (group, groupIdx) => {
+  const rows = [];
+  const hasAnyOptions = group.items.some(item => item.hasOption && item.optionText);
+
+  group.items.forEach((item) => {
+    if (item.hasOption && item.optionText) {
+      const members = item.optionText.split(",").map(m => m.trim()).filter(Boolean);
+      members.forEach((member) => {
+        rows.push({
+          option_title_1: "OPTION",
+          option_name_1: item.name,
+          option_title_2: hasAnyOptions ? "TYPE" : "",   
+          option_name_2: hasAnyOptions ? member : "",   
+          option_title_3: "",
+          option_name_3: "",
+          option_price_yen: Number(item.price) - group.standardPrice, // ✅ 차액
+          option_quantity: item.name === "–" ? 0 : 20,
+          seller_unique_option_id: "",
+          external_product_hs_id: "",
+          q_inventory_id: ""
+        });
+      });
+    } else {
+      rows.push({
+        option_title_1: "OPTION",
+        option_name_1: item.name,
+        option_title_2: hasAnyOptions ? "TYPE" : "",   // ✅ 없으면 비우기
+        option_name_2: hasAnyOptions ? "-" : "", 
+        option_title_3: "",
+        option_name_3: "",
+        option_price_yen: Number(item.price) - group.standardPrice,
+        option_quantity: item.name === "–" ? 0 : 20,
+        seller_unique_option_id: "",
+        external_product_hs_id: "",
+        q_inventory_id: ""
+      });
+    }
+  });
+
+  rows.sort((a, b) => {
+    const numA = parseInt(a.option_name_1.match(/^\[(\d+)\]/)?.[1] || 9999, 10);
+    const numB = parseInt(b.option_name_1.match(/^\[(\d+)\]/)?.[1] || 9999, 10);
+    return numA - numB;
+  });
+
+  // ✅ 워크북 생성
+    const headers = [
+      "option_title_1",
+      "option_name_1",
+      "option_title_2",
+      "option_name_2",
+      "option_title_3",
+      "option_name_3",
+      "option_price_yen",
+      "option_quantity",
+      "seller_unique_option_id",
+      "external_product_hs_id",
+      "q_inventory_id"
+    ];
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers]);
+
+  // ✅ 2) 데이터는 A5부터 넣기 (2~4행 공백)
+  // header 옵션으로 컬럼 매핑을 고정하고 skipHeader로 데이터에선 헤더 미출력
+  XLSX.utils.sheet_add_json(worksheet, rows, {
+    header: headers,
+    skipHeader: true,
+    origin: "A5"      // ← 여기서 5행부터 시작
+  });
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, `Group${groupIdx + 1}`);
+
+  // ✅ 파일 저장 (그룹 번호 포함)
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  saveAs(
+    new Blob([excelBuffer], { type: "application/octet-stream" }),
+    `group_${groupIdx + 1}_qoo10_optiondownitem.xlsx`
+  );
+};
+const handleGenerateKeywords = async () => { 
   if (!keywordType) {
     alert("응원봉/앨범/MD/포카 중 하나를 선택하세요!");
     return;
@@ -628,91 +570,14 @@ ${
   }
 };
 
+const ceilToNearestHundred = (num) => Math.ceil(num / 100) * 100;
 
-  const handlePaste = (e) => {
-    const items = e.clipboardData.items;
-    const newFiles = [];
-
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf("image") !== -1) {
-        const blob = items[i].getAsFile();
-        newFiles.push(blob);
-      }
-    }
-
-    if (newFiles.length > 0) {
-      setImages([...images, ...newFiles]);
-    }
-  };
+// 온라인 업로드는 항상 online
+const activeTab = "online";
 
   return (
-    <div>
-      <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        gap: "15px",
-        marginBottom: "20px",
-        borderBottom: "2px solid #ddd",
-        paddingBottom: "10px"
-      }}
-    >
-      <button
-        className="pretty-button tab-upload"
-        style={{
-          backgroundColor: activeTab === "upload" ? "#33418f" : "#777",
-          width: "150px"
-        }}
-        onClick={() => setActiveTab("upload")}
-      >
-        현장구매 업로드
-      </button>
-      <button
-        className="pretty-button tab-online"
-        style={{
-          backgroundColor: activeTab === "online" ? "#33418f" : "#777",
-          width: "150px"
-        }}
-        onClick={() => setActiveTab("online")}
-      >
-        온라인 업로드
-      </button>
-      <button
-          className="pretty-button .tab-album"
-          style={{ 
-            backgroundColor: activeTab === "album" ? "#33418f" : "#777" ,
-            width: "150px"
-          }}
-          onClick={() => setActiveTab("album")}
-        >앨범 업로드</button>
-      <button
-        className="pretty-button tab-margin"
-        style={{
-          backgroundColor: activeTab === "margin" ? "#33418f" : "#777",
-          width: "150px"
-        }}
-        onClick={() => setActiveTab("margin")}
-      >
-        마진 계산기
-      </button>
-
-      <button
-        className="pretty-button tab-order"
-        style={{
-          backgroundColor: activeTab === "order" ? "#33418f" : "#777",
-          width: "150px"
-        }}
-        onClick={() => setActiveTab("order")}
-      >
-        주문 정리
-      </button>
-    </div>
-
-    {activeTab === "upload" && (
-      <div>      
-      <div style={{ padding: '20px' }}>
-      {/* 기본정보입력 */}
-        <h2>상품 등록</h2>
+    <div style={{ padding: "20px" }}>
+      <h2>온라인 업로드</h2>
         <div className="form-section">
 
   {/* 상세 이미지 업로드 */}
@@ -758,7 +623,7 @@ ${
 
   {/* 현장구매 발송 날짜 */}
   <div className="form-row">
-    <div className="form-label">📌 현장구매 발송날짜</div>
+    <div className="form-label">📌 발송날짜</div>
     <div className="form-input">
       <input 
         type="date"
@@ -768,31 +633,6 @@ ${
     </div>
   </div>
 
-  {/* PRE-ORDER 상품 여부 */}
-  <div className="form-row">
-    <div className="form-label">📌 PRE-ORDER 상품도 있어요</div>
-    <div className="form-input">
-      <input 
-        type="checkbox"
-        checked={hasPreorder}
-        onChange={(e) => setHasPreorder(e.target.checked)}
-      />
-    </div>
-  </div>
-
-  {/* PRE-ORDER 발송 날짜 */}
-  {hasPreorder && (
-    <div className="form-row">
-      <div className="form-label">📌 PRE-ORDER 발송날짜</div>
-      <div className="form-input">
-        <input 
-          type="date"
-          value={preorderShippingDate}
-          onChange={(e) => setPreorderShippingDate(e.target.value)}
-        />
-      </div>
-    </div>
-  )}
 
   {/* 콘서트/팝업명 */}
   <div className="form-row">
@@ -1052,25 +892,26 @@ ${
                           const rawPrice = Number(newList[idx].price);
 
                           if (!isNaN(rawPrice) && rawPrice > 0) {
-                            let finalPrice;
+                          let finalPrice;
 
-                            if (activeTab === "online") {
-                              // ✅ 온라인 업로드
-                              finalPrice = Math.round(rawPrice * 0.16);
-                            } else {
-                              // ✅ 현장구매 업로드 (기존 로직)
-                              const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
-                              const methodB = rawPrice * 0.2;
-                              finalPrice =
-                                ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
-                            }
+                          if (activeTab === "online") {
+                            // ✅ 온라인 업로드
+                            finalPrice = Math.ceil((rawPrice * 0.16) / 100) * 100;
 
-                            newList[idx].originalPriceKrw = rawPrice.toString();
-                            newList[idx].price = finalPrice.toString();
-                            setMdList(newList);
                           } else {
-                            alert("숫자를 올바르게 입력해주세요!");
+                            // ✅ 현장구매 업로드 (기존 로직)
+                            const methodA = ((rawPrice + 1600) / 0.58) / 9.42;
+                            const methodB = rawPrice * 0.2;
+                            finalPrice =
+                              ceilToNearestHundred(Math.max(methodA, methodB)) - 10;
                           }
+
+                          newList[idx].originalPriceKrw = rawPrice.toString();
+                          newList[idx].price = finalPrice.toString();
+                          setMdList(newList);
+                        } else {
+                          alert("숫자를 올바르게 입력해주세요!");
+                        }
 
                         }}
                       >
@@ -1330,17 +1171,8 @@ ${
 
     </div>
   )}
-      </div>  
-  </div>
-    )}
-    
-{activeTab === "online" && <OnlineUpload />}
-    {activeTab === "album" && <AlbumUpload />}
-    {/* 마진 계산기 탭 */}
-{activeTab === "margin" && <MarginCalculator />}
+    </div>
+  );
+}
 
-{/* 주문 정리 탭 */}
-{activeTab === "order" && <OrderManager />}
-  </div>
-  )}
-export default App;
+export default OnlineUpload;
