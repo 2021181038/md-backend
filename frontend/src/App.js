@@ -691,7 +691,7 @@ ${
         }}
         onClick={() => setActiveTab("upload")}
       >
-        현장구매 업로드
+        현장구매 업로드(최신뻐전 만들기 전 테스트)
       </button>
       <button
         className="pretty-button tab-online"
