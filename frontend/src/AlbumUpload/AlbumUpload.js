@@ -123,7 +123,7 @@ const [albumNameJp, setAlbumNameJp] = useState("");
 
   try {
     const res = await fetch(
-      "https://md-backend-blond.vercel.app/generate-album-keywords",
+      `${API_BASE}/generate-album-keywords`,
       {
         method: "POST",
         headers: {

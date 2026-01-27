@@ -79,8 +79,10 @@ def translate_members_en():
     members = data.get("members", [])
 
     prompt = (
-        "다음 멤버 이름을 영어 로마자 표기로 변환해줘. "
-        "절대 다른 설명하지 말고, 쉼표(,)로 구분해서 결과만 출력해. "
+        "Convert the following member names into English romanized spelling."
+        "Output only the converted names."
+        "Do not provide any additional explanation."
+        "Output only the results, separated by commas (,)."
         f"멤버: {', '.join(members)}"
     )
 
@@ -99,14 +101,58 @@ def translate_members_en():
         print("translate-members-en 오류:", str(e))
         return jsonify({"error": "GPT 처리 중 오류"}), 500
 
+
+@app.route("/generate-album-keywords", methods=["POST"])
+def generate_album_keywords():
+    data = request.json
+    raw_keywords = data.get("keywords", "")
+
+    if not raw_keywords:
+        return jsonify({"error": "키워드가 없습니다."}), 400
+
+    prompt = f"""
+다음은 K-POP 앨범 검색 키워드입니다.
+
+- 사용자가 입력한 키워드
+- CD
+- 위 키워드들의 영어 버전
+- 위 키워드들의 일본어 버전
+
+조건:
+- 설명하지 말고 키워드만 출력
+- 쉼표(,)로 구분
+- 중복 제거
+- 자연스러운 검색용 키워드
+
+키워드:
+{raw_keywords}
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        result = response.choices[0].message.content.strip()
+        return jsonify({ "result": result })
+
+    except Exception as e:
+        print("generate-album-keywords 오류:", str(e))
+        return jsonify({"error": "키워드 생성 실패"}), 500
+
+
+
 @app.route("/translate-members-jp", methods=["POST"])
 def translate_members_jp():
     data = request.json
     members = data.get("members", [])
 
     prompt = (
-        "다음 멤버 이름을 일본어 가타카나로 변환해줘. "
-        "절대 다른 설명하지 말고, 쉼표(,)로 구분해서 결과만 출력해. "
+        "Convert the following member names into Japanese katakana."
+        "Do not provide any additional explanation."
+        "Output only the results, separated by commas (,)."
+
         f"멤버: {', '.join(members)}"
     )
 
