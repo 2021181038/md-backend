@@ -56,11 +56,10 @@ function UploadMarginModal({ closeModal, selectedEvent, refreshCurrentEvent }) {
 
     if (deleteError) throw deleteError;
 
-    // ✅ 새 데이터 삽입 + select()로 반영 완료 확인
-    const { data: inserted, error } = await supabase
+    // ✅ 새 데이터 삽입
+    const { error } = await supabase
       .from("margins")
-      .insert(insertData)
-      .select();
+      .insert(insertData);
 
     if (error) {
       console.error(error);

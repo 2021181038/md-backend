@@ -226,6 +226,19 @@
 }
 
 
+/* 스크린 리더 전용 텍스트 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
@@ -250,12 +263,12 @@
   100% { transform: rotate(360deg); }
 }
 
-/* ✅ 모바일에서는 업로드 / 마진 탭 숨기고 주문정리만 표시 */
+/* ✅ 모바일에서는 업로드 / 온라인 / 앨범 / 마진 탭 숨기고 주문정리만 표시 */
 @media (max-width: 900px) {
   .tab-upload,
-  .tab-margin
+  .tab-online,
   .tab-album,
-  .tab-order {
+  .tab-margin {
     display: none !important;
   }
 }
