@@ -94,6 +94,9 @@ export const useMarginCalculator = () => {
       setTotalMargin({
         total: result.total,
         totalWon: result.totalWon,
+        totalPayWon: result.totalPayWon,
+        totalSettleWon: result.totalSettleWon,
+        totalCostWon: result.totalCostWon,
       });
       setTotalProxyFee(result.totalProxyFee);
     }

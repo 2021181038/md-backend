@@ -58,6 +58,9 @@ export const calculateTotalMargin = (matchedSummary, costs, exchangeRate, dutyAp
   if (matchedSummary.length === 0) return null;
 
   let totalSum = 0;
+  let totalPayYen = 0;
+  let totalSettleYen = 0;
+  let totalCostWon = 0;
   matchedSummary.forEach((row) => {
     const costWon = Number(costs[row.option]) || 0;
     const costYen = costWon > 0 ? costWon / exchangeRate : 0;
@@ -65,6 +68,9 @@ export const calculateTotalMargin = (matchedSummary, costs, exchangeRate, dutyAp
     const maxSettle = Number(row.maxSettle);
     const minPay = Number(row.minPay);
     const maxPay = Number(row.maxPay);
+    
+    // 매입금 총합 계산 (원가 × 수량)
+    totalCostWon += costWon * row.qty;
     
     if (!isNaN(minSettle) && !isNaN(maxSettle) && !isNaN(minPay) && !isNaN(maxPay)) {
       const avgSettle = Math.floor((minSettle + maxSettle) / 2);
@@ -74,6 +80,8 @@ export const calculateTotalMargin = (matchedSummary, costs, exchangeRate, dutyAp
       const dutyAmount = Math.floor(avgPay * (dutyRate + autoDutyRate));
       const marginAvg = Math.floor(avgSettle - costYen - dutyAmount);
       totalSum += marginAvg * row.qty;
+      totalPayYen += avgPay * row.qty;
+      totalSettleYen += avgSettle * row.qty;
     }
   });
 
@@ -88,10 +96,16 @@ export const calculateTotalMargin = (matchedSummary, costs, exchangeRate, dutyAp
   });
 
   const totalProxyYen = totalProxy / exchangeRate;
+  const totalMarginWon = Math.ceil((totalSum * exchangeRate) - totalProxy);
+  const totalPayWon = Math.ceil(totalPayYen * exchangeRate);
+  const totalSettleWon = Math.ceil(totalSettleYen * exchangeRate);
 
   return {
     total: (totalSum - totalProxyYen).toFixed(2),
-    totalWon: Math.ceil((totalSum * exchangeRate) - totalProxy).toLocaleString(),
+    totalWon: totalMarginWon.toLocaleString(),
+    totalPayWon: totalPayWon.toLocaleString(),
+    totalSettleWon: totalSettleWon.toLocaleString(),
+    totalCostWon: Math.ceil(totalCostWon).toLocaleString(),
     totalProxyFee: totalProxy,
   };
 };

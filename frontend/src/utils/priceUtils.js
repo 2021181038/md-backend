@@ -52,26 +52,37 @@ export const calculateOnlinePrice = (rawPrice) => {
 
 /**
  * 앨범 업로드용: 원화를 엔화로 변환
- * 환율을 적용하고 끝자리를 90으로 조정
+ * 원가에 15%를 더한 후 환율로 나누고 1.6배를 적용하고 끝자리를 90으로 조정
  * @param {number|string} krw - 원화 가격
  * @returns {number} 엔화 가격 (끝자리 90)
  */
 export const convertToYen = (krw) => {
   if (!krw || Number(krw) <= 0) return 0;
-  let yen = Math.round(Number(krw) / EXCHANGE_RATES.ALBUM);
-  return applyEnding90(yen);
+  // 1. 원가에 15% 추가
+  const adjustedKrw = Number(krw) * 1.15;
+  // 2. 환율로 나눔
+  let yen = Math.round(adjustedKrw / EXCHANGE_RATES.ALBUM);
+  // 3. 1.6배 적용
+  yen = Math.round(yen * PRICE_COEFFICIENTS.ALBUM_SINGLE_MULTIPLIER);
+  // 4. 끝자리 90 조정
+  return Math.floor(yen / PRICE_CONFIG.ROUND_TO_HUNDRED) * PRICE_CONFIG.ROUND_TO_HUNDRED + PRICE_CONFIG.ENDING_90;
 };
 
 /**
  * 앨범 업로드용: 옵션 없는 상품 전용 엔화 변환
- * 배수 계수를 적용하고 끝자리를 90으로 조정
+ * 원가에 15%를 더한 후 배수 계수를 적용하고 끝자리를 90으로 조정
  * @param {number|string} krw - 원화 가격
  * @returns {number} 엔화 가격 (끝자리 90)
  */
 export const convertSingleToYen = (krw) => {
   if (!krw || Number(krw) <= 0) return 0;
-  let yen = Math.round(Number(krw) / EXCHANGE_RATES.ALBUM_SINGLE);
+  // 1. 원가에 15% 추가
+  const adjustedKrw = Number(krw) * 1.15;
+  // 2. 환율로 나눔
+  let yen = Math.round(adjustedKrw / EXCHANGE_RATES.ALBUM_SINGLE);
+  // 3. 1.6배 적용
   yen = Math.round(yen * PRICE_COEFFICIENTS.ALBUM_SINGLE_MULTIPLIER);
+  // 4. 끝자리 90 조정
   return Math.floor(yen / PRICE_CONFIG.ROUND_TO_HUNDRED) * PRICE_CONFIG.ROUND_TO_HUNDRED + PRICE_CONFIG.ENDING_90;
 };
 
