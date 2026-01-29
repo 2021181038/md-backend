@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { DUTY_CONFIG } from "../../constants/config";
+import { parseOptionText } from "../utils/textUtils";
 
 const ResultTable = ({
   matchedSummary,
@@ -14,30 +15,42 @@ const ResultTable = ({
   handleOptionChange,
   handleQtyChange,
   handleCostChange,
+  handleSortByOption,
 }) => {
+  const [showDetailSettings, setShowDetailSettings] = useState(false);
+
   if (matchedSummary.length === 0) return null;
 
   return (
     <div>
-      <h3>📊 옵션별 수량 + 마진 계산 통합표</h3>
-      <div className="legend">
-        <p>🟢 결제금 {DUTY_CONFIG.AUTO_DUTY_THRESHOLD.toLocaleString()}엔 초과 (자동 {DUTY_CONFIG.AUTO_DUTY_RATE * 100}%)</p>
-        <p>🟣 옷 관세 (체크 시 12%)</p>
-        <p>🔴 모두 해당</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+        <h3 style={{ margin: 0 }}>📊 마진 계산</h3>
+        <button 
+          onClick={() => setShowDetailSettings(!showDetailSettings)}
+          className="mc-btn mc-btn-blue"
+          style={{ fontSize: "14px", padding: "6px 12px" }}
+        >
+          {showDetailSettings ? "상세설정 숨기기" : "상세설정"}
+        </button>
+      </div>
+      <div className="legend" style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
+        <span>🟢 결제금 {DUTY_CONFIG.AUTO_DUTY_THRESHOLD.toLocaleString()}엔 초과 (자동 {DUTY_CONFIG.AUTO_DUTY_RATE * 100}%)</span>
+        <span>🟣 옷 관세 (체크 시 12%)</span>
+        <span>🔴 모두 해당</span>
       </div>
 
       <table className="margin-table">
         <thead>
           <tr>
             <th>옵션정보</th>
-            <th>옷 관세</th>
-            <th>대찍 대리비(₩)</th>
+            {showDetailSettings && <th>옷 관세</th>}
+            {showDetailSettings && <th>대찍 대리비(₩)</th>}
             <th>총 수량</th>
             <th>원가(₩)</th>
             <th>원가(¥)</th>
-            <th>분할(N)</th>
-            <th>정산금(평균)</th>
+            {showDetailSettings && <th>분할(N)</th>}
             <th>결제금(평균)</th>
+            <th>정산금(평균)</th>
             <th>마진(¥, 평균)</th>
             <th>최종마진(¥)</th>
           </tr>
@@ -57,42 +70,48 @@ const ResultTable = ({
               rowClass = "duty-row";
             }
 
+            const { main, sub } = parseOptionText(row.option);
+
             return (
               <tr key={idx} className={rowClass}>
                 <td>
-                  <input
-                    type="text"
-                    value={row.option}
-                    onChange={(e) => handleOptionChange(idx, e.target.value)}
-                    style={{ width: "95%" }}
-                  />
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontWeight: "bold", fontSize: "1.05em" }}>{main}</span>
+                    {sub && (
+                      <span style={{ color: "#666", fontSize: "0.85em" }}>{sub}</span>
+                    )}
+                  </div>
                 </td>
-                <td>
-                  <label>
+                {showDetailSettings && (
+                  <td>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={!!dutyApplied[row.option]}
+                        onChange={(e) =>
+                          setDutyApplied((prev) => ({
+                            ...prev,
+                            [row.option]: e.target.checked,
+                          }))
+                        }
+                      />{" "}
+                    </label>
+                  </td>
+                )}
+                {showDetailSettings && (
+                  <td>
                     <input
                       type="checkbox"
-                      checked={!!dutyApplied[row.option]}
+                      checked={!!proxyApplied[row.option]}
                       onChange={(e) =>
-                        setDutyApplied((prev) => ({
+                        setProxyApplied((prev) => ({
                           ...prev,
                           [row.option]: e.target.checked,
                         }))
                       }
-                    />{" "}
-                  </label>
-                </td>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={!!proxyApplied[row.option]}
-                    onChange={(e) =>
-                      setProxyApplied((prev) => ({
-                        ...prev,
-                        [row.option]: e.target.checked,
-                      }))
-                    }
-                  />
-                </td>
+                    />
+                  </td>
+                )}
                 <td>
                   <input
                     type="number"
@@ -111,22 +130,24 @@ const ResultTable = ({
                   />
                 </td>
                 <td>{calc.costYen}</td>
-                <td>
-                  <input
-                    type="number"
-                    min="1"
-                    value={divideMap[row.option] || 1}
-                    onChange={(e) =>
-                      setDivideMap((prev) => ({
-                        ...prev,
-                        [row.option]: Number(e.target.value) || 1,
-                      }))
-                    }
-                    style={{ width: "60px", textAlign: "center" }}
-                  />
-                </td>
-                <td>{calc.avgSettle}</td>
+                {showDetailSettings && (
+                  <td>
+                    <input
+                      type="number"
+                      min="1"
+                      value={divideMap[row.option] || 1}
+                      onChange={(e) =>
+                        setDivideMap((prev) => ({
+                          ...prev,
+                          [row.option]: Number(e.target.value) || 1,
+                        }))
+                      }
+                      style={{ width: "60px", textAlign: "center" }}
+                    />
+                  </td>
+                )}
                 <td>{calc.avgPay}</td>
+                <td>{calc.avgSettle}</td>
                 <td>{calc.marginAvg}</td>
                 <td>{calc.totalMarginAvg}</td>
               </tr>

@@ -116,10 +116,26 @@ export const groupByCustomPrice = (items) => {
       });
     }
 
-    const updatedGroup = group.map(item => ({
-      ...item,
-      diffFromStandard: Number(item.price) - standardPrice
-    }));
+    // 기준 가격의 50% 계산 (옵션 가격 제한용)
+    const halfStandardPrice = standardPrice * 0.5;
+    const minOptionPrice = -halfStandardPrice; // -50%
+    const maxOptionPrice = halfStandardPrice;  // +50%
+
+    const updatedGroup = group.map(item => {
+      let diffFromStandard = Number(item.price) - standardPrice;
+      
+      // 옵션 가격이 ±50% 범위를 넘으면 제한
+      if (diffFromStandard < minOptionPrice) {
+        diffFromStandard = minOptionPrice;
+      } else if (diffFromStandard > maxOptionPrice) {
+        diffFromStandard = maxOptionPrice;
+      }
+      
+      return {
+        ...item,
+        diffFromStandard
+      };
+    });
 
     groups.push({ standardPrice, items: updatedGroup });
 

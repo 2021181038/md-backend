@@ -4,7 +4,6 @@ import { useMarginCalculator } from "./hooks/useMarginCalculator";
 import FileUploadSection from "./components/FileUploadSection";
 import ProductSelectionSection from "./components/ProductSelectionSection";
 import ActionButtonsSection from "./components/ActionButtonsSection";
-import TextExtractSection from "./components/TextExtractSection";
 import SummarySection from "./components/SummarySection";
 import ResultTable from "./components/ResultTable";
 import TotalMarginSection from "./components/TotalMarginSection";
@@ -17,7 +16,6 @@ function MarginCalculator() {
     settlementData,
     matchedSummary,
     totalMargin,
-    extractedText,
     totalProxyFee,
     dutyApplied,
     proxyApplied,
@@ -26,26 +24,20 @@ function MarginCalculator() {
     setDutyApplied,
     setProxyApplied,
     setDivideMap,
-    handleFileUpload,
     handleSettlementUpload,
     toggleSelect,
     handleSummarize,
-    handleMatchSettlement,
     handleTotalMargin,
-    handleExtractText,
     handleOptionChange,
     handleQtyChange,
     handleCostChange,
-    handleExportCSV,
     calculateMarginForRow,
+    handleSortByOption,
   } = useMarginCalculator();
 
   return (
     <div className="margin-container">
-      <FileUploadSection
-        handleFileUpload={handleFileUpload}
-        handleSettlementUpload={handleSettlementUpload}
-      />
+      <FileUploadSection handleSettlementUpload={handleSettlementUpload} />
 
       <ProductSelectionSection
         productNames={productNames}
@@ -60,13 +52,11 @@ function MarginCalculator() {
         settlementData={settlementData}
         matchedSummary={matchedSummary}
         handleSummarize={handleSummarize}
-        handleMatchSettlement={handleMatchSettlement}
         handleTotalMargin={handleTotalMargin}
-        handleExtractText={handleExtractText}
+        proxyApplied={proxyApplied}
         setProxyApplied={setProxyApplied}
+        handleSortByOption={handleSortByOption}
       />
-
-      <TextExtractSection extractedText={extractedText} />
 
       <TotalMarginSection totalMargin={totalMargin} totalProxyFee={totalProxyFee} />
 
@@ -86,12 +76,6 @@ function MarginCalculator() {
         />
       ) : (
         <SummarySection summary={summary} />
-      )}
-
-      {summary.length > 0 && (
-        <button onClick={handleExportCSV} className="mc-btn mc-btn-green">
-          💾 CSV로 내보내기
-        </button>
       )}
     </div>
   );

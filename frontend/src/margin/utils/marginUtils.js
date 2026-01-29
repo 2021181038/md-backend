@@ -2,7 +2,9 @@ import { DUTY_CONFIG, PROXY_FEE_CONFIG } from '../../constants/config';
 
 export const calculateMargin = (row, costs, exchangeRate, divideMap, proxyApplied) => {
   const costWon = Number(costs[row.option]) || 0;
-  const costYen = costWon > 0 ? Math.floor(costWon / exchangeRate) : "-";
+  // 계산용 숫자 값과 화면 표시용 값을 분리
+  const numericCostYen = costWon > 0 ? Math.floor(costWon / exchangeRate) : 0;
+  const costYen = costWon > 0 ? numericCostYen : "-";
 
   const minSettle = Number(row.minSettle);
   const maxSettle = Number(row.maxSettle);
@@ -36,7 +38,7 @@ export const calculateMargin = (row, costs, exchangeRate, divideMap, proxyApplie
   }
 
   const marginAvg = Math.floor(
-    avgSettle - costYen - autoDutyAmount - (proxyFee / exchangeRate)
+    avgSettle - numericCostYen - autoDutyAmount - (proxyFee / exchangeRate)
   );
 
   const totalMarginAvg = Math.floor(marginAvg * row.qty);
