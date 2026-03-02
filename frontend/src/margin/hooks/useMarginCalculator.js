@@ -223,6 +223,9 @@ export const useMarginCalculator = () => {
       ...prev,
       ...newCosts,
     }));
+
+    // 가격 입력 후 선택된 옵션명들 자동 해제
+    setSelectedRows(new Set());
   };
 
   return {
