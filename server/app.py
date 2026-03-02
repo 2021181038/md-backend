@@ -39,23 +39,43 @@ def extract_md():
         })
 
     try:
+        # 개선된 프롬프트: 더 구체적이고 정확한 추출을 위한 지시사항
+        system_prompt = """You are an expert at extracting product information from images. 
+Extract each product's English name and price (in Korean Won) from the image(s).
+
+CRITICAL RULES:
+1. Extract ONLY product names and prices - ignore table borders, headers, "No.", "|---|", etc.
+2. Product names should be in English (romanized if needed)
+3. Prices must be in Korean Won (원, WON, ₩) - extract the numeric value only
+4. Format each item as: [number] PRODUCT_NAME - PRICE WON
+5. Be precise - do not include extra text, dashes, or formatting characters
+6. If price is unclear or missing, use empty string for price
+7. Number each item sequentially starting from 1
+
+Example output format:
+[1] MINIVE PLUSH DOLL - 18000 WON
+[2] PHOTOCARD SET - 5000 WON
+[3] POSTER - 12000 WON"""
+
+        user_prompt = "Extract all products and their prices from these images. Follow the format exactly."
+
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        "Please extract each item’s English product name and price from the image. "
-                        "Format like:\n\n[1] MINIVE PLUSH DOLL - 18000 WON\n\n"
-                        "Avoid table lines and text like 'No.' or '|---|'."
-                    )
+                    "content": system_prompt
                 },
                 {
                     "role": "user",
-                    "content": image_parts
+                    "content": [
+                        {"type": "text", "text": user_prompt},
+                        *image_parts
+                    ]
                 }
             ],
-            max_tokens=1000
+            max_tokens=2000,  # 더 많은 토큰으로 긴 목록 처리
+            temperature=0.1,  # 낮은 temperature로 일관성 향상
         )
 
         result = response.choices[0].message.content
@@ -63,7 +83,7 @@ def extract_md():
 
     except Exception as e:
         print("OpenAI API 오류:", str(e))
-        return jsonify({"error": "GPT 처리 중 오류가 발생했습니다."}), 500
+        return jsonify({"error": f"GPT 처리 중 오류가 발생했습니다: {str(e)}"}), 500
 
 @app.route('/')
 def serve_react():

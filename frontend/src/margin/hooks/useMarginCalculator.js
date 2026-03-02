@@ -22,6 +22,7 @@ export const useMarginCalculator = () => {
   const [proxyApplied, setProxyApplied] = useState({});
   const [totalProxyFee, setTotalProxyFee] = useState(0);
   const [divideMap, setDivideMap] = useState({});
+  const [selectedRows, setSelectedRows] = useState(new Set());
 
   const handleSettlementUpload = (e) => {
     const file = e.target.files[0];
@@ -51,6 +52,7 @@ export const useMarginCalculator = () => {
       setProxyApplied({});
       setTotalProxyFee(0);
       setDivideMap({});
+      setSelectedRows(new Set());
     });
   };
 
@@ -186,6 +188,43 @@ export const useMarginCalculator = () => {
     setSummary(sortedSummary);
   };
 
+  // 행 선택 토글
+  const toggleRowSelection = (option) => {
+    setSelectedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(option)) {
+        newSet.delete(option);
+      } else {
+        newSet.add(option);
+      }
+      return newSet;
+    });
+  };
+
+  // 일괄 가격 입력 (선택된 행에만 적용)
+  const handleBulkCostInput = (price, selectedRowsSet) => {
+    if (!price || price === "") return;
+    
+    const priceValue = Number(price);
+    if (isNaN(priceValue)) return;
+
+    // 선택된 행이 없으면 모든 행에 적용
+    const rowsToUpdate = selectedRowsSet && selectedRowsSet.size > 0 
+      ? matchedSummary.filter((row) => selectedRowsSet.has(row.option))
+      : matchedSummary;
+
+    // 선택된 옵션에만 동일한 가격 적용
+    const newCosts = {};
+    rowsToUpdate.forEach((row) => {
+      newCosts[row.option] = priceValue;
+    });
+    
+    setCosts((prev) => ({
+      ...prev,
+      ...newCosts,
+    }));
+  };
+
   return {
     // State
     csvData,
@@ -201,6 +240,7 @@ export const useMarginCalculator = () => {
     proxyApplied,
     totalProxyFee,
     divideMap,
+    selectedRows,
     // Setters
     setSelectedNames,
     setDutyApplied,
@@ -218,6 +258,8 @@ export const useMarginCalculator = () => {
     handleExportCSV,
     calculateMarginForRow,
     handleSortByOption,
+    handleBulkCostInput,
+    toggleRowSelection,
   };
 };
 

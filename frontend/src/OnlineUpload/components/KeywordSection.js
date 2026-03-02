@@ -3,9 +3,6 @@ import React from "react";
 const KeywordSection = ({
   keywordType,
   setKeywordType,
-  memberText,
-  setMemberText,
-  isKeywordLoading,
   handleGenerateKeywords,
   keywords,
   handleCopy,
@@ -53,29 +50,12 @@ const KeywordSection = ({
         </label>
       </div>
 
-      <div style={{ marginTop: '10px' }}>
-        <textarea
-          placeholder="멤버명을 쉼표로 구분해 입력하세요 (예: 리쿠, 쇼타, 유타) + 4명까지만 입력 가능합니다."
-          value={memberText}
-          onChange={(e) => {
-            const value = e.target.value;
-            const members = value.split(",").map(m => m.trim()).filter(Boolean);
-            if (members.length <= 4) {
-              setMemberText(value);
-            } else {
-              alert("최대 4명까지만 입력할 수 있다!");
-            }
-          }}
-          style={{ width: '100%', height: '60px' }}
-        />
-      </div>
-
       <button
         className="pretty-button"
-        disabled={isKeywordLoading}
+        style={{ marginTop: '10px' }}
         onClick={handleGenerateKeywords}
       >
-        {isKeywordLoading ? "키워드 생성 중..." : "생성하기"}
+        키워드 생성하기
       </button>
 
       {keywords.length > 0 && (
@@ -85,21 +65,11 @@ const KeywordSection = ({
             {keywords.map((kw, idx) => (
               <li key={idx} style={{ marginBottom: '10px' }}>
                 <div>
-                  {kw.en}
+                  {kw.keyword || kw.en || kw}
                   <button
                     className="COPY-button"
                     style={{ marginLeft: '10px' }}
-                    onClick={() => handleCopy(kw.en, "영어 키워드")}
-                  >
-                    복사하기
-                  </button>
-                </div>
-                <div>
-                  {kw.jp}
-                  <button
-                    className="COPY-button"
-                    style={{ marginLeft: '10px' }}
-                    onClick={() => handleCopy(kw.jp, "일본어 키워드")}
+                    onClick={() => handleCopy(kw.keyword || kw.en || kw, "키워드")}
                   >
                     복사하기
                   </button>

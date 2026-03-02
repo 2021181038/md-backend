@@ -124,6 +124,27 @@ input[type="number"] {
   transition: background-color 0.3s ease;
 }
 
+/* 선택된 행 스타일 */
+.margin-table tbody tr.selected-row {
+  background-color: #fff3cd !important;
+  border: 2px solid #ffc107 !important;
+}
+
+.margin-table tbody tr.selected-row.duty-row {
+  background-color: #ffe0f5 !important;
+  border: 2px solid #ffc107 !important;
+}
+
+.margin-table tbody tr.selected-row.auto-duty-row {
+  background-color: #d4f5d4 !important;
+  border: 2px solid #ffc107 !important;
+}
+
+.margin-table tbody tr.selected-row.dual-duty-row {
+  background-color: #ffe0e0 !important;
+  border: 2px solid #ffc107 !important;
+}
+
 
 /* 업로드 영역을 가로 배치 */
 .upload-section {

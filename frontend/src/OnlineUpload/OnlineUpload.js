@@ -113,9 +113,6 @@ function OnlineUpload() {
       <KeywordSection
         keywordType={keywordType}
         setKeywordType={setKeywordType}
-        memberText={memberText}
-        setMemberText={setMemberText}
-        isKeywordLoading={isKeywordLoading}
         handleGenerateKeywords={handleGenerateKeywords}
         keywords={keywords}
         handleCopy={handleCopy}

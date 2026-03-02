@@ -44,6 +44,7 @@ function AlbumUpload() {
     // Handlers
     handleGenerateAll,
     handleCopyDescription,
+    handleCopy,
     removeSet,
     canGroupPrices,
     updateMultiplier,
@@ -168,13 +169,10 @@ function AlbumUpload() {
       />
 
       <KeywordSection
-        memberText={memberText}
-        setMemberText={setMemberText}
         handleGenerateKeywordsAlbum={handleGenerateKeywordsAlbum}
         keywords={keywords}
         groupName={groupName}
-        albumNameEn={albumNameEn}
-        albumNameJp={albumNameJp}
+        handleCopy={handleCopy}
       />
     </div>
   );

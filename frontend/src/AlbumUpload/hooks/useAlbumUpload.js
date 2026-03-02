@@ -4,7 +4,7 @@ import { getMultiplier, getRowHighlight } from "../utils/highlightUtils";
 import { isRowHighlighted, calcPreviewResult } from "../utils/rowUtils";
 import { generateMainProductName, generateDescription } from "../utils/productUtils";
 import { collectAllItems, groupByCustomPrice, judgeOptionResult } from "../utils/groupUtils";
-import { translateMembersEn, translateMembersJp } from "../api/albumApi";
+import { generateAllKeywords } from "../../utils/keywordUtils";
 
 export const useAlbumUpload = () => {
   const [sets, setSets] = useState([]);
@@ -55,53 +55,21 @@ export const useAlbumUpload = () => {
     handleGenerateDescription();
   };
 
-  const handleGenerateKeywordsAlbum = async () => {
-    if (!memberText) {
-      alert("멤버명을 입력하세요!");
+  const handleGenerateKeywordsAlbum = () => {
+    if (!groupName) {
+      alert("그룹명을 입력하세요!");
       return;
     }
 
-    const members = memberText
-      .split(",")
-      .map(m => m.trim())
-      .filter(Boolean);
+    // 앨범 업로드는 "アルバム" 타입으로 처리
+    const keywordList = generateAllKeywords(groupName, "アルバム");
+    const formattedKeywords = keywordList.map(keyword => ({
+      keyword: keyword,
+      en: keyword,
+      jp: keyword,
+    }));
 
-    try {
-      const translatedMembersEn = await translateMembersEn(members);
-      const translatedMembersJp = await translateMembersJp(members);
-      const groupNameJpArr = await translateMembersJp([groupName]);
-      const groupNameJp = groupNameJpArr[0] || groupName;
-
-      const extraKeywordEn = "CD";
-      const extraKeywordJp = "CD";
-
-      const albumNameEnValue = eventName;
-      const albumNameJpArr = await translateMembersJp([eventName]);
-      const albumNameJpValue = albumNameJpArr[0] || eventName;
-
-      setAlbumNameEn(albumNameEnValue);
-      setAlbumNameJp(albumNameJpValue);
-
-      const result = members.map((_, idx) => ({
-        en: translatedMembersEn[idx] || "",
-        jp: translatedMembersJp[idx] || "",
-        type: "member"
-      }));
-
-      const finalKeywords = [
-        {
-          en: `${groupName} ${albumNameEnValue} ${extraKeywordEn}`.trim(),
-          jp: `${groupNameJp} ${albumNameJpValue} ${extraKeywordJp}`.trim(),
-          type: "main"
-        },
-        ...result
-      ];
-
-      setKeywords(finalKeywords);
-    } catch (error) {
-      console.error("키워드 추출 실패:", error);
-      alert("키워드 생성 실패");
-    }
+    setKeywords(formattedKeywords);
   };
 
   const removeSet = (setId) => {
@@ -347,6 +315,18 @@ export const useAlbumUpload = () => {
     }
   };
 
+  const handleCopy = (text, label) => {
+    if (!text) {
+      alert(`${label}이(가) 없습니다.`);
+      return;
+    }
+    navigator.clipboard.writeText(text)
+      .then(() => {})
+      .catch((err) => {
+        console.error("복사 실패:", err);
+      });
+  };
+
   const toggleRowHighlight = (setId, rowIndex) => {
     setSets(prev =>
       prev.map(s => {
@@ -430,6 +410,7 @@ export const useAlbumUpload = () => {
     handleGenerateDescription,
     handleGenerateKeywordsAlbum,
     handleCopyDescription,
+    handleCopy,
     removeSet,
     canGroupPrices,
     updateMultiplier,

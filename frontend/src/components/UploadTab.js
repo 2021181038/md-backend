@@ -1,6 +1,6 @@
 import React from "react";
 import { useUploadTab } from "../hooks/useUploadTab";
-import { generateKeywords } from "../api/keywordApi";
+import { generateAllKeywords } from "../utils/keywordUtils";
 import { downloadGroupExcel } from "../utils/excelUtils";
 import FormSection from "./upload/FormSection";
 import BonusSection from "./upload/BonusSection";
@@ -52,14 +52,9 @@ const UploadTab = () => {
     convertToYen,
   } = useUploadTab();
 
-  const handleGenerateKeywords = async () => {
+  const handleGenerateKeywords = () => {
     if (!keywordType) {
       alert("응원봉/앨범/MD/포카 중 하나를 선택하세요!");
-      return;
-    }
-
-    if (!memberText) {
-      alert("멤버명을 입력하세요!");
       return;
     }
 
@@ -68,17 +63,14 @@ const UploadTab = () => {
       return;
     }
 
-    setIsKeywordLoading(true);
+    const keywordList = generateAllKeywords(groupName, keywordType);
+    const formattedKeywords = keywordList.map(keyword => ({
+      keyword: keyword,
+      en: keyword,
+      jp: keyword,
+    }));
 
-    try {
-      const finalKeywords = await generateKeywords(keywordType, memberText, groupName);
-      setKeywords(finalKeywords);
-    } catch (error) {
-      console.error("키워드 추출 실패:", error);
-      alert(error.message || "키워드 생성 중 오류가 발생했습니다.");
-    } finally {
-      setIsKeywordLoading(false);
-    }
+    setKeywords(formattedKeywords);
   };
 
   const handleDownloadExcelByGroup = (group, groupIdx) => {
@@ -157,9 +149,6 @@ const UploadTab = () => {
       <KeywordSection
         keywordType={keywordType}
         setKeywordType={setKeywordType}
-        memberText={memberText}
-        setMemberText={setMemberText}
-        isKeywordLoading={isKeywordLoading}
         handleGenerateKeywords={handleGenerateKeywords}
         keywords={keywords}
         handleCopy={handleCopy}

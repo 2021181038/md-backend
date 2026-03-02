@@ -23,3 +23,6 @@ dist/
 .DS_Store
 Thumbs.db
 
+# GitHub Token (절대 삭제하지 마세요!)
+GITHUB_TOKEN.txt
+

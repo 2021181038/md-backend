@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 const ActionButtonsSection = ({
   selectedNames,
@@ -10,7 +10,10 @@ const ActionButtonsSection = ({
   proxyApplied,
   setProxyApplied,
   handleSortByOption,
+  handleBulkCostInput,
+  selectedRows,
 }) => {
+  const [bulkPrice, setBulkPrice] = useState("");
   return (
     <div className="button-row">
       {selectedNames.length > 0 && summary.length === 0 && (
@@ -52,9 +55,37 @@ const ActionButtonsSection = ({
       })()}
 
       {summary.length > 0 && matchedSummary.length > 0 && (
-        <button onClick={handleSortByOption} className="mc-btn mc-btn-green">
-          옵션명 오름차순 정렬
-        </button>
+        <>
+          <button onClick={handleSortByOption} className="mc-btn mc-btn-green">
+            옵션명 오름차순 정렬
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <input
+              type="number"
+              value={bulkPrice}
+              onChange={(e) => setBulkPrice(e.target.value)}
+              placeholder="가격 입력 (₩)"
+              style={{
+                width: "150px",
+                padding: "8px 12px",
+                border: "1px solid #ddd",
+                borderRadius: "6px",
+                fontSize: "14px",
+                textAlign: "right",
+              }}
+            />
+            <button
+              onClick={() => {
+                handleBulkCostInput(bulkPrice, selectedRows);
+                setBulkPrice("");
+              }}
+              className="mc-btn mc-btn-blue"
+              style={{ width: "auto", padding: "8px 16px", margin: 0 }}
+            >
+              일괄 가격 입력 {selectedRows && selectedRows.size > 0 && `(${selectedRows.size}개 선택)`}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

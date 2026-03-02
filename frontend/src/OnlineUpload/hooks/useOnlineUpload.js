@@ -5,7 +5,8 @@ import { parseExtractedText } from "../utils/textUtils";
 import { groupByCustomPrice } from "../utils/groupUtils";
 import { generateDescription, generateMainName } from "../utils/descriptionUtils";
 import { calculateOnlinePrice } from "../../utils/priceUtils";
-import { extractMD, translateMembersEn, translateMembersJp } from "../api/onlineApi";
+import { extractMD } from "../api/onlineApi";
+import { generateAllKeywords } from "../../utils/keywordUtils";
 
 export const useOnlineUpload = () => {
   const [images, setImages] = useState([]);
@@ -157,14 +158,9 @@ export const useOnlineUpload = () => {
     setGrouped(result);
   };
 
-  const handleGenerateKeywords = async () => {
+  const handleGenerateKeywords = () => {
     if (!keywordType) {
       alert("응원봉/앨범/MD/포카 중 하나를 선택하세요!");
-      return;
-    }
-
-    if (!memberText) {
-      alert("멤버명을 입력하세요!");
       return;
     }
 
@@ -173,66 +169,14 @@ export const useOnlineUpload = () => {
       return;
     }
 
-    const members = memberText
-      .split(",")
-      .map(m => m.trim())
-      .filter(Boolean);
+    const keywordList = generateAllKeywords(groupName, keywordType);
+    const formattedKeywords = keywordList.map(keyword => ({
+      keyword: keyword,
+      en: keyword,
+      jp: keyword,
+    }));
 
-    if (members.length === 0) {
-      alert("멤버명을 올바르게 입력하세요.");
-      return;
-    }
-
-    setIsKeywordLoading(true);
-
-    try {
-      const [translatedMembersEn, translatedMembersJp, groupNameJpArr] = await Promise.all([
-        translateMembersEn(members),
-        translateMembersJp(members),
-        translateMembersJp([groupName]),
-      ]);
-
-      if (!translatedMembersEn.length || !translatedMembersJp.length) {
-        alert("키워드 생성에 실패했습니다. 다시 시도해주세요.");
-        return;
-      }
-
-      const groupNameJp = groupNameJpArr[0] || groupName;
-      const groupNameEn = groupName;
-
-      let extraKeywordEn = "";
-      let extraKeywordJp = "";
-
-      if (keywordType === "アルバム") {
-        extraKeywordEn = "CD";
-        extraKeywordJp = "CD";
-      } else if (keywordType === "포카" || keywordType === "フォトカード") {
-        extraKeywordEn = "POCA";
-        extraKeywordJp = "ポカ";
-      }
-
-      const memberKeywords = members.map((_, idx) => ({
-        en: translatedMembersEn[idx] || "",
-        jp: translatedMembersJp[idx] || "",
-        type: "member",
-      }));
-
-      const finalKeywords = [
-        {
-          en: `${groupNameEn} ${keywordType} ${extraKeywordEn}`.trim(),
-          jp: `${groupNameJp} ${keywordType} ${extraKeywordJp}`.trim(),
-          type: "main",
-        },
-        ...memberKeywords,
-      ];
-
-      setKeywords(finalKeywords);
-    } catch (error) {
-      console.error("키워드 추출 실패:", error);
-      alert("키워드 생성 중 오류가 발생했습니다.");
-    } finally {
-      setIsKeywordLoading(false);
-    }
+    setKeywords(formattedKeywords);
   };
 
   const updateMdItem = (idx, field, value) => {

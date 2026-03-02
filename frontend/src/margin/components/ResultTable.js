@@ -16,6 +16,8 @@ const ResultTable = ({
   handleQtyChange,
   handleCostChange,
   handleSortByOption,
+  selectedRows,
+  toggleRowSelection,
 }) => {
   const [showDetailSettings, setShowDetailSettings] = useState(false);
 
@@ -72,9 +74,30 @@ const ResultTable = ({
 
             const { main, sub } = parseOptionText(row.option);
 
+            const isSelected = selectedRows && selectedRows.has(row.option);
+            const finalRowClass = isSelected ? `${rowClass} selected-row`.trim() : rowClass;
+
             return (
-              <tr key={idx} className={rowClass}>
-                <td>
+              <tr key={idx} className={finalRowClass}>
+                <td
+                  onClick={() => toggleRowSelection(row.option)}
+                  style={{
+                    cursor: "pointer",
+                    userSelect: "none",
+                    backgroundColor: isSelected ? "#fff3cd" : "transparent",
+                    transition: "background-color 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.backgroundColor = "#f0f8ff";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }
+                  }}
+                >
                   <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                     <span style={{ fontWeight: "bold", fontSize: "1.05em" }}>{main}</span>
                     {sub && (
@@ -180,6 +203,8 @@ ResultTable.propTypes = {
   handleOptionChange: PropTypes.func.isRequired,
   handleQtyChange: PropTypes.func.isRequired,
   handleCostChange: PropTypes.func.isRequired,
+  selectedRows: PropTypes.instanceOf(Set),
+  toggleRowSelection: PropTypes.func.isRequired,
 };
 
 export default ResultTable;

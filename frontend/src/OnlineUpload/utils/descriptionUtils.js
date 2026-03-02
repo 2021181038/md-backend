@@ -29,29 +29,29 @@ export const generateDescription = (
     if (bonusSets.length === 1 && bonusSets[0].base) {
       const base = Number(bonusSets[0].base);
       html += `
-<div style="text-align:center;">${base * 2000 - 100}円以上 : 公式特典1枚</div>
-<div style="text-align:center;">${base * 4000 - 200}円以上 : 公式特典2枚</div>
-<div style="text-align:center;">${base * 6000 - 300}円以上 : 公式特典3枚 (以降も金額に応じて自動追加となります。)</div>
+<div style="text-align:center;">${base * 1600 - 100}円以上 : 公式特典1枚</div>
+<div style="text-align:center;">${base * 3200 - 200}円以上 : 公式特典2枚</div>
+<div style="text-align:center;">${base * 4800 - 300}円以上 : 公式特典3枚 (以降も金額に応じて自動追加となります。)</div>
 `;
     } else {
       bonusSets.forEach(set => {
         if (set.base && set.label) {
           html += `
 <div style="text-align:center;">
-  ${set.base * 2000 - 100}円ごとに ${set.label} 1枚ずつ支給
+  ${set.base * 1600 - 100}円ごとに ${set.label} 1枚ずつ支給
 </div>
 `;
         }
       });
 
       const maxBase = Math.max(...bonusSets.map(s => Number(s.base)));
-      html += `<div style="text-align:center;">例: ${maxBase * 2000 - 100}円の場合 → `;
+      html += `<div style="text-align:center;">例: ${maxBase * 1600 - 100}円の場合 → `;
 
       html += bonusSets
         .map(
           s =>
             `${s.label} ${Math.floor(
-              (maxBase * 2000 - 100) / (s.base * 2000 - 100)
+              (maxBase * 1600 - 100) / (s.base * 1600 - 100)
             )}枚`
         )
         .join(" + ");

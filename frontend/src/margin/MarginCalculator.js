@@ -20,6 +20,7 @@ function MarginCalculator() {
     dutyApplied,
     proxyApplied,
     divideMap,
+    selectedRows,
     setSelectedNames,
     setDutyApplied,
     setProxyApplied,
@@ -33,6 +34,8 @@ function MarginCalculator() {
     handleCostChange,
     calculateMarginForRow,
     handleSortByOption,
+    handleBulkCostInput,
+    toggleRowSelection,
   } = useMarginCalculator();
 
   return (
@@ -56,6 +59,8 @@ function MarginCalculator() {
         proxyApplied={proxyApplied}
         setProxyApplied={setProxyApplied}
         handleSortByOption={handleSortByOption}
+        handleBulkCostInput={handleBulkCostInput}
+        selectedRows={selectedRows}
       />
 
       <TotalMarginSection totalMargin={totalMargin} totalProxyFee={totalProxyFee} />
@@ -73,6 +78,8 @@ function MarginCalculator() {
           handleOptionChange={handleOptionChange}
           handleQtyChange={handleQtyChange}
           handleCostChange={handleCostChange}
+          selectedRows={selectedRows}
+          toggleRowSelection={toggleRowSelection}
         />
       ) : (
         <SummarySection summary={summary} />

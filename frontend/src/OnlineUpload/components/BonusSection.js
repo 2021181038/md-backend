@@ -43,10 +43,10 @@ const BonusSection = ({ bonusSets, setBonusSets }) => {
                 const validSets = bonusSets.filter(s => s.base && s.label);
                 if (validSets.length > 1) {
                   const maxBase = Math.max(...validSets.map(s => Number(s.base)));
-                  const maxPrice = maxBase * 2000 - 100;
+                  const maxPrice = maxBase * 1600 - 100;
                   return `例: ${maxPrice}円の場合 → ` +
                     validSets.map(s => {
-                      const count = Math.floor(maxPrice / (s.base * 2000 - 100));
+                      const count = Math.floor(maxPrice / (s.base * 1600 - 100));
                       return `${s.label} ${count}枚`;
                     }).join(" + ");
                 }
@@ -74,9 +74,9 @@ const BonusSection = ({ bonusSets, setBonusSets }) => {
       )}
       {bonusSets.length === 1 && bonusSets[0].base && (
         <div>
-          <p>{bonusSets[0].base * 2000 - 100}円以上 : 公式特典1枚</p>
-          <p>{bonusSets[0].base * 4000 - 200}円以上 : 公式特典2枚</p>
-          <p>{bonusSets[0].base * 6000 - 300}円以上 : 公式特典3枚 (以降も…)</p>
+          <p>{bonusSets[0].base * 1600 - 100}円以上 : 公式特典1枚</p>
+          <p>{bonusSets[0].base * 3200 - 200}円以上 : 公式特典2枚</p>
+          <p>{bonusSets[0].base * 4800 - 300}円以上 : 公式特典3枚 (以降も…)</p>
         </div>
       )}
     </div>
