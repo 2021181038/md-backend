@@ -1,20 +1,28 @@
 export const summarizeOrders = (csvData, selectedNames) => {
+  // 1단계: 선택한 상품명만 필터링 (수량은 아직 체크하지 않음)
   const filtered = csvData.filter((row) =>
     selectedNames.includes(row["상품명"])
   );
 
+  // 2단계: 같은 옵션별로 합산하되, 수량이 양수인 행만 합산
   const merged = {};
   filtered.forEach((row) => {
     const option = row["옵션정보"];
     const qty = Number(row["수량"]) || 0;
-    if (!merged[option]) merged[option] = 0;
-    merged[option] += qty;
+    // 수량이 양수인 행만 합산 (음수 행은 무시)
+    if (qty > 0) {
+      if (!merged[option]) merged[option] = 0;
+      merged[option] += qty;
+    }
   });
 
-  const summaryArr = Object.entries(merged).map(([option, qty]) => ({
-    option,
-    qty,
-  }));
+  // 3단계: 최종 합산 결과가 양수인 옵션만 반환
+  const summaryArr = Object.entries(merged)
+    .filter(([option, qty]) => qty > 0)
+    .map(([option, qty]) => ({
+      option,
+      qty,
+    }));
 
   summaryArr.sort((a, b) => {
     const numA = parseInt(a.option.match(/\[(\d+)\]/)?.[1] || 0, 10);
@@ -28,7 +36,7 @@ export const summarizeOrders = (csvData, selectedNames) => {
 export const matchSettlement = (summary, settlementData) => {
   const result = summary.map((item) => {
     const sameOptionsAll = settlementData.filter(
-      (row) => row["옵션정보"] === item.option
+      (row) => row["옵션정보"] === item.option && Number(row["수량"]) > 0
     );
 
     if (sameOptionsAll.length === 0) {
