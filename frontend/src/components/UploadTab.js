@@ -12,6 +12,8 @@ import KeywordSection from "./upload/KeywordSection";
 
 const UploadTab = () => {
   const {
+    uploadMode,
+    setUploadMode,
     groupName,
     setGroupName,
     eventName,
@@ -39,10 +41,6 @@ const UploadTab = () => {
     errorMsg,
     hasAlbum,
     setHasAlbum,
-    hasPreorder,
-    setHasPreorder,
-    preorderShippingDate,
-    setPreorderShippingDate,
     handleImageUpload,
     handlePaste,
     handleOnetoThree,
@@ -80,6 +78,40 @@ const UploadTab = () => {
     <div style={{ padding: '20px' }}>
       <h2>상품 등록</h2>
 
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "12px",
+          marginBottom: "20px",
+        }}
+      >
+        <button
+          type="button"
+          className="pretty-button"
+          style={{
+            backgroundColor: uploadMode === "offline" ? "#33418f" : "#777",
+            width: "140px",
+          }}
+          onClick={() => setUploadMode("offline")}
+          aria-pressed={uploadMode === "offline"}
+        >
+          현장
+        </button>
+        <button
+          type="button"
+          className="pretty-button"
+          style={{
+            backgroundColor: uploadMode === "online" ? "#33418f" : "#777",
+            width: "140px",
+          }}
+          onClick={() => setUploadMode("online")}
+          aria-pressed={uploadMode === "online"}
+        >
+          온라인
+        </button>
+      </div>
+
       <FormSection
         images={images}
         groupName={groupName}
@@ -87,8 +119,6 @@ const UploadTab = () => {
         eventName={eventName}
         hasBonus={hasBonus}
         hasAlbum={hasAlbum}
-        hasPreorder={hasPreorder}
-        preorderShippingDate={preorderShippingDate}
         handleImageUpload={handleImageUpload}
         handlePaste={handlePaste}
         setGroupName={setGroupName}
@@ -96,8 +126,6 @@ const UploadTab = () => {
         setEventName={setEventName}
         setHasBonus={setHasBonus}
         setHasAlbum={setHasAlbum}
-        setHasPreorder={setHasPreorder}
-        setPreorderShippingDate={setPreorderShippingDate}
       />
 
       {hasBonus && (
@@ -157,4 +185,3 @@ const UploadTab = () => {
 };
 
 export default UploadTab;
-

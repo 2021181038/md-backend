@@ -7,6 +7,7 @@ import { convertKrwToYenOffline, convertKrwToYenOnline } from "../utils/priceUti
 import { extractImagesFromClipboard } from "../utils/imageUtils";
 
 export const useUploadTab = () => {
+  const [uploadMode, setUploadMode] = useState("offline");
   const [groupName, setGroupName] = useState('');
   const [eventName, setEventName] = useState('');
   const [hasBonus, setHasBonus] = useState(false);
@@ -24,8 +25,6 @@ export const useUploadTab = () => {
   const [loadingMessage, setLoadingMessage] = useState("");
   const [errorMsg, setErrorMsg] = useState('');
   const [hasAlbum, setHasAlbum] = useState(false);
-  const [hasPreorder, setHasPreorder] = useState(false);
-  const [preorderShippingDate, setPreorderShippingDate] = useState('');
 
   useEffect(() => {
     if (bonusSets.length === 1 && bonusSets[0].base) {
@@ -55,7 +54,7 @@ export const useUploadTab = () => {
     setErrorMsg('');
 
     try {
-      const results = await extractMd(images, "offline", {
+      const results = await extractMd(images, uploadMode, {
         onProgress: setLoadingMessage,
       });
       setMdList(results);
@@ -74,18 +73,23 @@ export const useUploadTab = () => {
   };
 
   const handleGenerateMainName = () => {
-    const result = generateMainName(groupName, thumbnailShippingDate, eventName, hasBonus);
+    const result = generateMainName(
+      groupName,
+      thumbnailShippingDate,
+      eventName,
+      hasBonus,
+      uploadMode
+    );
     setMainName(result);
   };
 
   const handleGenerateDescription = () => {
     const result = generateDescription(
       thumbnailShippingDate,
-      preorderShippingDate,
       hasBonus,
-      hasPreorder,
       hasAlbum,
-      bonusSets
+      bonusSets,
+      uploadMode
     );
     setDetailDescription(result);
   };
@@ -97,7 +101,7 @@ export const useUploadTab = () => {
   };
 
   const handleGroup = () => {
-    const result = groupByCustomPrice(mdList);
+    const result = groupByCustomPrice(mdList, uploadMode);
     setGrouped(result);
   };
 
@@ -113,18 +117,15 @@ export const useUploadTab = () => {
       });
   };
 
-  const convertToYen = (idx, priceMode = "offline") => {
+  const convertToYen = (idx) => {
     const newList = [...mdList];
     const rawPrice = Number(newList[idx].price);
 
     if (!isNaN(rawPrice) && rawPrice > 0) {
-      let finalPrice;
-
-      if (priceMode === "online") {
-        finalPrice = convertKrwToYenOnline(rawPrice);
-      } else {
-        finalPrice = convertKrwToYenOffline(rawPrice);
-      }
+      const finalPrice =
+        uploadMode === "online"
+          ? convertKrwToYenOnline(rawPrice)
+          : convertKrwToYenOffline(rawPrice);
 
       newList[idx].originalPriceKrw = rawPrice.toString();
       newList[idx].price = finalPrice.toString();
@@ -135,6 +136,8 @@ export const useUploadTab = () => {
   };
 
   return {
+    uploadMode,
+    setUploadMode,
     groupName,
     setGroupName,
     eventName,
@@ -168,10 +171,6 @@ export const useUploadTab = () => {
     setErrorMsg,
     hasAlbum,
     setHasAlbum,
-    hasPreorder,
-    setHasPreorder,
-    preorderShippingDate,
-    setPreorderShippingDate,
     handleImageUpload,
     handlePaste,
     handleSubmit,
@@ -183,4 +182,3 @@ export const useUploadTab = () => {
     convertToYen,
   };
 };
-

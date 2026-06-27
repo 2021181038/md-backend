@@ -60,7 +60,7 @@ const ProductTableSection = ({ mdList, setMdList, convertToYen }) => {
                     />
                     <button
                       className="convert-btn"
-                      onClick={() => convertToYen(idx, "offline")}
+                      onClick={() => convertToYen(idx)}
                     >
                       엔화로 변환
                     </button>

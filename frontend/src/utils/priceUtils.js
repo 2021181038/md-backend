@@ -86,15 +86,17 @@ export const convertSingleToYen = (krw) => {
  * @param {Array<Object>} items - 그룹화할 상품 목록 (price 속성 필요)
  * @returns {Array<Object>} 그룹화된 상품 목록
  */
-export const groupByCustomPrice = (items) => {
+export const groupByCustomPrice = (items, mode = "offline") => {
   const sorted = [...items].sort((a, b) => Number(a.price) - Number(b.price));
   let remaining = [...sorted];
   const groups = [];
+  const minMultiplier = mode === "online" ? 1.6 : 2;
+  const applyOptionLimit = mode === "offline";
 
   while (remaining.length > 0) {
     const prices = remaining.map(item => Number(item.price));
     const min = Math.min(...prices);
-    const rawStandard = min * 2;
+    const rawStandard = min * minMultiplier;
     const lowerBound = rawStandard * PRICE_COEFFICIENTS.GROUP_BOUND_LOWER;
     const upperBound = rawStandard * PRICE_COEFFICIENTS.GROUP_BOUND_UPPER;
 
@@ -128,14 +130,15 @@ export const groupByCustomPrice = (items) => {
 
     const updatedGroup = group.map(item => {
       let diffFromStandard = Number(item.price) - standardPrice;
-      
-      // 옵션 가격이 ±50% 범위를 넘으면 제한
-      if (diffFromStandard < minOptionPrice) {
-        diffFromStandard = minOptionPrice;
-      } else if (diffFromStandard > maxOptionPrice) {
-        diffFromStandard = maxOptionPrice;
+
+      if (applyOptionLimit) {
+        if (diffFromStandard < minOptionPrice) {
+          diffFromStandard = minOptionPrice;
+        } else if (diffFromStandard > maxOptionPrice) {
+          diffFromStandard = maxOptionPrice;
+        }
       }
-      
+
       return {
         ...item,
         diffFromStandard

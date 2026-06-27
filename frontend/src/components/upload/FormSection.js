@@ -8,8 +8,6 @@ const FormSection = ({
   eventName,
   hasBonus,
   hasAlbum,
-  hasPreorder,
-  preorderShippingDate,
   handleImageUpload,
   handlePaste,
   setGroupName,
@@ -17,8 +15,6 @@ const FormSection = ({
   setEventName,
   setHasBonus,
   setHasAlbum,
-  setHasPreorder,
-  setPreorderShippingDate,
 }) => {
   return (
     <div className="form-section">
@@ -57,7 +53,7 @@ const FormSection = ({
       </div>
 
       <div className="form-row">
-        <div className="form-label">📌 현장구매 발송날짜</div>
+        <div className="form-label">📌 발송날짜</div>
         <div className="form-input">
           <input
             type="date"
@@ -66,30 +62,6 @@ const FormSection = ({
           />
         </div>
       </div>
-
-      <div className="form-row">
-        <div className="form-label">📌 PRE-ORDER 상품도 있어요</div>
-        <div className="form-input">
-          <input
-            type="checkbox"
-            checked={hasPreorder}
-            onChange={(e) => setHasPreorder(e.target.checked)}
-          />
-        </div>
-      </div>
-
-      {hasPreorder && (
-        <div className="form-row">
-          <div className="form-label">📌 PRE-ORDER 발송날짜</div>
-          <div className="form-input">
-            <input
-              type="date"
-              value={preorderShippingDate}
-              onChange={(e) => setPreorderShippingDate(e.target.value)}
-            />
-          </div>
-        </div>
-      )}
 
       <div className="form-row">
         <div className="form-label">📌 콘서트 / 팝업명</div>
@@ -134,8 +106,6 @@ FormSection.propTypes = {
   eventName: PropTypes.string.isRequired,
   hasBonus: PropTypes.bool.isRequired,
   hasAlbum: PropTypes.bool.isRequired,
-  hasPreorder: PropTypes.bool.isRequired,
-  preorderShippingDate: PropTypes.string.isRequired,
   handleImageUpload: PropTypes.func.isRequired,
   handlePaste: PropTypes.func.isRequired,
   setGroupName: PropTypes.func.isRequired,
@@ -143,9 +113,6 @@ FormSection.propTypes = {
   setEventName: PropTypes.func.isRequired,
   setHasBonus: PropTypes.func.isRequired,
   setHasAlbum: PropTypes.func.isRequired,
-  setHasPreorder: PropTypes.func.isRequired,
-  setPreorderShippingDate: PropTypes.func.isRequired,
 };
 
 export default FormSection;
-

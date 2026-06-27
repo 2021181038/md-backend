@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 
 const TabNavigation = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: "upload", label: "현장구매 업로드" },
-    { id: "online", label: "온라인 업로드" },
+    { id: "upload", label: "MD 업로드" },
     { id: "album", label: "앨범 업로드" },
     { id: "margin", label: "마진 계산기" },
     { id: "order", label: "주문 정리" },
