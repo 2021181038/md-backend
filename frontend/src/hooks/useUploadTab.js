@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { extractMd, ExtractMdError } from "../api/mdApi";
 import { formatExtractError } from "../api/extractApi";
 import { generateMainName, generateDescription } from "../utils/descriptionUtils";
-import { groupByCustomPrice } from "../utils/priceUtils";
-import { convertKrwToYenOffline, convertKrwToYenOnline } from "../utils/priceUtils";
+import { groupByCustomPrice, convertKrwToYenOffline, convertKrwToYenOnline } from "../utils/priceUtils";
 import { extractImagesFromClipboard } from "../utils/imageUtils";
+import { buildMdItem, mapMdListForMode } from "../utils/textUtils";
+
+const computeGrouped = (list, mode) =>
+  groupByCustomPrice(mapMdListForMode(list, mode), mode);
 
 export const useUploadTab = () => {
   const [uploadMode, setUploadMode] = useState("offline");
@@ -14,12 +17,12 @@ export const useUploadTab = () => {
   const [images, setImages] = useState([]);
   const [mdList, setMdList] = useState([]);
   const [grouped, setGrouped] = useState([]);
+  const [hasGrouped, setHasGrouped] = useState(false);
   const [thumbnailShippingDate, setThumbnailShippingDate] = useState('');
   const [mainName, setMainName] = useState('');
   const [detailDescription, setDetailDescription] = useState('');
   const [keywordType, setKeywordType] = useState('');
   const [keywords, setKeywords] = useState([]);
-  const [isKeywordLoading, setIsKeywordLoading] = useState(false);
   const [bonusSets, setBonusSets] = useState([{ base: "", label: "" }]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -27,10 +30,12 @@ export const useUploadTab = () => {
   const [hasAlbum, setHasAlbum] = useState(false);
 
   useEffect(() => {
-    if (bonusSets.length === 1 && bonusSets[0].base) {
-      // 특전 조건 변경 시 처리
+    if (hasGrouped && mdList.length > 0) {
+      setGrouped(computeGrouped(mdList, uploadMode));
     }
-  }, [bonusSets]);
+    // uploadMode 전환 시에만 그룹 재계산
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadMode]);
 
   const handleImageUpload = (e) => {
     setImages([...e.target.files]);
@@ -43,7 +48,7 @@ export const useUploadTab = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleFetchPrices = async () => {
     if (!images.length) {
       setErrorMsg("이미지를 업로드해주세요.");
       return;
@@ -52,9 +57,11 @@ export const useUploadTab = () => {
     setIsLoading(true);
     setLoadingMessage("시작 중...");
     setErrorMsg('');
+    setGrouped([]);
+    setHasGrouped(false);
 
     try {
-      const results = await extractMd(images, uploadMode, {
+      const results = await extractMd(images, {
         onProgress: setLoadingMessage,
       });
       setMdList(results);
@@ -72,38 +79,34 @@ export const useUploadTab = () => {
     }
   };
 
-  const handleGenerateMainName = () => {
-    const result = generateMainName(
+  const handleGenerateContent = () => {
+    const main = generateMainName(
       groupName,
       thumbnailShippingDate,
       eventName,
       hasBonus,
       uploadMode
     );
-    setMainName(result);
-  };
+    if (main) setMainName(main);
 
-  const handleGenerateDescription = () => {
-    const result = generateDescription(
+    const description = generateDescription(
       thumbnailShippingDate,
       hasBonus,
       hasAlbum,
       bonusSets,
       uploadMode
     );
-    setDetailDescription(result);
+    if (description) setDetailDescription(description);
   };
 
-  const handleOnetoThree = async () => {
-    handleGenerateMainName();
-    handleGenerateDescription();
-    await handleSubmit();
-  };
-
-  const handleGroup = () => {
-    const result = groupByCustomPrice(mdList, uploadMode);
-    setGrouped(result);
-  };
+  const handleGroup = useCallback(() => {
+    if (!mdList.length) {
+      alert("먼저 가격 정보를 가져와주세요.");
+      return;
+    }
+    setGrouped(computeGrouped(mdList, uploadMode));
+    setHasGrouped(true);
+  }, [mdList, uploadMode]);
 
   const handleCopy = (text, label) => {
     if (!text) {
@@ -119,20 +122,26 @@ export const useUploadTab = () => {
 
   const convertToYen = (idx) => {
     const newList = [...mdList];
-    const rawPrice = Number(newList[idx].price);
+    const rawPrice = Number(newList[idx].originalPriceKrw);
 
     if (!isNaN(rawPrice) && rawPrice > 0) {
-      const finalPrice =
-        uploadMode === "online"
-          ? convertKrwToYenOnline(rawPrice)
-          : convertKrwToYenOffline(rawPrice);
-
-      newList[idx].originalPriceKrw = rawPrice.toString();
-      newList[idx].price = finalPrice.toString();
+      newList[idx] = {
+        ...newList[idx],
+        originalPriceKrw: rawPrice.toString(),
+        priceOffline: convertKrwToYenOffline(rawPrice).toString(),
+        priceOnline: convertKrwToYenOnline(rawPrice).toString(),
+      };
       setMdList(newList);
+      if (hasGrouped) {
+        setGrouped(computeGrouped(newList, uploadMode));
+      }
     } else {
-      alert("숫자를 올바르게 입력해주세요!");
+      alert("원화 가격을 올바르게 입력해주세요!");
     }
+  };
+
+  const addEmptyProduct = () => {
+    setMdList([...mdList, buildMdItem("", 0)]);
   };
 
   return {
@@ -145,40 +154,31 @@ export const useUploadTab = () => {
     hasBonus,
     setHasBonus,
     images,
-    setImages,
     mdList,
     setMdList,
     grouped,
-    setGrouped,
     thumbnailShippingDate,
     setThumbnailShippingDate,
     mainName,
-    setMainName,
     detailDescription,
-    setDetailDescription,
     keywordType,
     setKeywordType,
     keywords,
     setKeywords,
-    isKeywordLoading,
-    setIsKeywordLoading,
     bonusSets,
     setBonusSets,
     isLoading,
     loadingMessage,
-    setIsLoading,
     errorMsg,
-    setErrorMsg,
     hasAlbum,
     setHasAlbum,
     handleImageUpload,
     handlePaste,
-    handleSubmit,
-    handleGenerateMainName,
-    handleGenerateDescription,
-    handleOnetoThree,
+    handleFetchPrices,
+    handleGenerateContent,
     handleGroup,
     handleCopy,
     convertToYen,
+    addEmptyProduct,
   };
 };

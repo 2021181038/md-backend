@@ -2,7 +2,8 @@ import React from "react";
 import { useUploadTab } from "../hooks/useUploadTab";
 import { generateAllKeywords } from "../utils/keywordUtils";
 import { downloadGroupExcel } from "../utils/excelUtils";
-import FormSection from "./upload/FormSection";
+import ImageUploadSection from "./upload/ImageUploadSection";
+import MetadataFormSection from "./upload/MetadataFormSection";
 import BonusSection from "./upload/BonusSection";
 import MainNameSection from "./upload/MainNameSection";
 import DescriptionSection from "./upload/DescriptionSection";
@@ -32,8 +33,6 @@ const UploadTab = () => {
     setKeywordType,
     keywords,
     setKeywords,
-    isKeywordLoading,
-    setIsKeywordLoading,
     bonusSets,
     setBonusSets,
     isLoading,
@@ -43,10 +42,12 @@ const UploadTab = () => {
     setHasAlbum,
     handleImageUpload,
     handlePaste,
-    handleOnetoThree,
+    handleFetchPrices,
+    handleGenerateContent,
     handleGroup,
     handleCopy,
     convertToYen,
+    addEmptyProduct,
   } = useUploadTab();
 
   const handleGenerateKeywords = () => {
@@ -78,49 +79,39 @@ const UploadTab = () => {
     <div style={{ padding: '20px' }}>
       <h2>상품 등록</h2>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "12px",
-          marginBottom: "20px",
-        }}
-      >
-        <button
-          type="button"
-          className="pretty-button"
-          style={{
-            backgroundColor: uploadMode === "offline" ? "#33418f" : "#777",
-            width: "140px",
-          }}
-          onClick={() => setUploadMode("offline")}
-          aria-pressed={uploadMode === "offline"}
-        >
-          현장
-        </button>
-        <button
-          type="button"
-          className="pretty-button"
-          style={{
-            backgroundColor: uploadMode === "online" ? "#33418f" : "#777",
-            width: "140px",
-          }}
-          onClick={() => setUploadMode("online")}
-          aria-pressed={uploadMode === "online"}
-        >
-          온라인
-        </button>
-      </div>
-
-      <FormSection
+      <ImageUploadSection
         images={images}
+        handleImageUpload={handleImageUpload}
+        handlePaste={handlePaste}
+        onFetchPrices={handleFetchPrices}
+        isLoading={isLoading}
+        loadingMessage={loadingMessage}
+        errorMsg={errorMsg}
+      />
+
+      <ProductTableSection
+        mdList={mdList}
+        setMdList={setMdList}
+        convertToYen={convertToYen}
+        uploadMode={uploadMode}
+        setUploadMode={setUploadMode}
+        addEmptyProduct={addEmptyProduct}
+      />
+
+      <GroupSection
+        grouped={grouped}
+        handleGroup={handleGroup}
+        handleDownloadExcelByGroup={handleDownloadExcelByGroup}
+      />
+
+      <hr style={{ margin: "30px 0" }} />
+
+      <MetadataFormSection
         groupName={groupName}
         thumbnailShippingDate={thumbnailShippingDate}
         eventName={eventName}
         hasBonus={hasBonus}
         hasAlbum={hasAlbum}
-        handleImageUpload={handleImageUpload}
-        handlePaste={handlePaste}
         setGroupName={setGroupName}
         setThumbnailShippingDate={setThumbnailShippingDate}
         setEventName={setEventName}
@@ -129,49 +120,28 @@ const UploadTab = () => {
       />
 
       {hasBonus && (
-        <BonusSection bonusSets={bonusSets} setBonusSets={setBonusSets} />
+        <BonusSection
+          bonusSets={bonusSets}
+          setBonusSets={setBonusSets}
+          uploadMode={uploadMode}
+        />
       )}
 
-      <hr />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '20px' }}>
         <button
           className="pretty-button"
-          style={{ marginTop: '20px' }}
-          onClick={handleOnetoThree}
+          onClick={handleGenerateContent}
         >
-          위에 모두 입력 후 눌러주세요
+          글 추출하기
         </button>
-
-        {isLoading && (
-          <div style={{ textAlign: "center", marginTop: "15px" }}>
-            <div className="spinner"></div>
-            <p>{loadingMessage || "상품 정보를 불러오는 중입니다..."}</p>
-          </div>
-        )}
-
-        {errorMsg && (
-          <div style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
-            {errorMsg}
-          </div>
-        )}
+        <p style={{ textAlign: "center", color: "#666", fontSize: "14px", margin: "8px 0 0" }}>
+          현재 {uploadMode === "online" ? "온라인" : "현장"} 버전 기준으로 메인상품명·상세페이지 글이 생성됩니다.
+        </p>
       </div>
 
       <MainNameSection mainName={mainName} handleCopy={handleCopy} />
 
       <DescriptionSection detailDescription={detailDescription} />
-
-      <ProductTableSection
-        mdList={mdList}
-        setMdList={setMdList}
-        convertToYen={convertToYen}
-      />
-
-      <GroupSection
-        grouped={grouped}
-        handleGroup={handleGroup}
-        handleDownloadExcelByGroup={handleDownloadExcelByGroup}
-      />
 
       <KeywordSection
         keywordType={keywordType}

@@ -12,7 +12,7 @@ export class ExtractMdError extends Error {
   }
 }
 
-export const extractMd = async (images, priceMode = "offline", options = {}) => {
+export const extractMd = async (images, options = {}) => {
   const { onProgress } = options;
 
   if (!images.length) {
@@ -44,7 +44,7 @@ export const extractMd = async (images, priceMode = "offline", options = {}) => 
       const raw = await postExtractMd(formData, (message) => {
         onProgress?.(`이미지 ${batchLabel} — ${message}`);
       });
-      const parsed = parseMdResponse(raw, priceMode);
+      const parsed = parseMdResponse(raw);
 
       if (!parsed.length) {
         failedBatches.push(batchLabel);

@@ -1,15 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-const FormSection = ({
-  images,
+const MetadataFormSection = ({
   groupName,
   thumbnailShippingDate,
   eventName,
   hasBonus,
   hasAlbum,
-  handleImageUpload,
-  handlePaste,
   setGroupName,
   setThumbnailShippingDate,
   setEventName,
@@ -18,28 +15,6 @@ const FormSection = ({
 }) => {
   return (
     <div className="form-section">
-      <div className="form-row">
-        <div className="form-label">📌 상세 이미지 업로드</div>
-        <div className="form-input">
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageUpload}
-          />
-        </div>
-      </div>
-
-      <div onPaste={handlePaste} className="upload-box">
-        네모 박스를 클릭한 후 이미지를 여기에 복사·붙여넣기
-      </div>
-
-      <div style={{ marginTop: "10px" }}>
-        {images.map((img, idx) => (
-          <p key={idx}>{img.name || `clipboard-image-${idx}`}</p>
-        ))}
-      </div>
-
       <div className="form-row">
         <div className="form-label">📌 그룹명</div>
         <div className="form-input">
@@ -99,15 +74,12 @@ const FormSection = ({
   );
 };
 
-FormSection.propTypes = {
-  images: PropTypes.arrayOf(PropTypes.instanceOf(File)).isRequired,
+MetadataFormSection.propTypes = {
   groupName: PropTypes.string.isRequired,
   thumbnailShippingDate: PropTypes.string.isRequired,
   eventName: PropTypes.string.isRequired,
   hasBonus: PropTypes.bool.isRequired,
   hasAlbum: PropTypes.bool.isRequired,
-  handleImageUpload: PropTypes.func.isRequired,
-  handlePaste: PropTypes.func.isRequired,
   setGroupName: PropTypes.func.isRequired,
   setThumbnailShippingDate: PropTypes.func.isRequired,
   setEventName: PropTypes.func.isRequired,
@@ -115,4 +87,4 @@ FormSection.propTypes = {
   setHasAlbum: PropTypes.func.isRequired,
 };
 
-export default FormSection;
+export default MetadataFormSection;

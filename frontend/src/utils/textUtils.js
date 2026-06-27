@@ -30,7 +30,37 @@ const applyPriceMode = (rawPrice, priceMode) => {
   ).toString();
 };
 
-export const parseMdProducts = (products, priceMode = 'offline') => {
+export const buildMdItem = (name, rawPrice, extra = {}) => ({
+  name,
+  originalPriceKrw: rawPrice > 0 ? rawPrice.toString() : '',
+  priceOffline: rawPrice > 0 ? applyPriceMode(rawPrice, 'offline') : '',
+  priceOnline: rawPrice > 0 ? applyPriceMode(rawPrice, 'online') : '',
+  hasOption: false,
+  optionText: '',
+  ...extra,
+});
+
+export const getPriceForMode = (item, mode = 'offline') => {
+  if (mode === 'online') {
+    return item.priceOnline ?? item.price ?? '';
+  }
+  return item.priceOffline ?? item.price ?? '';
+};
+
+export const setPriceForMode = (item, mode, value) => {
+  if (mode === 'online') {
+    return { ...item, priceOnline: value };
+  }
+  return { ...item, priceOffline: value };
+};
+
+export const mapMdListForMode = (mdList, mode = 'offline') =>
+  mdList.map((item) => ({
+    ...item,
+    price: getPriceForMode(item, mode),
+  }));
+
+export const parseMdProducts = (products) => {
   if (!Array.isArray(products)) return [];
 
   return products
@@ -41,34 +71,29 @@ export const parseMdProducts = (products, priceMode = 'offline') => {
       const rawPrice = toKrwNumber(product?.price);
       const cleanName = name.replace(/^\[\d+\]\s*/, '').trim();
 
-      return {
-        name: cleanName,
-        price: applyPriceMode(rawPrice, priceMode),
-        originalPriceKrw: rawPrice > 0 ? rawPrice.toString() : '',
-        options: [],
-      };
+      return buildMdItem(cleanName, rawPrice);
     })
     .filter(Boolean);
 };
 
-export const parseMdResponse = (payload, priceMode = 'offline', textParser) => {
+export const parseMdResponse = (payload, _priceMode, textParser) => {
   if (payload?.products?.length) {
-    return parseMdProducts(payload.products, priceMode);
+    return parseMdProducts(payload.products);
   }
 
   const text = payload?.text ?? (typeof payload === 'string' ? payload : '');
   if (!text) return [];
 
-  const parser = textParser || ((value) => parseMdText(value, priceMode));
+  const parser = textParser || parseMdText;
   return parser(text);
 };
 
 // MD 텍스트 파싱 (JSON 실패 시 fallback)
-export const parseMdText = (rawText, priceMode = "offline") => {
+export const parseMdText = (rawText) => {
   const lines = rawText.split("\n").filter(line => {
     const trimmed = line.trim();
-    return trimmed !== "" && 
-           !trimmed.match(/^[|:\-\s]+$/) && 
+    return trimmed !== "" &&
+           !trimmed.match(/^[|:\-\s]+$/) &&
            !trimmed.match(/^(No\.|번호|상품명|가격|Price)/i);
   });
 
@@ -80,11 +105,10 @@ export const parseMdText = (rawText, priceMode = "offline") => {
     if (match) {
       const rawPrice = toKrwNumber(match[3]);
       if (rawPrice > 0) {
-        return {
-          name: `[${match[1]}] ${match[2].trim().replace(/[-\u2013\u2014:]+$/, "")}`,
-          price: applyPriceMode(rawPrice, priceMode),
-          originalPriceKrw: rawPrice.toString(),
-        };
+        return buildMdItem(
+          `[${match[1]}] ${match[2].trim().replace(/[-\u2013\u2014:]+$/, "")}`,
+          rawPrice
+        );
       }
     }
 
@@ -92,11 +116,10 @@ export const parseMdText = (rawText, priceMode = "offline") => {
     if (match) {
       const rawPrice = toKrwNumber(match[3]);
       if (rawPrice > 0) {
-        return {
-          name: `[${match[1]}] ${match[2].trim().replace(/[-\u2013\u2014:]+$/, "")}`,
-          price: applyPriceMode(rawPrice, priceMode),
-          originalPriceKrw: rawPrice.toString(),
-        };
+        return buildMdItem(
+          `[${match[1]}] ${match[2].trim().replace(/[-\u2013\u2014:]+$/, "")}`,
+          rawPrice
+        );
       }
     }
 
@@ -105,20 +128,14 @@ export const parseMdText = (rawText, priceMode = "offline") => {
       const productName = match[1] || match[3];
       const rawPrice = toKrwNumber(match[2] || match[4]);
       if (rawPrice > 0 && productName) {
-        return {
-          name: productName.trim().replace(/[-\u2013\u2014:]+$/, ""),
-          price: applyPriceMode(rawPrice, priceMode),
-          originalPriceKrw: rawPrice.toString(),
-          options: [],
-        };
+        return buildMdItem(
+          productName.trim().replace(/[-\u2013\u2014:]+$/, ""),
+          rawPrice
+        );
       }
     }
 
-    return {
-      name: trimmedLine.replace(/[-\u2013\u2014:]+$/, "").trim(),
-      price: "",
-      options: [],
-    };
+    return buildMdItem(trimmedLine.replace(/[-\u2013\u2014:]+$/, "").trim(), 0);
   }).filter(item => item.name);
 };
 

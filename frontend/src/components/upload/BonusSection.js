@@ -1,6 +1,9 @@
 import React from "react";
+import { getBonusMultiplier } from "../../utils/descriptionUtils";
 
-const BonusSection = ({ bonusSets, setBonusSets }) => {
+const BonusSection = ({ bonusSets, setBonusSets, uploadMode = "offline" }) => {
+  const multiplier = getBonusMultiplier(uploadMode);
+
   return (
     <div style={{ marginTop: '0px', marginBottom: '10px' }}>
       <h3>🎁 특전조건 입력</h3>
@@ -43,10 +46,10 @@ const BonusSection = ({ bonusSets, setBonusSets }) => {
                 const validSets = bonusSets.filter(s => s.base && s.label);
                 if (validSets.length > 1) {
                   const maxBase = Math.max(...validSets.map(s => Number(s.base)));
-                  const maxPrice = maxBase * 2000 - 100;
+                  const maxPrice = maxBase * multiplier - 100;
                   return `例: ${maxPrice}円の場合 → ` +
                     validSets.map(s => {
-                      const count = Math.floor(maxPrice / (s.base * 2000 - 100));
+                      const count = Math.floor(maxPrice / (s.base * multiplier - 100));
                       return `${s.label} ${count}枚`;
                     }).join(" + ");
                 }
@@ -74,9 +77,9 @@ const BonusSection = ({ bonusSets, setBonusSets }) => {
       )}
       {bonusSets.length === 1 && bonusSets[0].base && (
         <div>
-          <p>{bonusSets[0].base * 2000 - 100}円以上 : 公式特典1枚</p>
-          <p>{bonusSets[0].base * 4000 - 200}円以上 : 公式特典2枚</p>
-          <p>{bonusSets[0].base * 6000 - 300}円以上 : 公式特典3枚 (以降も…)</p>
+          <p>{bonusSets[0].base * multiplier - 100}円以上 : 公式特典1枚</p>
+          <p>{bonusSets[0].base * multiplier * 2 - 200}円以上 : 公式特典2枚</p>
+          <p>{bonusSets[0].base * multiplier * 3 - 300}円以上 : 公式特典3枚 (以降も…)</p>
         </div>
       )}
     </div>
@@ -84,4 +87,3 @@ const BonusSection = ({ bonusSets, setBonusSets }) => {
 };
 
 export default BonusSection;
-

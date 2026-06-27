@@ -1,23 +1,74 @@
 import React from "react";
-import { convertKrwToYenOffline } from "../../utils/priceUtils";
+import { getPriceForMode, setPriceForMode } from "../../utils/textUtils";
 
-const ProductTableSection = ({ mdList, setMdList, convertToYen }) => {
+const ProductTableSection = ({
+  mdList,
+  setMdList,
+  convertToYen,
+  uploadMode,
+  setUploadMode,
+  addEmptyProduct,
+}) => {
+  const modeLabel = uploadMode === "online" ? "온라인" : "현장";
+
   return (
     <div style={{ marginTop: '30px' }}>
-      <h3>📋 상품명 및 가격</h3>
-      <h3>상품 추가 시 가격은 ₩원화₩를 기준으로 입력하기</h3>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+        }}
+      >
+        <div>
+          <h3 style={{ margin: 0 }}>📋 상품명 및 가격</h3>
+          <p style={{ margin: "6px 0 0", color: "#666", fontSize: "14px" }}>
+            현장·온라인 엔화가 함께 계산됩니다. 오른쪽에서 버전을 선택하세요.
+          </p>
+        </div>
+
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            type="button"
+            className="pretty-button"
+            style={{
+              backgroundColor: uploadMode === "offline" ? "#33418f" : "#777",
+              width: "100px",
+            }}
+            onClick={() => setUploadMode("offline")}
+            aria-pressed={uploadMode === "offline"}
+          >
+            현장
+          </button>
+          <button
+            type="button"
+            className="pretty-button"
+            style={{
+              backgroundColor: uploadMode === "online" ? "#33418f" : "#777",
+              width: "100px",
+            }}
+            onClick={() => setUploadMode("online")}
+            aria-pressed={uploadMode === "online"}
+          >
+            온라인
+          </button>
+        </div>
+      </div>
+
       {mdList.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-          <p>상품을 추가하려면 아래 버튼을 클릭하세요.</p>
+          <p>이미지를 업로드한 뒤 「가격 정보 가져오기」를 눌러주세요.</p>
         </div>
       ) : (
-        <div className="md-table-container">
+        <div className="md-table-container" style={{ marginTop: "16px" }}>
           <table className="md-table">
             <thead>
               <tr>
                 <th>상품명</th>
                 <th>가격 (원화)</th>
-                <th>가격 (엔화)</th>
+                <th>가격 (엔화 · {modeLabel})</th>
                 <th style={{ color: 'red' }}>옵션 여부</th>
                 <th></th>
               </tr>
@@ -44,27 +95,40 @@ const ProductTableSection = ({ mdList, setMdList, convertToYen }) => {
                     )}
                   </div>
                 </td>
-                <td>{item.originalPriceKrw ? `₩${item.originalPriceKrw}` : '-'}</td>
                 <td>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
                     <input
                       type="number"
                       className="md-input-price"
-                      placeholder="₩원화 입력"
-                      value={item.price}
+                      placeholder="₩원화"
+                      value={item.originalPriceKrw || ""}
                       onChange={(e) => {
                         const newList = [...mdList];
-                        newList[idx].price = e.target.value;
+                        newList[idx].originalPriceKrw = e.target.value;
                         setMdList(newList);
                       }}
+                      style={{ width: "100px" }}
                     />
                     <button
                       className="convert-btn"
                       onClick={() => convertToYen(idx)}
                     >
-                      엔화로 변환
+                      엔화 계산
                     </button>
                   </div>
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    className="md-input-price"
+                    placeholder="¥엔화"
+                    value={getPriceForMode(item, uploadMode)}
+                    onChange={(e) => {
+                      const newList = [...mdList];
+                      newList[idx] = setPriceForMode(newList[idx], uploadMode, e.target.value);
+                      setMdList(newList);
+                    }}
+                  />
                 </td>
                 <td>
                   <input
@@ -112,13 +176,9 @@ const ProductTableSection = ({ mdList, setMdList, convertToYen }) => {
           </table>
         </div>
       )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px", marginBottom: "15px" }}>
-        <button
-          className="plus-button"
-          onClick={() => {
-            setMdList([...mdList, { name: "", price: "", hasOption: false, optionText: "" }]);
-          }}
-        >
+        <button className="plus-button" onClick={addEmptyProduct}>
           상품 추가 +
         </button>
       </div>
@@ -127,4 +187,3 @@ const ProductTableSection = ({ mdList, setMdList, convertToYen }) => {
 };
 
 export default ProductTableSection;
-

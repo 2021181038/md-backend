@@ -1,6 +1,9 @@
 import { formatThumbnailDate } from "./dateUtils";
 
 const BONUS_MULTIPLIER = { offline: 2000, online: 1600 };
+export const getBonusMultiplier = (uploadMode = "offline") =>
+  BONUS_MULTIPLIER[uploadMode] || BONUS_MULTIPLIER.offline;
+
 const PURCHASE_LABEL = { offline: "現地購入", online: "PRE-ORDER" };
 const BONUS_SHIPPING_NOTE = {
   offline: "特典はオフラインバージョン特典のみで発送されます。",
