@@ -5,6 +5,7 @@ import os
 import base64
 from dotenv import load_dotenv
 
+# 여기변경
 load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://md-backend-blond.vercel.app"}})
