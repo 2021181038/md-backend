@@ -27,9 +27,9 @@ export const PRICE_COEFFICIENTS = {
 
 // 이미지 처리 설정
 export const IMAGE_CONFIG = {
-  MAX_SIZE: 1080,      // 최대 이미지 크기 (픽셀)
-  BATCH_SIZE: 4,       // 이미지 배치 크기
-  QUALITY: 0.9,        // 이미지 압축 품질
+  MAX_SIZE: 1600,      // 최대 이미지 크기 (픽셀) — 표/스크린샷 글씨 인식용
+  BATCH_SIZE: 1,       // 이미지 1장씩 API 호출 (여러 장 인식률 우선)
+  QUALITY: 0.92,        // JPEG 압축 품질
 };
 
 // 가격 계산 설정

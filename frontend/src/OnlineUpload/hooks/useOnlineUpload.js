@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { extractMd, ExtractMdError } from "../../api/mdApi";
-import { parseExtractedText } from "../utils/textUtils";
+import { formatExtractError } from "../../api/extractApi";
 import { groupByCustomPrice } from "../utils/groupUtils";
 import { generateDescription, generateMainName } from "../utils/descriptionUtils";
 import { calculateOnlinePrice } from "../../utils/priceUtils";
@@ -82,7 +82,6 @@ export const useOnlineUpload = () => {
     try {
       const results = await extractMd(images, "online", {
         onProgress: setLoadingMessage,
-        parseFn: parseExtractedText,
       });
       setMdList(results);
     } catch (error) {
@@ -92,7 +91,7 @@ export const useOnlineUpload = () => {
         setMdList(error.partialResults);
       }
 
-      setErrorMsg(`❌ ${error.message}`);
+      setErrorMsg(`❌ ${formatExtractError(error)}`);
     } finally {
       setIsLoading(false);
       setLoadingMessage("");

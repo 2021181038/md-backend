@@ -7,6 +7,33 @@ const EXTRACT_TIMEOUT_MS = 120000;
 const WAKE_BACKOFF_MS = [3000, 6000, 12000, 12000, 12000, 12000];
 const EXTRACT_BACKOFF_MS = [3000, 6000, 12000, 20000, 30000];
 
+const ERROR_HINTS = {
+  SERVER_UNAVAILABLE: "Render 서버가 깨어나는 중일 수 있습니다. 30~60초 후 다시 시도해주세요.",
+  SERVER_TIMEOUT: "네트워크가 느리거나 서버 응답이 지연되고 있습니다.",
+  OPENAI_AUTH: "Render → Environment → OPENAI_API_KEY 를 확인해주세요.",
+  OPENAI_QUOTA: "platform.openai.com → Billing 에서 잔액을 확인해주세요.",
+  OPENAI_RATE_LIMIT: "1~2분 기다린 뒤 다시 시도해주세요.",
+  OPENAI_TIMEOUT: "이미지가 크거나 상품이 많으면 시간이 더 걸릴 수 있습니다.",
+  OPENAI_CONNECTION: "OpenAI 서버 연결 문제입니다. 잠시 후 재시도해주세요.",
+  OPENAI_SERVER: "OpenAI 측 일시적 오류입니다. 잠시 후 재시도해주세요.",
+  OPENAI_ERROR: "같은 이미지로 한 번 더 시도해주세요.",
+  MISSING_API_KEY: "Render 대시보드에 OPENAI_API_KEY 를 등록해주세요.",
+  MISSING_IMAGES: "이미지를 선택한 뒤 다시 시도해주세요.",
+  EMPTY_RESULT: "표가 잘 보이는 선명한 스크린샷으로 다시 시도해주세요.",
+  NO_RESULT: "서버 응답에 상품 데이터가 없습니다.",
+};
+
+export class ExtractApiError extends Error {
+  constructor(message, { code, retryable, status, hint } = {}) {
+    super(message);
+    this.name = "ExtractApiError";
+    this.code = code;
+    this.retryable = retryable;
+    this.status = status;
+    this.hint = hint;
+  }
+}
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const fetchWithTimeout = async (url, options, timeoutMs) => {
@@ -28,14 +55,39 @@ const isRetryableError = (error) =>
   error?.name === "TypeError" ||
   (typeof error?.message === "string" && error.message.toLowerCase().includes("fetch"));
 
-const parseErrorMessage = async (response, fallback) => {
+const buildApiError = (payload, status, fallbackMessage) => {
+  const code = payload?.code || (status >= 500 ? "SERVER_UNAVAILABLE" : "OPENAI_ERROR");
+  const message = payload?.error || fallbackMessage;
+  const retryable = payload?.retryable ?? isRetryableStatus(status);
+  const hint = ERROR_HINTS[code];
+
+  return new ExtractApiError(message, { code, retryable, status, hint });
+};
+
+const parseApiError = async (response, fallbackMessage) => {
   try {
     const data = await response.json();
-    if (data?.error) return data.error;
+    return buildApiError(data, response.status, fallbackMessage);
   } catch {
-    // ignore JSON parse errors
+    return new ExtractApiError(fallbackMessage, {
+      code: response.status >= 500 ? "SERVER_UNAVAILABLE" : "OPENAI_ERROR",
+      retryable: isRetryableStatus(response.status),
+      status: response.status,
+      hint: ERROR_HINTS.SERVER_UNAVAILABLE,
+    });
   }
-  return fallback;
+};
+
+export const formatExtractError = (error) => {
+  if (error instanceof ExtractApiError) {
+    return error.hint ? `${error.message} (${error.hint})` : error.message;
+  }
+
+  if (error?.name === "AbortError") {
+    return `요청 시간이 초과되었습니다. (${ERROR_HINTS.SERVER_TIMEOUT})`;
+  }
+
+  return error?.message || "상품 정보를 불러오지 못했습니다.";
 };
 
 const pingLegacyServer = async () => {
@@ -45,7 +97,6 @@ const pingLegacyServer = async () => {
     WAKE_TIMEOUT_MS
   );
 
-  // 서버가 깨어 있으면 이미지 없음(400) 또는 라우트 응답이 옴
   if (response.status === 400) return true;
   if (response.ok) return true;
   return isRetryableStatus(response.status) ? false : true;
@@ -64,15 +115,17 @@ export const wakeServer = async (onProgress) => {
 
       if (healthResponse.ok) return;
 
-      // 구버전 서버(/health 미배포) fallback
       if (healthResponse.status === 404 && (await pingLegacyServer())) {
         return;
       }
 
       if (!isRetryableStatus(healthResponse.status)) {
-        throw new Error(await parseErrorMessage(healthResponse, "서버 연결에 실패했습니다."));
+        throw await parseApiError(healthResponse, "서버 연결에 실패했습니다.");
       }
     } catch (error) {
+      if (error instanceof ExtractApiError && !error.retryable) {
+        throw error;
+      }
       if (!isRetryableError(error) && error?.name !== "AbortError") {
         throw error;
       }
@@ -83,11 +136,18 @@ export const wakeServer = async (onProgress) => {
     }
   }
 
-  throw new Error("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
+  throw new ExtractApiError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.", {
+    code: "SERVER_UNAVAILABLE",
+    retryable: true,
+    hint: ERROR_HINTS.SERVER_UNAVAILABLE,
+  });
 };
 
 export const postExtractMd = async (formData, onProgress) => {
-  let lastError = new Error("상품 정보를 가져오지 못했습니다.");
+  let lastError = new ExtractApiError("상품 정보를 가져오지 못했습니다.", {
+    code: "OPENAI_ERROR",
+    retryable: true,
+  });
 
   for (let attempt = 0; attempt < EXTRACT_MAX_ATTEMPTS; attempt++) {
     onProgress?.(`상품 정보 분석 중... (${attempt + 1}/${EXTRACT_MAX_ATTEMPTS})`);
@@ -100,12 +160,10 @@ export const postExtractMd = async (formData, onProgress) => {
       );
 
       if (!response.ok) {
-        lastError = new Error(
-          await parseErrorMessage(response, `서버 오류 (${response.status})`)
-        );
+        lastError = await parseApiError(response, `서버 오류 (${response.status})`);
 
-        if (isRetryableStatus(response.status) && attempt < EXTRACT_MAX_ATTEMPTS - 1) {
-          onProgress?.(`응답 지연 — 재시도 중... (${attempt + 2}/${EXTRACT_MAX_ATTEMPTS})`);
+        if (lastError.retryable && attempt < EXTRACT_MAX_ATTEMPTS - 1) {
+          onProgress?.(`${lastError.message} — 재시도 중... (${attempt + 2}/${EXTRACT_MAX_ATTEMPTS})`);
           await sleep(EXTRACT_BACKOFF_MS[attempt] ?? 30000);
           continue;
         }
@@ -115,31 +173,54 @@ export const postExtractMd = async (formData, onProgress) => {
 
       const data = await response.json();
 
+      if (Array.isArray(data?.products)) {
+        return { products: data.products };
+      }
+
       if (!data?.result) {
-        lastError = new Error("서버에서 결과를 받지 못했습니다.");
-        if (attempt < EXTRACT_MAX_ATTEMPTS - 1) {
+        lastError = buildApiError(
+          data?.error ? data : { code: "NO_RESULT", error: "서버에서 결과를 받지 못했습니다.", retryable: true },
+          response.status,
+          "서버에서 결과를 받지 못했습니다."
+        );
+
+        if (lastError.retryable && attempt < EXTRACT_MAX_ATTEMPTS - 1) {
           onProgress?.(`결과 없음 — 재시도 중... (${attempt + 2}/${EXTRACT_MAX_ATTEMPTS})`);
           await sleep(EXTRACT_BACKOFF_MS[attempt] ?? 30000);
           continue;
         }
+
         throw lastError;
       }
 
-      return data.result;
+      return { text: data.result };
     } catch (error) {
-      lastError = error;
+      if (error instanceof ExtractApiError) {
+        lastError = error;
+        if (!error.retryable) {
+          throw error;
+        }
+      } else {
+        lastError = error;
+      }
 
-      if (attempt < EXTRACT_MAX_ATTEMPTS - 1 && isRetryableError(error)) {
+      if (attempt < EXTRACT_MAX_ATTEMPTS - 1 && (isRetryableError(error) || lastError?.retryable)) {
         onProgress?.(`연결 실패 — 재시도 중... (${attempt + 2}/${EXTRACT_MAX_ATTEMPTS})`);
         await sleep(EXTRACT_BACKOFF_MS[attempt] ?? 30000);
         continue;
       }
 
       if (error?.name === "AbortError") {
-        throw new Error("요청 시간이 초과되었습니다. 다시 시도해주세요.");
+        throw new ExtractApiError("요청 시간이 초과되었습니다. 다시 시도해주세요.", {
+          code: "SERVER_TIMEOUT",
+          retryable: true,
+          hint: ERROR_HINTS.SERVER_TIMEOUT,
+        });
       }
 
-      throw error;
+      throw lastError instanceof ExtractApiError
+        ? lastError
+        : new ExtractApiError(formatExtractError(error), { code: "OPENAI_ERROR", retryable: true });
     }
   }
 

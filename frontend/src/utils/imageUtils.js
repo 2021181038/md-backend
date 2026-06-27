@@ -8,7 +8,7 @@ import { IMAGE_CONFIG } from '../constants/config';
  * @returns {Promise<Blob>} 리사이즈된 이미지 Blob
  */
 export const resizeImage = (file, maxSize = IMAGE_CONFIG.MAX_SIZE) => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -34,10 +34,22 @@ export const resizeImage = (file, maxSize = IMAGE_CONFIG.MAX_SIZE) => {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
 
-        canvas.toBlob((blob) => resolve(blob), file.type, IMAGE_CONFIG.QUALITY);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("이미지 변환에 실패했습니다."));
+              return;
+            }
+            resolve(new File([blob], "image.jpg", { type: "image/jpeg" }));
+          },
+          "image/jpeg",
+          IMAGE_CONFIG.QUALITY
+        );
       };
+      img.onerror = () => reject(new Error("이미지를 불러올 수 없습니다."));
       img.src = e.target.result;
     };
+    reader.onerror = () => reject(new Error("이미지 파일을 읽을 수 없습니다."));
     reader.readAsDataURL(file);
   });
 };

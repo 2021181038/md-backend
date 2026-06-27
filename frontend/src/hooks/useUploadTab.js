@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { extractMd, ExtractMdError } from "../api/mdApi";
+import { formatExtractError } from "../api/extractApi";
 import { generateMainName, generateDescription } from "../utils/descriptionUtils";
 import { groupByCustomPrice } from "../utils/priceUtils";
 import { convertKrwToYenOffline, convertKrwToYenOnline } from "../utils/priceUtils";
@@ -65,7 +66,7 @@ export const useUploadTab = () => {
         setMdList(error.partialResults);
       }
 
-      setErrorMsg(`❌ ${error.message}`);
+      setErrorMsg(`❌ ${formatExtractError(error)}`);
     } finally {
       setIsLoading(false);
       setLoadingMessage("");

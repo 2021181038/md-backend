@@ -1,6 +1,6 @@
 import { resizeImage, chunkArray } from "../utils/imageUtils";
 import { IMAGE_CONFIG } from "../constants/config";
-import { parseMdText, assignNumbers } from "../utils/textUtils";
+import { parseMdResponse, assignNumbers } from "../utils/textUtils";
 import { wakeServer, postExtractMd } from "./extractApi";
 
 export class ExtractMdError extends Error {
@@ -13,8 +13,7 @@ export class ExtractMdError extends Error {
 }
 
 export const extractMd = async (images, priceMode = "offline", options = {}) => {
-  const { onProgress, parseFn } = options;
-  const parser = parseFn || ((raw) => parseMdText(raw, priceMode));
+  const { onProgress } = options;
 
   if (!images.length) {
     throw new Error("이미지를 업로드해주세요.");
@@ -45,7 +44,7 @@ export const extractMd = async (images, priceMode = "offline", options = {}) => 
       const raw = await postExtractMd(formData, (message) => {
         onProgress?.(`이미지 ${batchLabel} — ${message}`);
       });
-      const parsed = parser(raw);
+      const parsed = parseMdResponse(raw, priceMode);
 
       if (!parsed.length) {
         failedBatches.push(batchLabel);
