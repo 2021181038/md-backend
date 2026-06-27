@@ -10,30 +10,3 @@ export const parseSettlementCSV = (file, onComplete) => {
     },
   });
 };
-
-export const exportToCSV = (matchedSummary, calculateMargin) => {
-  if (matchedSummary.length === 0) {
-    alert("먼저 마진 계산을 완료해주세요!");
-    return;
-  }
-
-  const rows = [["옵션정보", "마진"]];
-
-  matchedSummary.forEach((row) => {
-    const { marginAvg } = calculateMargin(row);
-    rows.push([row.option, marginAvg]);
-  });
-
-  const csvContent =
-    "data:text/csv;charset=utf-8,\uFEFF" +
-    rows.map((e) => e.join(",")).join("\n");
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "margin_summary.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-

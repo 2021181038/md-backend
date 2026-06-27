@@ -36,11 +36,7 @@ function AlbumUpload() {
     setHasBonus,
     bonusAlbumName,
     setBonusAlbumName,
-    memberText,
-    setMemberText,
     keywords,
-    albumNameEn,
-    albumNameJp,
     // Handlers
     handleGenerateAll,
     handleCopyDescription,

@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { parseSettlementCSV, exportToCSV } from "../utils/csvUtils";
-import { extractText } from "../utils/textUtils";
+import { parseSettlementCSV } from "../utils/csvUtils";
 import { calculateMargin, calculateTotalMargin } from "../utils/marginUtils";
 import { summarizeOrders, matchSettlement } from "../utils/settlementUtils";
 import { extractProductNames } from "../utils/productUtils";
@@ -18,7 +17,6 @@ export const useMarginCalculator = () => {
   const [costs, setCosts] = useState({});
   const [totalMargin, setTotalMargin] = useState(null);
   const [dutyApplied, setDutyApplied] = useState({});
-  const [extractedText, setExtractedText] = useState("");
   const [proxyApplied, setProxyApplied] = useState({});
   const [totalProxyFee, setTotalProxyFee] = useState(0);
   const [divideMap, setDivideMap] = useState({});
@@ -46,7 +44,6 @@ export const useMarginCalculator = () => {
       setSummary([]);
       setMatchedSummary([]);
       setTotalMargin(null);
-      setExtractedText("");
       setCosts({});
       setDutyApplied({});
       setProxyApplied({});
@@ -77,11 +74,6 @@ export const useMarginCalculator = () => {
       // 정산 데이터가 없는 경우에는 매칭 결과를 비워둔다
       setMatchedSummary([]);
     }
-  };
-
-  const handleExtractText = () => {
-    const text = extractText(summary);
-    setExtractedText(text);
   };
 
   const handleTotalMargin = () => {
@@ -136,10 +128,6 @@ export const useMarginCalculator = () => {
       ...prev,
       [option]: value,
     }));
-  };
-
-  const handleExportCSV = () => {
-    exportToCSV(matchedSummary, (row) => calculateMargin(row, costs, EXCHANGE_RATE, divideMap, proxyApplied));
   };
 
   const calculateMarginForRow = (row) => {
@@ -239,7 +227,6 @@ export const useMarginCalculator = () => {
     costs,
     totalMargin,
     dutyApplied,
-    extractedText,
     proxyApplied,
     totalProxyFee,
     divideMap,
@@ -253,12 +240,10 @@ export const useMarginCalculator = () => {
     handleSettlementUpload,
     toggleSelect,
     handleSummarize,
-    handleExtractText,
     handleTotalMargin,
     handleOptionChange,
     handleQtyChange,
     handleCostChange,
-    handleExportCSV,
     calculateMarginForRow,
     handleSortByOption,
     handleBulkCostInput,

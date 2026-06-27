@@ -20,12 +20,12 @@ function OnlineUpload() {
     mdList,
     grouped,
     isLoading,
+    loadingMessage,
     errorMsg,
     mainName,
     detailDescription,
     isKeywordLoading,
     keywordType,
-    memberText,
     keywords,
     setGroupName,
     setThumbnailShippingDate,
@@ -34,7 +34,6 @@ function OnlineUpload() {
     setHasAlbum,
     setBonusSets,
     setKeywordType,
-    setMemberText,
     handleImageUpload,
     handlePaste,
     handleOnetoThree,
@@ -85,7 +84,7 @@ function OnlineUpload() {
         {isLoading && (
           <div style={{ textAlign: "center", marginTop: "15px" }}>
             <div className="spinner"></div>
-            <p>상품 정보를 불러오는 중입니다...</p>
+            <p>{loadingMessage || "상품 정보를 불러오는 중입니다..."}</p>
           </div>
         )}
 

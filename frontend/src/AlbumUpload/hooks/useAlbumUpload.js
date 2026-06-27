@@ -22,10 +22,7 @@ export const useAlbumUpload = () => {
   const [isSiteSelectable, setIsSiteSelectable] = useState(false);
   const [hasBonus, setHasBonus] = useState(false);
   const [bonusAlbumName, setBonusAlbumName] = useState("");
-  const [memberText, setMemberText] = useState("");
   const [keywords, setKeywords] = useState([]);
-  const [albumNameEn, setAlbumNameEn] = useState("");
-  const [albumNameJp, setAlbumNameJp] = useState("");
 
   const handleGenerateMainProductName = () => {
     const result = generateMainProductName(
@@ -399,11 +396,7 @@ export const useAlbumUpload = () => {
     setHasBonus,
     bonusAlbumName,
     setBonusAlbumName,
-    memberText,
-    setMemberText,
     keywords,
-    albumNameEn,
-    albumNameJp,
     // Handlers
     handleGenerateAll,
     handleGenerateMainProductName,

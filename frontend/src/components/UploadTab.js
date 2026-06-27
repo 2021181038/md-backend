@@ -28,8 +28,6 @@ const UploadTab = () => {
     detailDescription,
     keywordType,
     setKeywordType,
-    memberText,
-    setMemberText,
     keywords,
     setKeywords,
     isKeywordLoading,
@@ -37,6 +35,7 @@ const UploadTab = () => {
     bonusSets,
     setBonusSets,
     isLoading,
+    loadingMessage,
     errorMsg,
     hasAlbum,
     setHasAlbum,
@@ -119,7 +118,7 @@ const UploadTab = () => {
         {isLoading && (
           <div style={{ textAlign: "center", marginTop: "15px" }}>
             <div className="spinner"></div>
-            <p>상품 정보를 불러오는 중입니다...</p>
+            <p>{loadingMessage || "상품 정보를 불러오는 중입니다..."}</p>
           </div>
         )}
 

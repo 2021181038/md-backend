@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
 import { validateAndHandleEnvVars } from './utils/envValidator';
 
 // 환경 변수 검증
@@ -32,5 +31,3 @@ root.render(
       <App />
   </React.StrictMode>
 );
-
-reportWebVitals();

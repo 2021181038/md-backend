@@ -1,21 +1,3 @@
-export const extractText = (summary) => {
-  if (summary.length === 0) return "";
-
-  const text = summary
-    .map((item) => {
-      let clean = item.option
-        .replace(/^OPTION:\s*/i, "")
-        .replace(/\s*\/\s*TYPE:\s*/i, " ")
-        .replace(/\([^)]*円[^)]*\)/g, "")
-        .replace(/\s*-\s*$/, "")
-        .trim();
-      return `${clean} ${item.qty}`;
-    })
-    .join("\n");
-  
-  return text;
-};
-
 /**
  * 옵션정보를 파싱하여 메인 텍스트와 서브 텍스트로 분리
  * @param {string} optionText - 원본 옵션 정보
@@ -56,4 +38,3 @@ export const parseOptionText = (optionText) => {
 
   return { main, sub };
 };
-

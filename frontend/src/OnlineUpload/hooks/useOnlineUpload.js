@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { resizeImage, chunkArray } from "../../utils/imageUtils";
-import { IMAGE_CONFIG } from "../../constants/config";
+import { extractMd, ExtractMdError } from "../../api/mdApi";
 import { parseExtractedText } from "../utils/textUtils";
 import { groupByCustomPrice } from "../utils/groupUtils";
 import { generateDescription, generateMainName } from "../utils/descriptionUtils";
 import { calculateOnlinePrice } from "../../utils/priceUtils";
-import { extractMD } from "../api/onlineApi";
 import { generateAllKeywords } from "../../utils/keywordUtils";
 
 export const useOnlineUpload = () => {
@@ -19,12 +17,12 @@ export const useOnlineUpload = () => {
   const [mdList, setMdList] = useState([]);
   const [grouped, setGrouped] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [mainName, setMainName] = useState("");
   const [detailDescription, setDetailDescription] = useState("");
   const [isKeywordLoading, setIsKeywordLoading] = useState(false);
   const [keywordType, setKeywordType] = useState("MD");
-  const [memberText, setMemberText] = useState("");
   const [keywords, setKeywords] = useState([]);
 
   const handleImageUpload = (e) => {
@@ -60,8 +58,8 @@ export const useOnlineUpload = () => {
   const handleGenerateDescription = () => {
     const html = generateDescription(
       thumbnailShippingDate,
-      false, // hasPreorder - 온라인 업로드에서는 사용하지 않음
-      "", // preorderShippingDate - 온라인 업로드에서는 사용하지 않음
+      false,
+      "",
       hasBonus,
       bonusSets,
       hasAlbum
@@ -78,61 +76,26 @@ export const useOnlineUpload = () => {
     if (isLoading) return;
 
     setIsLoading(true);
-    setErrorMsg('');
-    let allResults = [];
+    setLoadingMessage("시작 중...");
+    setErrorMsg("");
 
     try {
-      // 이미지 리사이즈 (병렬 처리)
-      const resizedImages = await Promise.all(images.map(img => resizeImage(img, IMAGE_CONFIG.MAX_SIZE)));
-      const batches = chunkArray(resizedImages, IMAGE_CONFIG.BATCH_SIZE);
-      const totalBatches = batches.length;
-
-      // 배치를 병렬로 처리 (최대 3개 동시 처리로 속도 향상)
-      const MAX_CONCURRENT = 3;
-      const batchPromises = [];
-
-      for (let i = 0; i < batches.length; i += MAX_CONCURRENT) {
-        const batchGroup = batches.slice(i, i + MAX_CONCURRENT);
-        
-        const groupPromises = batchGroup.map(async (batch) => {
-          const formData = new FormData();
-          batch.forEach((file) => formData.append("images", file));
-          
-          try {
-            const raw = await extractMD(formData);
-            const parsed = parseExtractedText(raw);
-            return parsed;
-          } catch (error) {
-            console.error(`배치 처리 오류:`, error);
-            // 개별 배치 실패 시 빈 배열 반환 (다른 배치는 계속 처리)
-            return [];
-          }
-        });
-
-        const groupResults = await Promise.all(groupPromises);
-        allResults = [...allResults, ...groupResults.flat()];
-        
-        if (process.env.NODE_ENV === 'development') {
-          const completedBatches = Math.min(i + MAX_CONCURRENT, totalBatches);
-          console.log(`이미지 처리 진행: ${completedBatches}/${totalBatches} 배치 완료`);
-        }
-      }
-
-      // 결과 정리 및 번호 부여
-      allResults = allResults.map((item, idx) => {
-        if (/^\[\d+\]/.test(item.name)) {
-          return item;
-        } else {
-          return { ...item, name: `[${idx + 1}] ${item.name}` };
-        }
+      const results = await extractMd(images, "online", {
+        onProgress: setLoadingMessage,
+        parseFn: parseExtractedText,
       });
-
-      setMdList(allResults);
+      setMdList(results);
     } catch (error) {
       console.error("에러 발생:", error);
-      setErrorMsg("❌ 상품 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.");
+
+      if (error instanceof ExtractMdError && error.partialResults.length > 0) {
+        setMdList(error.partialResults);
+      }
+
+      setErrorMsg(`❌ ${error.message}`);
     } finally {
       setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -210,7 +173,6 @@ export const useOnlineUpload = () => {
   };
 
   return {
-    // State
     images,
     groupName,
     thumbnailShippingDate,
@@ -221,14 +183,13 @@ export const useOnlineUpload = () => {
     mdList,
     grouped,
     isLoading,
+    loadingMessage,
     errorMsg,
     mainName,
     detailDescription,
     isKeywordLoading,
     keywordType,
-    memberText,
     keywords,
-    // Setters
     setGroupName,
     setThumbnailShippingDate,
     setEventName,
@@ -236,8 +197,6 @@ export const useOnlineUpload = () => {
     setHasAlbum,
     setBonusSets,
     setKeywordType,
-    setMemberText,
-    // Handlers
     handleImageUpload,
     handlePaste,
     handleGenerateMainName,
@@ -254,4 +213,3 @@ export const useOnlineUpload = () => {
     setMdList,
   };
 };
-

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { extractMd } from "../api/mdApi";
+import { extractMd, ExtractMdError } from "../api/mdApi";
 import { generateMainName, generateDescription } from "../utils/descriptionUtils";
 import { groupByCustomPrice } from "../utils/priceUtils";
 import { convertKrwToYenOffline, convertKrwToYenOnline } from "../utils/priceUtils";
@@ -16,11 +16,11 @@ export const useUploadTab = () => {
   const [mainName, setMainName] = useState('');
   const [detailDescription, setDetailDescription] = useState('');
   const [keywordType, setKeywordType] = useState('');
-  const [memberText, setMemberText] = useState('');
   const [keywords, setKeywords] = useState([]);
   const [isKeywordLoading, setIsKeywordLoading] = useState(false);
   const [bonusSets, setBonusSets] = useState([{ base: "", label: "" }]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [errorMsg, setErrorMsg] = useState('');
   const [hasAlbum, setHasAlbum] = useState(false);
   const [hasPreorder, setHasPreorder] = useState(false);
@@ -44,17 +44,31 @@ export const useUploadTab = () => {
   };
 
   const handleSubmit = async () => {
+    if (!images.length) {
+      setErrorMsg("이미지를 업로드해주세요.");
+      return;
+    }
+
     setIsLoading(true);
+    setLoadingMessage("시작 중...");
     setErrorMsg('');
 
     try {
-      const results = await extractMd(images, "offline");
+      const results = await extractMd(images, "offline", {
+        onProgress: setLoadingMessage,
+      });
       setMdList(results);
     } catch (error) {
       console.error("에러 발생:", error);
-      setErrorMsg("❌ 상품 정보를 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.");
+
+      if (error instanceof ExtractMdError && error.partialResults.length > 0) {
+        setMdList(error.partialResults);
+      }
+
+      setErrorMsg(`❌ ${error.message}`);
     } finally {
       setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -140,8 +154,6 @@ export const useUploadTab = () => {
     setDetailDescription,
     keywordType,
     setKeywordType,
-    memberText,
-    setMemberText,
     keywords,
     setKeywords,
     isKeywordLoading,
@@ -149,6 +161,7 @@ export const useUploadTab = () => {
     bonusSets,
     setBonusSets,
     isLoading,
+    loadingMessage,
     setIsLoading,
     errorMsg,
     setErrorMsg,
