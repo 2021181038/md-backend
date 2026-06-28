@@ -19,6 +19,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://md-backend-blond.vercel.app"}})
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+#test
 
 def error_response(message, code, status, retryable=False):
     return jsonify({
