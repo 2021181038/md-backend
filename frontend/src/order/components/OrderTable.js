@@ -1,6 +1,5 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useOrderTable } from "../hooks/useOrderTable";
-import { calculateTotalFee } from "../utils/calculationUtils";
 import OrderTableRow from "./OrderTableRow";
 import { EXCHANGE_RATES } from "../../constants/config";
 
@@ -13,7 +12,6 @@ function OrderTable({
   refreshCurrentEvent,
   highlightedOptions,
   setHighlightedOptions,
-  agents,
 }) {
   const {
     newOptionName,
@@ -31,9 +29,7 @@ function OrderTable({
     handleSortByNeeded,
     handleDelete,
     handleAddOption,
-  } = useOrderTable(selectedEvent, eventOrders, setEventOrders, refreshCurrentEvent, agents);
-
-  const totalFee = useMemo(() => calculateTotalFee(agents), [agents]);
+  } = useOrderTable(selectedEvent, eventOrders, setEventOrders, refreshCurrentEvent);
 
   const markAsChanged = useCallback((optionName) => {
     setHighlightedOptions((prev) =>
@@ -71,7 +67,7 @@ function OrderTable({
         <span>📦 {selectedEvent} 주문 내역</span>
         <span style={{ fontSize: "15px", fontWeight: "600", color: "#4a764c" }}>
           환율 {EXCHANGE_RATE} 기준, 마진: {totalProfit.toLocaleString()}円 (≈{" "}
-          {totalProfitKRW.toLocaleString()}원) / 수고비 {totalFee.toLocaleString()}₩
+          {totalProfitKRW.toLocaleString()}원)
         </span>
       </h3>
 

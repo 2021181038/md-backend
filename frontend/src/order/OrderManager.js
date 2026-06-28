@@ -4,30 +4,24 @@ import { useOrderManager } from "./hooks/useOrderManager";
 
 import EventList from "./components/EventList";
 import OrderTable from "./components/OrderTable";
-import AgentList from "./components/AgentList";
-import AddAgentModal from "./components/AddAgentModal";
 import UploadEventModal from "./components/UploadEventModal";
 import MergeEventModal from "./components/MergeEventModal";
 import UploadMarginModal from "./components/UploadMarginModal";
-import AddOptionModal from "./components/AddOptionModal";
 
 function OrderManager() {
   const {
     eventList,
     selectedEvent,
     eventOrders,
-    agents,
     highlightedOptions,
     modal,
     setEventOrders,
-    setAgents,
     setHighlightedOptions,
     setSelectedEvent,
     refreshCurrentEvent,
     loadEventList,
     openModal,
     closeModal,
-    setModal,
   } = useOrderManager();
 
   return (
@@ -58,20 +52,6 @@ function OrderManager() {
           refreshCurrentEvent={refreshCurrentEvent}
           highlightedOptions={highlightedOptions}
           setHighlightedOptions={setHighlightedOptions}
-          agents={agents}
-        />
-
-        <AgentList
-          selectedEvent={selectedEvent}
-          agents={agents}
-          setAgents={setAgents}
-          eventOrders={eventOrders}
-          setEventOrders={setEventOrders}
-          refreshCurrentEvent={refreshCurrentEvent}
-          openAddAgentModal={() => openModal("addAgent")}
-          openAddOptionModal={(agent) => {
-            setModal((prev) => ({ ...prev, addOption: agent }));
-          }}
         />
       </div>
 
@@ -92,32 +72,11 @@ function OrderManager() {
         />
       )}
 
-      {modal.addAgent && (
-        <AddAgentModal
-          closeModal={() => closeModal("addAgent")}
-          selectedEvent={selectedEvent}
-          eventOrders={eventOrders}
-          setAgents={setAgents}
-          refreshCurrentEvent={refreshCurrentEvent}
-        />
-      )}
-
       {modal.margin && (
         <UploadMarginModal
           closeModal={() => closeModal("margin")}
           selectedEvent={selectedEvent}
           refreshCurrentEvent={refreshCurrentEvent}
-        />
-      )}
-
-      {modal.addOption && (
-        <AddOptionModal
-          closeModal={() => closeModal("addOption")}
-          agent={modal.addOption}
-          eventOrders={eventOrders}
-          setEventOrders={setEventOrders}
-          setAgents={setAgents}
-          selectedEvent={selectedEvent}
         />
       )}
     </div>

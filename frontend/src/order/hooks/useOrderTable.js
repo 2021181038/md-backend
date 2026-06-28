@@ -7,7 +7,7 @@ import { EXCHANGE_RATES } from "../../constants/config";
 
 const EXCHANGE_RATE = EXCHANGE_RATES.ORDER;
 
-export const useOrderTable = (selectedEvent, eventOrders, setEventOrders, refreshCurrentEvent, agents) => {
+export const useOrderTable = (selectedEvent, eventOrders, setEventOrders, refreshCurrentEvent) => {
   const [newOptionName, setNewOptionName] = useState("");
   const [newOptionQty, setNewOptionQty] = useState("");
   const [lastSavedTime, setLastSavedTime] = useState(null);

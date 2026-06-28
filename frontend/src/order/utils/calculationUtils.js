@@ -12,8 +12,3 @@ export const calculateTotalProfit = (eventOrders, margins, exchangeRate) => {
   }, 0);
 };
 
-// 총 수고비 계산
-export const calculateTotalFee = (agents) => {
-  return agents.reduce((sum, a) => sum + Number(a.fee || 0), 0);
-};
-

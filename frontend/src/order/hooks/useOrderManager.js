@@ -5,13 +5,10 @@ export const useOrderManager = () => {
   const [eventList, setEventList] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventOrders, setEventOrders] = useState([]);
-  const [agents, setAgents] = useState([]);
   const [highlightedOptions, setHighlightedOptions] = useState([]);
   const [modal, setModal] = useState({
     upload: false,
     merge: false,
-    addAgent: false,
-    addOption: false,
     margin: false,
   });
 
@@ -23,7 +20,7 @@ export const useOrderManager = () => {
   const loadEventDetails = useCallback(async (eventName) => {
     if (!eventName) return;
 
-    const { ordersRes, agentsRes } = await fetchEventDetails(eventName);
+    const { ordersRes } = await fetchEventDetails(eventName);
 
     if (!ordersRes.error) {
       const cleaned = ordersRes.data.map((row) => ({
@@ -34,8 +31,6 @@ export const useOrderManager = () => {
       }));
       setEventOrders(cleaned);
     }
-
-    if (!agentsRes.error) setAgents(agentsRes.data || []);
   }, []);
 
   useEffect(() => {
@@ -67,18 +62,14 @@ export const useOrderManager = () => {
     eventList,
     selectedEvent,
     eventOrders,
-    agents,
     highlightedOptions,
     modal,
     setEventOrders,
-    setAgents,
     setHighlightedOptions,
     setSelectedEvent: handleSelectEvent,
     refreshCurrentEvent,
     loadEventList,
     openModal,
     closeModal,
-    setModal,
   };
 };
-
