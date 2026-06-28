@@ -2,8 +2,8 @@ import React from "react";
 
 const GroupSection = ({ grouped, handleGroup, handleDownloadExcelByGroup }) => {
   return (
-    <>
-      <button className="pretty-button" onClick={handleGroup}>
+    <div style={{ marginTop: "8px" }}>
+      <button type="button" className="btn-primary btn-primary--inline" onClick={handleGroup}>
         가격별 그룹 만들기
       </button>
 
@@ -19,25 +19,27 @@ const GroupSection = ({ grouped, handleGroup, handleDownloadExcelByGroup }) => {
         });
 
         return (
-          <div key={idx} style={{ marginBottom: '15px' }}>
-            <strong>
-              그룹 {idx + 1} (기준가격: ¥{group.standardPrice} 참고가격: ¥{referencePrice})
-            </strong>
-            <button
-              className="xlsx-button"
-              style={{ marginLeft: '10px' }}
-              onClick={() => handleDownloadExcelByGroup(group, idx)}
-            >
-              그룹 {idx + 1} 엑셀 다운로드
-            </button>
-            <ul>
+          <div key={idx} className="group-block">
+            <div className="group-block-header">
+              <span className="group-block-title">
+                그룹 {idx + 1} (기준가격: ¥{group.standardPrice} · 참고가격: ¥{referencePrice})
+              </span>
+              <button
+                type="button"
+                className="xlsx-button"
+                onClick={() => handleDownloadExcelByGroup(group, idx)}
+              >
+                그룹 {idx + 1} 엑셀 다운로드
+              </button>
+            </div>
+            <ul className="group-item-list">
               {sortedItems.map((item, i) => {
                 const diff = Number(item.price) - group.standardPrice;
                 const diffText = diff === 0 ? '0' : (diff > 0 ? `+${diff}` : `${diff}`);
                 return (
                   <li
                     key={i}
-                    style={{ color: item.hasOption ? 'red' : 'black' }}
+                    className={item.hasOption ? "has-option" : ""}
                   >
                     {item.name} : {diffText}
                   </li>
@@ -47,9 +49,8 @@ const GroupSection = ({ grouped, handleGroup, handleDownloadExcelByGroup }) => {
           </div>
         );
       })}
-    </>
+    </div>
   );
 };
 
 export default GroupSection;
-

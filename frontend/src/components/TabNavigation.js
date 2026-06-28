@@ -10,33 +10,21 @@ const TabNavigation = ({ activeTab, setActiveTab }) => {
   ];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        gap: "15px",
-        marginBottom: "20px",
-        borderBottom: "2px solid #ddd",
-        paddingBottom: "10px"
-      }}
-    >
+    <nav className="tab-bar" role="tablist" aria-label="메인 메뉴">
       {tabs.map((tab) => (
         <button
           key={tab.id}
-          className={`pretty-button tab-${tab.id}`}
-          style={{
-            backgroundColor: activeTab === tab.id ? "#33418f" : "#777",
-            width: "150px"
-          }}
+          type="button"
+          className={`tab-pill tab-${tab.id}${activeTab === tab.id ? " active" : ""}`}
           onClick={() => setActiveTab(tab.id)}
           aria-label={`${tab.label} 탭으로 전환`}
-          aria-pressed={activeTab === tab.id}
+          aria-selected={activeTab === tab.id}
           role="tab"
         >
           {tab.label}
         </button>
       ))}
-    </div>
+    </nav>
   );
 };
 
@@ -46,4 +34,3 @@ TabNavigation.propTypes = {
 };
 
 export default TabNavigation;
-

@@ -4,23 +4,25 @@ const MainNameSection = ({ mainName, handleCopy }) => {
   if (!mainName) return null;
 
   return (
-    <div style={{ marginTop: '0px' }}>
-      <h3>📝 메인상품명</h3>
+    <div className="result-section">
+      <h3 className="ui-card-title">메인상품명</h3>
       <textarea
+        className="ui-textarea"
         value={mainName}
         readOnly
-        style={{ width: '100%', height: '60px', fontSize: '16px' }}
+        rows={3}
       />
-      <button
-        className="COPY-button"
-        style={{ marginTop: '8px' }}
-        onClick={() => handleCopy(mainName, "메인 상품명")}
-      >
-        복사하기
-      </button>
+      <div className="btn-row">
+        <button
+          type="button"
+          className="btn-copy"
+          onClick={() => handleCopy(mainName, "메인 상품명")}
+        >
+          복사하기
+        </button>
+      </div>
     </div>
   );
 };
 
 export default MainNameSection;
-

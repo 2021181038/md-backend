@@ -1,232 +1,238 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
+@import "./styles/toss-ui.css";
 
 .pretty-button {
-  padding: 10px 16px;
-  background-color: #33418f;
+  padding: 12px 18px;
+  background-color: #3182f6;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: bold;
-  text-align: left;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
   cursor: pointer;
-  width: 270px;
-  transition: background-color 0.2s, transform 0.1s;
+  width: auto;
+  min-width: 140px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
 .pretty-button:hover {
-  background-color: #0056b3;
+  background-color: #1b64da;
 }
 
 .pretty-button:active {
-  transform: scale(0.97);
+  transform: scale(0.99);
 }
 
-.COPY-button{
+.pretty-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.COPY-button {
   padding: 10px 16px;
-  background-color: #a43399;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: bold;
-  text-align: center;
-  cursor: pointer;
-  width: 200px;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.COPY-button:hover{
-  background-color: #c061d3;
-}
-
-.COPY-button:active{
-  transform: scale(0.97);
-}
-
-
-.xlsx-button{
-  padding: 10px 16px;
-  background-color: #1a630f;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: bold;
-  text-align: center;
-  cursor: pointer;
-  width: 200px;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.xlsx-button:hover{
-  background-color: #529451;
-}
-
-.xlsx-button:active{
-  transform: scale(0.97);
-}
-.plus-button{
-  padding: 10px 16px;
-  background-color: #e6361f;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: bold;
-  text-align: left;
-  cursor: pointer;
-  width: 270px;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.plus-button:hover{
-  background-color: #a8401e; 
-}
-
-.plus-button:active{
-  transform: scale(0.97);
-}
-
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-/* =========================
-   📋 상품 테이블 스타일
-   ========================= */
-.md-table {
-  border-collapse: collapse;
-  margin-top: 15px;
+  background-color: #e8f3ff;
+  color: #3182f6;
+  border: 1px solid #3182f6;
+  border-radius: 12px;
   font-size: 14px;
-  table-layout: fixed; 
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  width: auto;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.COPY-button:hover {
+  background-color: #dceeff;
+}
+
+.COPY-button:active {
+  transform: scale(0.99);
+}
+
+.xlsx-button {
+  padding: 10px 16px;
+  background-color: #ffffff;
+  color: #3182f6;
+  border: 1px solid #3182f6;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  width: auto;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.xlsx-button:hover {
+  background-color: #e8f3ff;
+}
+
+.xlsx-button:active {
+  transform: scale(0.99);
+}
+
+.plus-button {
+  padding: 12px 18px;
+  background-color: #ffffff;
+  color: #191f28;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  width: auto;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.plus-button:hover {
+  background-color: #f9fafb;
+}
+
+.plus-button:active {
+  transform: scale(0.99);
+}
+
+.md-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+  table-layout: fixed;
 }
 
 .md-table th,
 .md-table td {
-  border: 1px solid #ddd;
-  padding: 8px 10px;
+  border-bottom: 1px solid #e5e8eb;
+  padding: 12px 10px;
   text-align: center;
   vertical-align: middle;
 }
 
 .md-table th {
-  
-  background-color: #f5f6fa;
+  background-color: #fafbfc;
   font-weight: 600;
-  color: #333;
-}
-
-.md-table tbody tr:nth-child(even) {
-  background-color: #fafafa;
+  color: #6b7684;
+  font-size: 13px;
 }
 
 .md-table tbody tr:hover {
-  background-color: #f0f8ff;
-  transition: background-color 0.2s;
+  background-color: #f9fafb;
 }
 
 .md-table-container {
-  height: 500px;        /* 테이블 전체 높이 고정 (원하는 만큼 조정 가능) */
-  overflow-y: auto;          /* 스크롤을 tbody 쪽만 적용 */
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin-top: 10px;
+  max-height: 480px;
+  overflow-y: auto;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  margin-top: 4px;
 }
+
 .md-table thead th {
-  position: sticky;          /* 헤더를 고정 */
-  top: 0;                    /* 상단 기준 */
-  background-color: #f5f6fa; /* 고정 시 배경색 유지 */
-  z-index: 2;                /* 스크롤 내용보다 위에 표시 */
+  position: sticky;
+  top: 0;
+  background-color: #fafbfc;
+  z-index: 2;
 }
 
-/* 상품명 input */
 .md-input-name {
-  width: 400px;
-  padding: 5px 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  width: 100%;
+  max-width: 280px;
+  padding: 10px 12px;
+  border: 1px solid #e5e8eb;
+  border-radius: 10px;
+  font-size: 14px;
 }
 
-/* 가격 input */
+.md-input-name:focus {
+  outline: none;
+  border-color: #3182f6;
+  box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.12);
+}
+
 .md-input-price {
   width: 100px;
-  padding: 5px 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border: 1px solid #e5e8eb;
+  border-radius: 10px;
   text-align: right;
+  font-size: 14px;
 }
 
-/* 변환 버튼 */
+.md-input-price:focus {
+  outline: none;
+  border-color: #3182f6;
+  box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.12);
+}
+
 .convert-btn {
-  background-color: #33418f;
+  background-color: #3182f6;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 5px 10px;
+  border-radius: 10px;
+  padding: 8px 12px;
   cursor: pointer;
   font-size: 13px;
-  transition: background-color 0.2s, transform 0.1s;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
 }
 
 .convert-btn:hover {
-  background-color: #4954b5;
+  background-color: #1b64da;
 }
 
-.convert-btn:active {
-  transform: scale(0.97);
-}
-
-/* 옵션 input */
 .md-input-option {
   font-size: 14px;
-  border: 1px solid #ccc;
-  padding: 4px;
-  border-radius: 4px;
+  border: 1px solid #e5e8eb;
+  padding: 8px 10px;
+  border-radius: 10px;
   min-width: 150px;
+  max-width: 100%;
 }
 
-/* 삭제 버튼 */
+.md-input-option:focus {
+  outline: none;
+  border-color: #3182f6;
+}
+
 .delete-btn {
-  color: #e6361f;
+  color: #f04452;
   border: none;
   background: none;
   cursor: pointer;
-  font-weight: bold;
-  transition: color 0.2s;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
 }
 
 .delete-btn:hover {
-  color: #b72d18;
+  background: #ffeeee;
 }
 
+.field-error {
+  color: #f04452;
+  font-size: 12px;
+  margin-top: 4px;
+}
 
-/* 스크린 리더 전용 텍스트 */
+.spinner {
+  border: 3px solid #e5e8eb;
+  border-top: 3px solid #3182f6;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -239,84 +245,10 @@
   border-width: 0;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #33418f;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* ✅ 모바일에서는 업로드 / 온라인 / 앨범 / 마진 탭 숨기고 주문정리만 표시 */
 @media (max-width: 900px) {
   .tab-upload,
-  .tab-online,
   .tab-album,
   .tab-margin {
     display: none !important;
   }
-}
-
-.form-section {
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-  margin-bottom: 20px;
-}
-
-.form-row {
-  display: flex;
-  align-items: center;
-  margin: 12px 0;
-}
-
-.form-label {
-  width: 280px;        /* 라벨 고정 너비 */
-  font-weight: 600;
-  color: #333;
-}
-
-.form-input {
-  width: 300px;        /* 입력칸 영역 너비를 지정 → 오른쪽 끝으로 안 감 */
-  display: flex;
-  justify-content: flex-start; /* 왼쪽 정렬 */
-}
-
-.form-input input[type="text"],
-.form-input input[type="date"],
-.form-input input[type="file"] {
-  width: 220px;
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.form-input input[type="checkbox"] {
-  transform: scale(1.2);
-}
-
-.upload-box {
-  border: 2px dashed #999;
-  padding: 20px;
-  margin-top: 10px;
-  text-align: center;
-  color: #444;
-  border-radius: 10px;
 }

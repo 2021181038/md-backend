@@ -76,8 +76,8 @@ const UploadTab = () => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>상품 등록</h2>
+    <div className="page-container">
+      <h1 className="page-title">상품 등록</h1>
 
       <ImageUploadSection
         images={images}
@@ -89,22 +89,22 @@ const UploadTab = () => {
         errorMsg={errorMsg}
       />
 
-      <ProductTableSection
-        mdList={mdList}
-        setMdList={setMdList}
-        convertToYen={convertToYen}
-        uploadMode={uploadMode}
-        setUploadMode={setUploadMode}
-        addEmptyProduct={addEmptyProduct}
-      />
+      <section className="ui-card">
+        <ProductTableSection
+          mdList={mdList}
+          setMdList={setMdList}
+          convertToYen={convertToYen}
+          uploadMode={uploadMode}
+          setUploadMode={setUploadMode}
+          addEmptyProduct={addEmptyProduct}
+        />
 
-      <GroupSection
-        grouped={grouped}
-        handleGroup={handleGroup}
-        handleDownloadExcelByGroup={handleDownloadExcelByGroup}
-      />
-
-      <hr style={{ margin: "30px 0" }} />
+        <GroupSection
+          grouped={grouped}
+          handleGroup={handleGroup}
+          handleDownloadExcelByGroup={handleDownloadExcelByGroup}
+        />
+      </section>
 
       <MetadataFormSection
         groupName={groupName}
@@ -127,21 +127,21 @@ const UploadTab = () => {
         />
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '20px' }}>
+      <section className="ui-card">
         <button
-          className="pretty-button"
+          type="button"
+          className="btn-primary"
           onClick={handleGenerateContent}
         >
           글 추출하기
         </button>
-        <p style={{ textAlign: "center", color: "#666", fontSize: "14px", margin: "8px 0 0" }}>
+        <p className="hint-text">
           현재 {uploadMode === "online" ? "온라인" : "현장"} 버전 기준으로 메인상품명·상세페이지 글이 생성됩니다.
         </p>
-      </div>
 
-      <MainNameSection mainName={mainName} handleCopy={handleCopy} />
-
-      <DescriptionSection detailDescription={detailDescription} />
+        <MainNameSection mainName={mainName} handleCopy={handleCopy} />
+        <DescriptionSection detailDescription={detailDescription} />
+      </section>
 
       <KeywordSection
         keywordType={keywordType}

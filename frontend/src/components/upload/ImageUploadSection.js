@@ -11,33 +11,48 @@ const ImageUploadSection = ({
   errorMsg,
 }) => {
   return (
-    <div className="form-section">
-      <div className="form-row">
-        <div className="form-label">📌 상세 이미지 업로드</div>
-        <div className="form-input">
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageUpload}
-          />
-        </div>
+    <section className="ui-card">
+      <h2 className="ui-card-title">상세 이미지 업로드</h2>
+      <p className="ui-card-desc">상품 이미지를 업로드하거나 붙여넣은 뒤 가격 정보를 가져오세요.</p>
+
+      <div className="ui-field">
+        <input
+          id="md-image-upload"
+          className="ui-file-input"
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleImageUpload}
+        />
+        <label htmlFor="md-image-upload" className="ui-file-label">
+          파일 선택
+        </label>
       </div>
 
-      <div onPaste={handlePaste} className="upload-box">
+      <div
+        tabIndex={0}
+        onPaste={handlePaste}
+        className="upload-dropzone"
+        role="textbox"
+        aria-label="이미지 붙여넣기 영역"
+      >
         네모 박스를 클릭한 후 이미지를 여기에 복사·붙여넣기
       </div>
 
-      <div style={{ marginTop: "10px" }}>
-        {images.map((img, idx) => (
-          <p key={idx}>{img.name || `clipboard-image-${idx}`}</p>
-        ))}
-      </div>
+      {images.length > 0 && (
+        <div className="upload-file-list">
+          {images.map((img, idx) => (
+            <p key={idx} className="upload-file-item">
+              {img.name || `clipboard-image-${idx}`}
+            </p>
+          ))}
+        </div>
+      )}
 
       <button
         type="button"
-        className="pretty-button"
-        style={{ marginTop: "20px" }}
+        className="btn-primary"
+        style={{ marginTop: "16px" }}
         onClick={onFetchPrices}
         disabled={isLoading}
       >
@@ -45,18 +60,14 @@ const ImageUploadSection = ({
       </button>
 
       {isLoading && (
-        <div style={{ textAlign: "center", marginTop: "15px" }}>
-          <div className="spinner"></div>
+        <div className="loading-block">
+          <div className="spinner" />
           <p>{loadingMessage || "상품 정보를 불러오는 중입니다..."}</p>
         </div>
       )}
 
-      {errorMsg && (
-        <div style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
-          {errorMsg}
-        </div>
-      )}
-    </div>
+      {errorMsg && <div className="error-banner">{errorMsg}</div>}
+    </section>
   );
 };
 

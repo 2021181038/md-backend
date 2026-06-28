@@ -4,28 +4,25 @@ const DescriptionSection = ({ detailDescription }) => {
   if (!detailDescription) return null;
 
   return (
-    <div style={{ marginTop: "10px" }}>
-      <h3>📝 상세페이지</h3>
+    <div className="result-section">
+      <h3 className="ui-card-title">상세페이지</h3>
       <textarea
+        className="ui-textarea ui-textarea--mono"
         value={detailDescription}
         readOnly
-        style={{
-          width: "100%",
-          height: "300px",
-          fontSize: "13px",
-          fontFamily: "monospace"
-        }}
+        rows={12}
       />
-      <button
-        className="COPY-button"
-        style={{ marginTop: "8px" }}
-        onClick={() => navigator.clipboard.writeText(detailDescription)}
-      >
-        복사하기
-      </button>
+      <div className="btn-row">
+        <button
+          type="button"
+          className="btn-copy"
+          onClick={() => navigator.clipboard.writeText(detailDescription)}
+        >
+          복사하기
+        </button>
+      </div>
     </div>
   );
 };
 
 export default DescriptionSection;
-

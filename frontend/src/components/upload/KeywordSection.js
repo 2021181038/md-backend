@@ -1,5 +1,12 @@
 import React from "react";
 
+const KEYWORD_OPTIONS = [
+  { value: "ペンライト", label: "응원봉" },
+  { value: "アルバム", label: "앨범" },
+  { value: "MD", label: "MD" },
+  { value: "フォトカード", label: "포카" },
+];
+
 const KeywordSection = ({
   keywordType,
   setKeywordType,
@@ -8,80 +15,55 @@ const KeywordSection = ({
   handleCopy,
 }) => {
   return (
-    <div style={{ marginTop: '30px' }}>
-      <h3>🔎 검색 키워드 추출</h3>
+    <section className="ui-card">
+      <h2 className="ui-card-title">검색 키워드 추출</h2>
+      <p className="ui-card-desc">카테고리를 선택하고 키워드를 생성하세요.</p>
 
-      <div>
-        <label>
-          <input
-            type="radio"
-            name="keywordType"
-            value="ペンライト"
-            checked={keywordType === "ペンライト"}
-            onChange={(e) => setKeywordType(e.target.value)}
-          /> 응원봉
-        </label>
-        <label style={{ marginLeft: '10px' }}>
-          <input
-            type="radio"
-            name="keywordType"
-            value="アルバム"
-            checked={keywordType === "アルバム"}
-            onChange={(e) => setKeywordType(e.target.value)}
-          /> 앨범
-        </label>
-        <label style={{ marginLeft: '10px' }}>
-          <input
-            type="radio"
-            name="keywordType"
-            value="MD"
-            checked={keywordType === "MD"}
-            onChange={(e) => setKeywordType(e.target.value)}
-          /> MD
-        </label>
-        <label style={{ marginLeft: '10px' }}>
-          <input
-            type="radio"
-            name="keywordType"
-            value="フォトカード"
-            checked={keywordType === "フォトカード"}
-            onChange={(e) => setKeywordType(e.target.value)}
-          /> 포카
-        </label>
+      <div className="chip-group">
+        {KEYWORD_OPTIONS.map((option) => (
+          <label
+            key={option.value}
+            className={`chip${keywordType === option.value ? " active" : ""}`}
+          >
+            <input
+              type="radio"
+              name="keywordType"
+              value={option.value}
+              checked={keywordType === option.value}
+              onChange={(e) => setKeywordType(e.target.value)}
+            />
+            {option.label}
+          </label>
+        ))}
       </div>
 
       <button
-        className="pretty-button"
-        style={{ marginTop: '10px' }}
+        type="button"
+        className="btn-primary"
+        style={{ marginTop: "16px" }}
         onClick={handleGenerateKeywords}
       >
         키워드 생성하기
       </button>
 
       {keywords.length > 0 && (
-        <div style={{ marginTop: '15px' }}>
-          <h4>검색키워드</h4>
-          <ul>
-            {keywords.map((kw, idx) => (
-              <li key={idx} style={{ marginBottom: '10px' }}>
-                <div>
-                  {kw.keyword || kw.en || kw}
-                  <button
-                    className="COPY-button"
-                    style={{ marginLeft: '10px' }}
-                    onClick={() => handleCopy(kw.keyword || kw.en || kw, "키워드")}
-                  >
-                    복사하기
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ul className="keyword-list">
+          {keywords.map((kw, idx) => (
+            <li key={idx} className="keyword-item">
+              <span>{kw.keyword || kw.en || kw}</span>
+              <button
+                type="button"
+                className="btn-copy"
+                onClick={() => handleCopy(kw.keyword || kw.en || kw, "키워드")}
+              >
+                복사
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
-    </div>
+    </section>
   );
 };
 
 export default KeywordSection;
-

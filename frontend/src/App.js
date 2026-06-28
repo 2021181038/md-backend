@@ -12,7 +12,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("order");
 
   return (
-    <div>
+    <div className="app-shell">
       <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {activeTab === "upload" && <UploadTab />}

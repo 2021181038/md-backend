@@ -5,14 +5,18 @@ const BonusSection = ({ bonusSets, setBonusSets, uploadMode = "offline" }) => {
   const multiplier = getBonusMultiplier(uploadMode);
 
   return (
-    <div style={{ marginTop: '0px', marginBottom: '10px' }}>
-      <h3>🎁 특전조건 입력</h3>
+    <section className="ui-card">
+      <h2 className="ui-card-title">특전조건 입력</h2>
+      <p className="ui-card-desc">
+        현재 {uploadMode === "online" ? "온라인" : "현장"} 버전 기준으로 미리보기가 표시됩니다.
+      </p>
 
       {bonusSets.map((set, idx) => (
-        <div key={idx} style={{ marginBottom: "10px" }}>
-          <label>기준 숫자: </label>
+        <div key={idx} className="bonus-row">
+          <label className="ui-label" style={{ marginBottom: 0 }}>기준 숫자</label>
           <input
             type="number"
+            className="ui-input"
             value={set.base}
             onChange={(e) => {
               const newSets = [...bonusSets];
@@ -20,14 +24,14 @@ const BonusSection = ({ bonusSets, setBonusSets, uploadMode = "offline" }) => {
               setBonusSets(newSets);
             }}
             placeholder="예: 5"
-            style={{ width: "100px", marginLeft: "8px" }}
           />
 
           {bonusSets.length > 1 && (
             <>
-              <label style={{ marginLeft: "10px" }}>특전 이름: </label>
+              <label className="ui-label" style={{ marginBottom: 0 }}>특전 이름</label>
               <input
                 type="text"
+                className="ui-input ui-input--wide"
                 value={set.label}
                 onChange={(e) => {
                   const newSets = [...bonusSets];
@@ -35,13 +39,12 @@ const BonusSection = ({ bonusSets, setBonusSets, uploadMode = "offline" }) => {
                   setBonusSets(newSets);
                 }}
                 placeholder="예: FRAGILE ver."
-                style={{ width: "200px", marginLeft: "8px" }}
               />
             </>
           )}
 
           {bonusSets.length > 1 && idx === bonusSets.length - 1 && (
-            <span style={{ marginLeft: "15px", color: "blue" }}>
+            <span className="bonus-preview-hint">
               {(() => {
                 const validSets = bonusSets.filter(s => s.base && s.label);
                 if (validSets.length > 1) {
@@ -60,29 +63,33 @@ const BonusSection = ({ bonusSets, setBonusSets, uploadMode = "offline" }) => {
         </div>
       ))}
 
-      <button
-        type="button"
-        onClick={() => setBonusSets([...bonusSets, { base: "", label: "" }])}
-      >
-        특전 추가 +
-      </button>
-      {bonusSets.length > 1 && (
+      <div className="btn-row">
         <button
           type="button"
-          onClick={() => setBonusSets(bonusSets.slice(0, -1))}
-          style={{ marginLeft: "10px", color: "red" }}
+          className="btn-secondary"
+          onClick={() => setBonusSets([...bonusSets, { base: "", label: "" }])}
         >
-          특전 삭제 -
+          특전 추가 +
         </button>
-      )}
+        {bonusSets.length > 1 && (
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => setBonusSets(bonusSets.slice(0, -1))}
+          >
+            특전 삭제 -
+          </button>
+        )}
+      </div>
+
       {bonusSets.length === 1 && bonusSets[0].base && (
-        <div>
+        <div className="bonus-preview">
           <p>{bonusSets[0].base * multiplier - 100}円以上 : 公式特典1枚</p>
           <p>{bonusSets[0].base * multiplier * 2 - 200}円以上 : 公式特典2枚</p>
           <p>{bonusSets[0].base * multiplier * 3 - 300}円以上 : 公式特典3枚 (以降も…)</p>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
